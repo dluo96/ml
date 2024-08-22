@@ -20,8 +20,22 @@ def count_bigrams(words: list[str]) -> dict[tuple[str, str], int]:
     return bg_counts
 
 
-def create_bigram_tensor(word: str) -> torch.Tensor:
-    ...
+def create_bigram_tensor(words: list[str]) -> torch.Tensor:
+    unique_chars = sorted(list(set("".join(words))))
+    unique_chars = ["<S>"] + unique_chars + ["<E>"]
+    N = len(unique_chars)
+    bigram_tensor = torch.zeros((N, N), dtype=torch.int32)
+
+    ctoi = {c: i for i, c in enumerate(unique_chars)}
+    itoc = {i: c for c, i in enumerate(unique_chars)}
+
+    for w in words:
+        chs = ["<S>"] + list(w) + ["<E>"]
+        for ch1, ch2 in zip(chs, chs[1:]):
+            ix1, ix2 = ctoi[ch1], ctoi[ch2]
+            bigram_tensor[ix1, ix2] += 1
+
+    return bigram_tensor
 
 
 def test_make_bigrams():
@@ -42,3 +56,18 @@ def test_count_bigrams():
         ("m", "a"): 1,
         ("a", "<E>"): 1,
     }
+
+
+def test_create_bigram_tensor():
+    assert torch.equal(
+        create_bigram_tensor(["emma"]),
+        torch.tensor(
+            [
+                [0, 0, 1, 0, 0],  # ("<S>", "e")
+                [0, 0, 0, 0, 1],  # ("a", "<E>")
+                [0, 0, 0, 1, 0],  # ("e", "m")
+                [0, 1, 0, 1, 0],  # ("m", "a") and ("m", "m")
+                [0, 0, 0, 0, 0],
+            ]
+        ),
+    )
