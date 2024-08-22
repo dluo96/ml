@@ -44,10 +44,11 @@ def sample(words: list[str]) -> str:
     g = torch.Generator().manual_seed(2147483647)
     ix = 0  # Sample the first token after "<S>"
     for _ in range(10):
-        row = bigram_tensor[
-            ix, :
-        ].float()  # Bigram probabilities given current character index
-        row /= row.sum()  # Normalise so probabilities sum to 1
+        # Bigram probabilities given current character index
+        row = bigram_tensor[ix, :].float()
+
+        # Normalise so probabilities sum to 1
+        row /= row.sum()
 
         # Sample a character index based on the bigram distribution
         ix = torch.multinomial(
