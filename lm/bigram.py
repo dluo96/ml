@@ -21,21 +21,47 @@ def count_bigrams(words: list[str]) -> dict[tuple[str, str], int]:
 
 
 def create_bigram_tensor(words: list[str]) -> torch.Tensor:
-    unique_chars = sorted(list(set("".join(words))))
-    unique_chars = ["<S>"] + unique_chars + ["<E>"]
+    unique_chars = ["<S>"] + sorted(list(set("".join(words)))) + ["<E>"]
     N = len(unique_chars)
     bigram_tensor = torch.zeros((N, N), dtype=torch.int32)
-
     ctoi = {c: i for i, c in enumerate(unique_chars)}
-    itoc = {i: c for c, i in enumerate(unique_chars)}
-
     for w in words:
         chs = ["<S>"] + list(w) + ["<E>"]
         for ch1, ch2 in zip(chs, chs[1:]):
-            ix1, ix2 = ctoi[ch1], ctoi[ch2]
+            ix1 = ctoi[ch1]
+            ix2 = ctoi[ch2]
             bigram_tensor[ix1, ix2] += 1
 
     return bigram_tensor
+
+
+def sample(words: list[str]) -> str:
+    unique_chars = ["<S>"] + sorted(list(set("".join(words)))) + ["<E>"]
+    itoc = {i: c for i, c in enumerate(unique_chars)}
+    bigram_tensor = create_bigram_tensor(words)
+
+    out = []
+    g = torch.Generator().manual_seed(2147483647)
+    ix = 0  # Sample the first token after "<S>"
+    for _ in range(10):
+        row = bigram_tensor[
+            ix, :
+        ].float()  # Bigram probabilities given current character index
+        row /= row.sum()  # Normalise so probabilities sum to 1
+
+        # Sample a character index based on the bigram distribution
+        ix = torch.multinomial(
+            input=row, num_samples=1, replacement=True, generator=g
+        ).item()
+
+        # Stop if we sample the end token "<E>"
+        if ix == 27:
+            break
+
+        char = itoc[ix]
+        out.append(char)
+
+    return "".join(out)
 
 
 def test_make_bigrams():
@@ -71,3 +97,9 @@ def test_create_bigram_tensor():
             ]
         ),
     )
+
+
+def test_sample():
+    words = open("names.txt", "r").read().splitlines()
+    out = sample(words)
+    assert out
