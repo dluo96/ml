@@ -92,10 +92,20 @@ def test_create_bigram_tensor():
         create_bigram_tensor(["emma"]),
         torch.tensor(
             [
-                [0, 0, 1, 0],  # ("<S>", "e")
-                [1, 0, 0, 0],  # ("a", "<E>")
+                [0, 0, 1, 0],  # (".", "e")
+                [1, 0, 0, 0],  # ("a", ".")
                 [0, 0, 0, 1],  # ("e", "m")
                 [0, 1, 0, 1],  # ("m", "a") and ("m", "m")
+            ]
+        ),
+    )
+    assert torch.equal(
+        create_bigram_tensor(["ava"]),
+        torch.tensor(
+            [
+                [0, 1, 0],  # (".", "a")
+                [1, 0, 1],  # ("a", "v") and ("a", ".")
+                [0, 1, 0],  # ("v", "a")
             ]
         ),
     )
