@@ -21,12 +21,13 @@ def count_bigrams(words: list[str]) -> dict[tuple[str, str], int]:
 
 
 def create_bigram_tensor(words: list[str]) -> torch.Tensor:
-    unique_chars = ["<S>"] + sorted(list(set("".join(words)))) + ["<E>"]
+    # Use a single token "." in favour of "<S>" and "<E>"
+    unique_chars = ["."] + sorted(list(set("".join(words))))  # + ["<E>"]
     N = len(unique_chars)
     bigram_tensor = torch.zeros((N, N), dtype=torch.int32)
     ctoi = {c: i for i, c in enumerate(unique_chars)}
     for w in words:
-        chs = ["<S>"] + list(w) + ["<E>"]
+        chs = ["."] + list(w) + ["."]
         for ch1, ch2 in zip(chs, chs[1:]):
             ix1 = ctoi[ch1]
             ix2 = ctoi[ch2]
@@ -36,31 +37,32 @@ def create_bigram_tensor(words: list[str]) -> torch.Tensor:
 
 
 def sample(words: list[str]) -> str:
-    unique_chars = ["<S>"] + sorted(list(set("".join(words)))) + ["<E>"]
+    unique_chars = ["."] + sorted(list(set("".join(words))))  # + ["<E>"]
     itoc = {i: c for i, c in enumerate(unique_chars)}
     bigram_tensor = create_bigram_tensor(words)
 
-    out = []
-    g = torch.Generator().manual_seed(2147483647)
-    ix = 0  # Sample the first token after "<S>"
-    for _ in range(10):
-        # Bigram probabilities given current character index
-        row = bigram_tensor[ix, :].float()
+    # Compute matrix of probabilities
+    P = bigram_tensor.float()
+    P /= P.sum(dim=1, keepdim=True)
 
-        # Normalise so probabilities sum to 1
-        row /= row.sum()
+    g = torch.Generator().manual_seed(2147483647)
+    out = []
+    ix = 0  # Start token "." is first
+    while True:
+        # Bigram probabilities given current character index
+        p = P[ix]
 
         # Sample a character index based on the bigram distribution
         ix = torch.multinomial(
-            input=row, num_samples=1, replacement=True, generator=g
+            input=p, num_samples=1, replacement=True, generator=g
         ).item()
 
-        # Stop if we sample the end token "<E>"
-        if ix == 27:
-            break
+        # Append character
+        out.append(itoc[ix])
 
-        char = itoc[ix]
-        out.append(char)
+        # Stop if we sample the end token "<E>"
+        if ix == 0:
+            break
 
     return "".join(out)
 
@@ -102,5 +104,5 @@ def test_create_bigram_tensor():
 
 def test_sample():
     words = open("names.txt", "r").read().splitlines()
-    out = sample(words)
-    assert out
+    sampled_name = sample(words)
+    assert sampled_name == "cexze."
