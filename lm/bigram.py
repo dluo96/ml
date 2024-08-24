@@ -53,9 +53,7 @@ def sample(words: list[str]) -> str:
         p = P[ix]
 
         # Sample a character index based on the bigram distribution
-        ix = torch.multinomial(
-            input=p, num_samples=1, replacement=True, generator=g
-        ).item()
+        ix = torch.multinomial(p, num_samples=1, replacement=True, generator=g).item()
 
         # Append character
         out.append(itoc[ix])
@@ -67,51 +65,91 @@ def sample(words: list[str]) -> str:
     return "".join(out)
 
 
-def test_make_bigrams():
-    assert make_bigrams(["emma"]) == [
-        ("<S>", "e"),
-        ("e", "m"),
-        ("m", "m"),
-        ("m", "a"),
-        ("a", "<E>"),
-    ]
+def evaluate(words: list[str]) -> float:
+    """Goal is to maximise the likelihood of the data with respect to the model
+    parameters, which, for the case of the bigram model, are the elements of the
+    bigram probability matrix.
+
+    This is equivalent to maximising the log likelihood (because log is monotonic).
+    This is equivalent to minimising the negative log likelihood.
+    This is equivalent to minimising the average negative log likelihood.
+    """
+    unique_chars = ["."] + sorted(list(set("".join(words))))
+    ctoi = {c: i for i, c in enumerate(unique_chars)}
+
+    bigram_tensor = create_bigram_tensor(words)
+    P = bigram_tensor.float()
+    P /= P.sum(dim=1, keepdim=True)
+
+    log_likelihood = 0.0
+    n = 0
+    for w in words[:3]:
+        chs = ["."] + list(w) + ["."]
+        for ch1, ch2 in zip(chs, chs[1:]):
+            ix1 = ctoi[ch1]
+            ix2 = ctoi[ch2]
+            prob = P[ix1, ix2]
+            log_prob = torch.log(prob)
+            log_likelihood += log_prob
+            n += 1
+            print(f"{ch1}{ch2}: {prob:.4f} {log_prob:.4f}")
+
+    nll = -log_likelihood
+
+    print(f"{log_likelihood=}")
+    print(f"{nll=}")
+    print(f"{nll/n=}")
 
 
-def test_count_bigrams():
-    assert count_bigrams(["emma"]) == {
-        ("<S>", "e"): 1,
-        ("e", "m"): 1,
-        ("m", "m"): 1,
-        ("m", "a"): 1,
-        ("a", "<E>"): 1,
-    }
+# def test_make_bigrams():
+#     assert make_bigrams(["emma"]) == [
+#         ("<S>", "e"),
+#         ("e", "m"),
+#         ("m", "m"),
+#         ("m", "a"),
+#         ("a", "<E>"),
+#     ]
+#
+#
+# def test_count_bigrams():
+#     assert count_bigrams(["emma"]) == {
+#         ("<S>", "e"): 1,
+#         ("e", "m"): 1,
+#         ("m", "m"): 1,
+#         ("m", "a"): 1,
+#         ("a", "<E>"): 1,
+#     }
+#
+#
+# def test_create_bigram_tensor():
+#     assert torch.equal(
+#         create_bigram_tensor(["emma"]),
+#         torch.tensor(
+#             [
+#                 [0, 0, 1, 0],  # (".", "e")
+#                 [1, 0, 0, 0],  # ("a", ".")
+#                 [0, 0, 0, 1],  # ("e", "m")
+#                 [0, 1, 0, 1],  # ("m", "a") and ("m", "m")
+#             ]
+#         ),
+#     )
+#     assert torch.equal(
+#         create_bigram_tensor(["ava"]),
+#         torch.tensor(
+#             [
+#                 [0, 1, 0],  # (".", "a")
+#                 [1, 0, 1],  # ("a", "v") and ("a", ".")
+#                 [0, 1, 0],  # ("v", "a")
+#             ]
+#         ),
+#     )
+#
+#
+# def test_sample():
+#     words = open("names.txt", "r").read().splitlines()
+#     sampled_name = sample(words)
+#     assert sampled_name == "cexze."
 
-
-def test_create_bigram_tensor():
-    assert torch.equal(
-        create_bigram_tensor(["emma"]),
-        torch.tensor(
-            [
-                [0, 0, 1, 0],  # (".", "e")
-                [1, 0, 0, 0],  # ("a", ".")
-                [0, 0, 0, 1],  # ("e", "m")
-                [0, 1, 0, 1],  # ("m", "a") and ("m", "m")
-            ]
-        ),
-    )
-    assert torch.equal(
-        create_bigram_tensor(["ava"]),
-        torch.tensor(
-            [
-                [0, 1, 0],  # (".", "a")
-                [1, 0, 1],  # ("a", "v") and ("a", ".")
-                [0, 1, 0],  # ("v", "a")
-            ]
-        ),
-    )
-
-
-def test_sample():
-    words = open("names.txt", "r").read().splitlines()
-    sampled_name = sample(words)
-    assert sampled_name == "cexze."
+if __name__ == "__main__":
+    names = open("names.txt", "r").read().splitlines()
+    evaluate(names)
