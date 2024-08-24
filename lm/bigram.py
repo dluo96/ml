@@ -49,7 +49,8 @@ def sample(words: list[str]) -> str:
     out = []
     ix = 0  # Start token "." is first
     while True:
-        # Bigram probabilities given current character index
+        # Get the probability distribution (over all possible characters)
+        # for the next character given the current character
         p = bigram_probs[ix]
 
         # Sample a character index based on the bigram distribution
