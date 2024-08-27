@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 
 class NNBigram:
-    def __init__(self, words: list[str]):
+    def __init__(self, words: list[str]) -> None:
         self.words = words
         unique_chars = ["."] + sorted(list(set("".join(words))))
         self.ctoi = {c: i for i, c in enumerate(unique_chars)}
@@ -13,13 +13,16 @@ class NNBigram:
         self.n_unique_chars = len(unique_chars)
         self.W = self._initialize_weights()
 
-    def _initialize_weights(self):
+    def _initialize_weights(self) -> torch.Tensor:
+        """Randomly initialise the weight matrix. It turns out that W is equivalent
+        to the bigram log counts. In other words, W.exp() is the bigram count tensor.
+        """
         g = torch.Generator().manual_seed(2147483647)
         return torch.randn(
             (self.n_unique_chars, self.n_unique_chars), generator=g, requires_grad=True
         )
 
-    def _get_bigram_pairs(self, words):
+    def _get_bigram_pairs(self, words: list[str]) -> tuple[torch.Tensor, torch.Tensor]:
         xs, ys = [], []
         for w in words:
             chs = ["."] + list(w) + ["."]
@@ -30,7 +33,7 @@ class NNBigram:
                 ys.append(ix2)
         return torch.tensor(xs), torch.tensor(ys)
 
-    def train(self):
+    def train(self) -> None:
         xs, ys = self._get_bigram_pairs(self.words)
         n_ex = xs.numel()
         xenc = F.one_hot(xs, num_classes=self.n_unique_chars).float()
