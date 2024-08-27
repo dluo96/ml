@@ -49,7 +49,7 @@ class BigramNeuralNetwork:
             loss.backward()
 
             with torch.no_grad():
-                self.W -= lr * self.W.grad
+                self.W += -50 * self.W.grad
 
     def sample(self) -> str:
         g = torch.Generator().manual_seed(2147483647)
@@ -57,7 +57,9 @@ class BigramNeuralNetwork:
         ix = 0  # Begin with start token "."
         while True:
             # Forward pass
-            xenc = F.one_hot(torch.tensor(ix), num_classes=self.n_unique_chars)
+            xenc = F.one_hot(
+                torch.tensor([ix]), num_classes=self.n_unique_chars
+            ).float()
             logits = xenc @ self.W
 
             # Compute softmax to get probability distribution over next character
@@ -80,7 +82,7 @@ class BigramNeuralNetwork:
 
 if __name__ == "__main__":
     # Example usage:
-    words = ["hello", "world"]
-    model = BigramNeuralNetwork(words)
-    model.train(epochs=1, lr=0.01)
+    names = open("names.txt", "r").read().splitlines()
+    model = BigramNeuralNetwork(words=names)
+    model.train(epochs=100, lr=0.01)
     print(model.sample())
