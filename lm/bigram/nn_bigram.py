@@ -1,8 +1,10 @@
+import pathlib
+
 import torch
 import torch.nn.functional as F
 
 
-class BigramNeuralNetwork:
+class NNBigram:
     def __init__(self, words: list[str]):
         self.words = words
         unique_chars = ["."] + sorted(list(set("".join(words))))
@@ -28,12 +30,12 @@ class BigramNeuralNetwork:
                 ys.append(ix2)
         return torch.tensor(xs), torch.tensor(ys)
 
-    def train(self, epochs=100, lr=0.01):
+    def train(self):
         xs, ys = self._get_bigram_pairs(self.words)
         n_ex = xs.numel()
         xenc = F.one_hot(xs, num_classes=self.n_unique_chars).float()
 
-        for _ in range(epochs):
+        for _ in range(100):
             # Forward pass
             logits = xenc @ self.W  # Log-counts
             counts = logits.exp()  # Un-normalised bigram tensor
@@ -81,8 +83,9 @@ class BigramNeuralNetwork:
 
 
 if __name__ == "__main__":
-    # Example usage:
-    names = open("../names.txt", "r").read().splitlines()
-    model = BigramNeuralNetwork(words=names)
-    model.train(epochs=100, lr=0.01)
+    data_dir = pathlib.Path(__file__).parent.parent
+    names = open(f"{data_dir}/names.txt", "r").read().splitlines()
+
+    model = NNBigram(words=names)
+    model.train()
     print(model.sample())
