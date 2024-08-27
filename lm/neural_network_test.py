@@ -1,6 +1,10 @@
 import torch
 
-from lm.neural_network import create_training_set_of_bigrams, get_bigram_pairs
+from lm.neural_network import (
+    create_training_set_of_bigrams,
+    get_bigram_pairs,
+    neural_network,
+)
 
 
 def test_generate_bigram_pairs() -> None:
@@ -48,3 +52,12 @@ def test_create_training_set_of_bigrams() -> None:
 
     assert torch.equal(xenc, expected_xenc)
     assert torch.equal(yenc, expected_yenc)
+
+
+def test_neural_network():
+    words = open("names.txt", "r").read().splitlines()
+    unique_chars = ["."] + sorted(list(set("".join(words))))
+    ctoi = {c: i for i, c in enumerate(unique_chars)}
+
+    neural_network(words, ctoi)
+    assert True
