@@ -6,7 +6,9 @@ import torch.nn.functional as F
 
 class NNBigram:
     """Character-level bigram model implemented using a neural network. The negative
-    log likelihood (NLL) is minimised using gradient descent.
+    log likelihood (NLL) is minimised using gradient descent. The neural network has
+    a single layer with no activation function. The weight matrix `W` is equivalent to
+    the log of the bigram counts tensor in `Bigram`.
     """
 
     def __init__(self, words: list[str]) -> None:
