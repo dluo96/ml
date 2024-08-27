@@ -14,7 +14,7 @@ class TestNNBigram(unittest.TestCase):
         self.model = NNBigram(words=self.words)
 
     def test_initialization(self):
-        N = 27  # 26 letters in alphabet and start/end token "."
+        N = 27  # 26 unique characters in `names.txt` and start/end token "."
         self.assertEqual(len(self.model.ctoi), N)
         self.assertEqual(len(self.model.itoc), N)
         self.assertIsInstance(self.model.W, torch.Tensor)
