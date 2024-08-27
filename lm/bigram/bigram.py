@@ -2,6 +2,10 @@ import torch
 
 
 class Bigram:
+    """Bigram character-level language model where 'training' consists of counting
+    the frequency of all bigrams.
+    """
+
     def __init__(self, words: list[str]) -> None:
         self.words = words
         unique_chars = ["."] + sorted(list(set("".join(words))))
@@ -64,7 +68,7 @@ class Bigram:
             # Append character
             out.append(self.itoc[ix])
 
-            # Stop if we sample the end token "<E>"
+            # Stop if we sample the end token "."
             if ix == 0:
                 break
 

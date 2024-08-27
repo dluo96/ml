@@ -5,6 +5,10 @@ import torch.nn.functional as F
 
 
 class NNBigram:
+    """Character-level bigram model implemented using a neural network. The negative
+    log likelihood (NLL) is minimised using gradient descent.
+    """
+
     def __init__(self, words: list[str]) -> None:
         self.words = words
         unique_chars = ["."] + sorted(list(set("".join(words))))
