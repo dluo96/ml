@@ -1,6 +1,6 @@
 import torch
 
-from lm.neural_network import (
+from lm.bigram.neural_network import (
     create_training_set_of_bigrams,
     get_bigram_pairs,
     neural_network,
@@ -8,7 +8,7 @@ from lm.neural_network import (
 
 
 def test_generate_bigram_pairs() -> None:
-    words = open("names.txt", "r").read().splitlines()
+    words = open("../names.txt", "r").read().splitlines()
     unique_chars = ["."] + sorted(list(set("".join(words))))
     ctoi = {c: i for i, c in enumerate(unique_chars)}
 
@@ -27,7 +27,7 @@ def test_generate_bigram_pairs() -> None:
 
 
 def test_create_training_set_of_bigrams() -> None:
-    words = open("names.txt", "r").read().splitlines()
+    words = open("../names.txt", "r").read().splitlines()
     unique_chars = ["."] + sorted(list(set("".join(words))))
     ctoi = {c: i for i, c in enumerate(unique_chars)}
 
@@ -55,7 +55,7 @@ def test_create_training_set_of_bigrams() -> None:
 
 
 def test_neural_network():
-    words = open("names.txt", "r").read().splitlines()
+    words = open("../names.txt", "r").read().splitlines()
     unique_chars = ["."] + sorted(list(set("".join(words))))
     ctoi = {c: i for i, c in enumerate(unique_chars)}
 

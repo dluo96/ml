@@ -82,7 +82,7 @@ class BigramNeuralNetwork:
 
 if __name__ == "__main__":
     # Example usage:
-    names = open("names.txt", "r").read().splitlines()
+    names = open("../names.txt", "r").read().splitlines()
     model = BigramNeuralNetwork(words=names)
     model.train(epochs=100, lr=0.01)
     print(model.sample())

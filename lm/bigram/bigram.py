@@ -113,5 +113,5 @@ def evaluate(words: list[str]) -> float:
 
 
 if __name__ == "__main__":
-    names = open("names.txt", "r").read().splitlines()
+    names = open("../names.txt", "r").read().splitlines()
     evaluate(names)

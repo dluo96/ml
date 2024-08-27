@@ -54,12 +54,12 @@ def test_create_bigram_tensor():
 
 
 def test_sample():
-    words = open("names.txt", "r").read().splitlines()
+    words = open("../names.txt", "r").read().splitlines()
     sampled_name = sample(words)
     assert sampled_name == "cexze."
 
 
 def test_evaluate():
-    words = open("names.txt", "r").read().splitlines()
+    words = open("../names.txt", "r").read().splitlines()
     avg_nll = evaluate(words)
     assert round(avg_nll, 4) == 2.4241
