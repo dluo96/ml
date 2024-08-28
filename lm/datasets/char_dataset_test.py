@@ -32,12 +32,15 @@ class TestCharDataset(unittest.TestCase):
         expected_vocab_size = 27  # a-z and start/end token "."
         self.assertEqual(self.dataset.get_vocab_size(), expected_vocab_size)
 
+    def test_max_word_length(self):
+        expected_max_word_length = len("jacqueline")
+        self.assertEqual(self.dataset.max_word_length, expected_max_word_length)
+
     def test_encode(self):
         word = "emma"
         encoded = self.dataset.encode(word)
         encoded_expected = torch.tensor([5, 13, 13, 1])
-        are_equal = torch.equal(encoded, encoded_expected)
-        self.assertTrue(are_equal)
+        self.assertTrue(torch.equal(encoded, encoded_expected))
 
     def test_encode_decode(self):
         word = "emma"
@@ -46,20 +49,26 @@ class TestCharDataset(unittest.TestCase):
     def test_getitem(self):
         x, y = self.dataset[0]
 
-        # The first word is "emma". Check this.
-        self.assertEqual(self.dataset.decode(x[:5]), ".emma")
-        self.assertEqual(self.dataset.decode(y[:4]), "emma")
-        expected_x = torch.tensor([0, 5, 13, 13, 1,  0,  0,  0,  0,  0,  0])
+        # Verify the first word is "emma".
+        self.assertEqual(self.dataset.decode(x), ".emma......")
+
+        # Check that the input/target tensors have the correct shape
+        max_word_length = len("jacqueline")  # "jacqueline" is the longest word
+        self.assertEqual(x.shape, (max_word_length + 1,))
+        self.assertEqual(x.shape, (max_word_length + 1,))
+
+        # Check that the input/target tensors are correct for "emma"
+        expected_x = torch.tensor([0, 5, 13, 13, 1,  0,  0,  0,  0,  0,  0])  # fmt: skip
         expected_y = torch.tensor([5, 13, 13, 1, 0, -1, -1, -1, -1, -1, -1])
         self.assertTrue(torch.equal(x, expected_x))
         self.assertTrue(torch.equal(y, expected_y))
 
     def test_dataloader(self):
-        # Check that DataLoader works properly
-        dataloader = DataLoader(self.dataset, batch_size=2)
+        B = 2  # Batch size
+        dataloader = DataLoader(self.dataset, batch_size=B, drop_last=True)
         for batch_x, batch_y in dataloader:
-            self.assertEqual(batch_x.shape, (2, self.dataset.max_word_length + 1))
-            self.assertEqual(batch_y.shape, (2, self.dataset.max_word_length + 1))
+            self.assertEqual(batch_x.shape, (B, self.dataset.max_word_length + 1))
+            self.assertEqual(batch_y.shape, (B, self.dataset.max_word_length + 1))
 
 
 if __name__ == "__main__":
