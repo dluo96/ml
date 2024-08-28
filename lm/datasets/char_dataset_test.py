@@ -29,7 +29,8 @@ class TestCharDataset(unittest.TestCase):
         self.dataset = CharDataset(self.words)
 
     def test_vocab_size(self):
-        self.assertEqual(self.dataset.get_vocab_size(), 27)
+        expected_vocab_size = 27  # a-z and start/end token "."
+        self.assertEqual(self.dataset.get_vocab_size(), expected_vocab_size)
 
     def test_encode(self):
         word = "emma"
@@ -40,9 +41,7 @@ class TestCharDataset(unittest.TestCase):
 
     def test_encode_decode(self):
         word = "emma"
-        encoded = self.dataset.encode(word)
-        decoded = self.dataset.decode(encoded)
-        self.assertEqual(decoded, word)
+        self.assertEqual(self.dataset.decode(self.dataset.encode(word)), word)
 
     def test_getitem(self):
         x, y = self.dataset[0]
