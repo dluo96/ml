@@ -3,7 +3,7 @@ import unittest
 
 import torch
 
-from lm.mlp.mlp import MLP
+from lm.models.mlp import MLP
 
 
 class TestBigram(unittest.TestCase):

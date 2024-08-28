@@ -4,7 +4,7 @@ import unittest
 import torch
 import torch.nn.functional as F
 
-from lm.bigram.nn_bigram import NNBigram
+from lm.models.nn_bigram import NNBigram
 
 
 class TestNNBigram(unittest.TestCase):

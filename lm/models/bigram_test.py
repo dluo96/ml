@@ -3,7 +3,7 @@ import unittest
 
 import torch
 
-from lm.bigram.bigram import Bigram
+from lm.models.bigram import Bigram
 
 
 class TestBigram(unittest.TestCase):
