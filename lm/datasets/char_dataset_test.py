@@ -8,18 +8,33 @@ from lm.datasets.char_dataset import CharDataset
 
 class TestCharDataset(unittest.TestCase):
     def setUp(self):
-        # Create a toy dataset
-        self.words = ["emma"]
+        # Create a toy dataset containing all characters a-z
+        self.words = [
+            "emma",
+            "isabella",
+            "camila",
+            "sadie",
+            "faith",
+            "margaret",
+            "jasmine",
+            "kayla",
+            "morgan",
+            "parker",
+            "jacqueline",
+            "veronica",
+            "winter",
+            "alexia",
+            "itzel",
+        ]
         self.dataset = CharDataset(self.words)
 
     def test_vocab_size(self):
-        expected_vocab_size = len(["."] + sorted(list(set("".join(self.words)))))
-        self.assertEqual(self.dataset.get_vocab_size(), expected_vocab_size)
+        self.assertEqual(self.dataset.get_vocab_size(), 27)
 
     def test_encode(self):
         word = "emma"
-        encoded = self.dataset.encode("emma")
-        encoded_expected = torch.tensor([2, 3, 3, 1])
+        encoded = self.dataset.encode(word)
+        encoded_expected = torch.tensor([5, 13, 13, 1])
         are_equal = torch.equal(encoded, encoded_expected)
         self.assertTrue(are_equal)
 
@@ -31,10 +46,12 @@ class TestCharDataset(unittest.TestCase):
 
     def test_getitem(self):
         x, y = self.dataset[0]
-        self.assertEqual(self.dataset.decode(x), ".emma")
-        self.assertEqual(self.dataset.decode(y), "emma.")
-        expected_x = torch.tensor([0, 2, 3, 3, 1])
-        expected_y = torch.tensor([2, 3, 3, 1, 0])
+
+        # The first word is "emma". Check this.
+        self.assertEqual(self.dataset.decode(x[:5]), ".emma")
+        self.assertEqual(self.dataset.decode(y[:4]), "emma")
+        expected_x = torch.tensor([0, 5, 13, 13, 1,  0,  0,  0,  0,  0,  0])
+        expected_y = torch.tensor([5, 13, 13, 1, 0, -1, -1, -1, -1, -1, -1])
         self.assertTrue(torch.equal(x, expected_x))
         self.assertTrue(torch.equal(y, expected_y))
 

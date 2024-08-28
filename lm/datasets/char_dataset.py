@@ -20,7 +20,7 @@ class CharDataset(Dataset):
         ix = torch.tensor([self.ctoi[ch] for ch in word])
         return ix
 
-    def decode(self, ix: torch.Tensor):
+    def decode(self, ix: torch.Tensor) -> str:
         word = "".join(self.itoc[i.item()] for i in ix)
         return word
 
