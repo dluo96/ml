@@ -10,7 +10,7 @@ class CharDataset(Dataset):
         self.ctoi = {c: i for i, c in enumerate(self.unique_chars)}
         self.itoc = {i: c for i, c in enumerate(self.unique_chars)}
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.words)
 
     def get_vocab_size(self) -> int:
@@ -24,7 +24,7 @@ class CharDataset(Dataset):
         word = "".join(self.itoc[i.item()] for i in ix)
         return word
 
-    def __getitem__(self, idx) -> tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         word = self.words[idx]
         ix = self.encode(word)
 

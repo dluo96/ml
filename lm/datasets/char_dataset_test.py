@@ -49,7 +49,7 @@ class TestCharDataset(unittest.TestCase):
     def test_getitem(self):
         x, y = self.dataset[0]
 
-        # Verify the first word is "emma".
+        # Verify the first word is "emma"
         self.assertEqual(self.dataset.decode(x), ".emma......")
 
         # Check that the input/target tensors have the correct shape
