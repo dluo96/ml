@@ -30,15 +30,13 @@ class TestCharDataset(unittest.TestCase):
         self.assertEqual(decoded, word)
 
     def test_getitem(self):
-        x, y = self.dataset[0]  # Index 0 should be "emma"
-        encoded = self.dataset.encode("emma")
-
-        # Check that x contains the correct encoded word with appropriate padding
-        self.assertTrue(torch.equal(x[1 : 1 + len(encoded)], encoded))
-        # Check that y contains the correct encoded word with appropriate padding
-        self.assertTrue(torch.equal(y[: len(encoded)], encoded))
-        # Check the mask value in y
-        self.assertTrue(torch.all(y[len(encoded) + 1 :] == -1))
+        x, y = self.dataset[0]
+        self.assertEqual(self.dataset.decode(x), ".emma")
+        self.assertEqual(self.dataset.decode(y), "emma.")
+        expected_x = torch.tensor([0, 2, 3, 3, 1])
+        expected_y = torch.tensor([2, 3, 3, 1, 0])
+        self.assertTrue(torch.equal(x, expected_x))
+        self.assertTrue(torch.equal(y, expected_y))
 
     def test_dataloader(self):
         # Check that DataLoader works properly

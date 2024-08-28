@@ -21,7 +21,7 @@ class CharDataset(Dataset):
         return ix
 
     def decode(self, ix: torch.Tensor):
-        word = "".join(self.itoc[i] for i in ix)
+        word = "".join(self.itoc[i.item()] for i in ix)
         return word
 
     def __getitem__(self, idx) -> tuple[torch.Tensor, torch.Tensor]:
