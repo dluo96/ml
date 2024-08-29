@@ -29,7 +29,9 @@ class TestMultiCharDataset(unittest.TestCase):
 
     def test_init(self):
         self.assertEqual(self.dataset.block_size, self.block_size)
-        self.assertEqual(self.dataset.get_vocab_size(), len(self.dataset.unique_chars))
+
+        expected_vocab_size = 27  # a-z and start/end token "."
+        self.assertEqual(self.dataset.get_vocab_size(), expected_vocab_size)
 
         expected_num_examples = sum([1 + len(w) for w in self.words])
         self.assertEqual(len(self.dataset), expected_num_examples)
