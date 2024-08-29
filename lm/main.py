@@ -19,7 +19,7 @@ def main() -> None:
     data_dir = pathlib.Path(__file__).parent
     words = open(f"{data_dir}/names.txt", "r").read().splitlines()
     dataset = CharDataset(words)
-    train_loader = DataLoader(dataset, batch_size=8)
+    train_loader = DataLoader(dataset, batch_size=2**14)
 
     # Model
     vocab_size = dataset.get_vocab_size()
@@ -31,7 +31,7 @@ def main() -> None:
 
     # Consolidate everything in the trainer
     trainer = Trainer(
-        num_epochs=100,
+        num_epochs=10000,
         train_loader=train_loader,
         model=model,
         optimizer=optimizer,

@@ -29,12 +29,12 @@ class Trainer:
             self.train_epoch()
 
             # Evaluate
-            train_loss = self.evaluate(self.train_loader)
-            logging.info(f"Epoch: {epoch} | Train loss: {train_loss:4f}")
+            if epoch % 20 == 0:
+                train_loss = self.evaluate(self.train_loader)
+                logging.info(f"Epoch: {epoch} | Train loss: {train_loss:4f}")
 
     def train_epoch(self):
         self.model.train()  # Set PyTorch module to training mode
-        total_loss = 0.0
 
         for batch in self.train_loader:
             X, Y = batch
@@ -46,8 +46,6 @@ class Trainer:
             self.model.zero_grad(set_to_none=True)  # Zero the gradients
             loss.backward()
             self.optimizer.step()
-
-            total_loss += loss.item()
 
     @torch.inference_mode()  # More efficient than torch.no_grad()
     def evaluate(self, dataloader: DataLoader) -> float:
