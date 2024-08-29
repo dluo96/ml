@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 
 
 class MultiCharDataset(Dataset):
-    def __init__(self, words: list[str], block_size: int = 3):
+    def __init__(self, words: list[str], block_size: int):
         self.words = words
         self.unique_chars = ["."] + sorted(list(set("".join(words))))
         self.ctoi = {c: i for i, c in enumerate(self.unique_chars)}
