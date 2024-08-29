@@ -1,70 +1,73 @@
-import pathlib
 import unittest
 
 import torch
+import torch.nn.functional as F
 
 from lm.models.bigram import Bigram
 
 
-class TestBigram(unittest.TestCase):
+class TestBigramModel(unittest.TestCase):
+    class Config:
+        vocab_size = 27  # Example vocabulary size for testing purposes
+
     def setUp(self):
-        # Setup that runs before each test
-        data_dir = pathlib.Path(__file__).parent.parent
-        self.words = open(f"{data_dir}/names.txt", "r").read().splitlines()
-        self.model = Bigram(words=self.words)
+        self.config = self.Config()
+        self.model = Bigram(self.config)
 
-    def test_make_bigrams(self):
-        expected_bigrams = [
-            ("<S>", "e"),
-            ("e", "m"),
-            ("m", "m"),
-            ("m", "a"),
-            ("a", "<E>"),
-        ]
-        self.assertEqual(self.model.make_bigrams(["emma"]), expected_bigrams)
-
-    def test_count_bigrams(self):
-        expected_bigram_counts = {
-            ("<S>", "e"): 1,
-            ("e", "m"): 1,
-            ("m", "m"): 1,
-            ("m", "a"): 1,
-            ("a", "<E>"): 1,
-        }
-        self.assertEqual(self.model.count_bigrams(["emma"]), expected_bigram_counts)
-
-    def test_create_bigram_tensor__one_word_dataset(self):
-        # Overwrite model instance in `setUp` to test with a 1-word dataset
-        self.model = Bigram(words=["emma"])
-        expected_tensor_emma = torch.tensor(
-            [
-                [0, 0, 1, 0],  # (".", "e")
-                [1, 0, 0, 0],  # ("a", ".")
-                [0, 0, 0, 1],  # ("e", "m")
-                [0, 1, 0, 1],  # ("m", "a") and ("m", "m")
-            ]
+    def test_init(self):
+        self.assertEqual(
+            self.model.logits.shape, (self.config.vocab_size, self.config.vocab_size)
         )
-        actual_tensor_emma = self.model.create_bigram_tensor(["emma"])
-        self.assertTrue(torch.equal(expected_tensor_emma, actual_tensor_emma))
-
-        # Reset model instance to test with a different 1-word dataset
-        self.model = Bigram(words=["ava"])
-        expected_tensor_ava = torch.tensor(
-            [
-                [0, 1, 0],  # (".", "a")
-                [1, 0, 1],  # ("a", "v") and ("a", ".")
-                [0, 1, 0],  # ("v", "a")
-            ]
+        self.assertTrue(
+            torch.equal(
+                self.model.logits,
+                torch.zeros(self.config.vocab_size, self.config.vocab_size),
+            )
         )
-        actual_tensor_ava = self.model.create_bigram_tensor(["ava"])
-        self.assertTrue(torch.equal(expected_tensor_ava, actual_tensor_ava))
+        self.assertIn(
+            self.model.logits,
+            self.model.parameters(),
+            msg="nn.Parameter is automatically assigned to the module parameters!",
+        )
+        self.assertTrue(
+            self.model.logits.requires_grad,
+            msg="nn.Parameter has requires_grad=True by default!",
+        )
 
-    def test_sample(self):
-        self.assertEqual(self.model.sample(self.words), "cexze.")
+    def test_get_block_size(self):
+        expected_block_size = 1  # Bigram model uses previous character to predict next
+        self.assertEqual(self.model.get_block_size(), expected_block_size)
 
-    def test_evaluate(self):
-        avg_nll = self.model.evaluate(self.words)
-        self.assertAlmostEqual(avg_nll, 2.454, places=4)
+    def test_forward_no_targets(self):
+        idx = torch.randint(0, self.config.vocab_size, (5,))  # 5 random indices
+        logits, loss = self.model.forward(idx)
+
+        # Check the shape of the logits
+        self.assertEqual(logits.shape, (5, self.config.vocab_size))
+        self.assertIsNone(loss, "Loss should be None when targets are not provided!")
+
+    def test_forward_with_targets(self):
+        idx = torch.randint(0, self.config.vocab_size, (5,))  # Random indices
+        targets = torch.randint(0, self.config.vocab_size, (5,))  # Random targets
+        logits, loss = self.model.forward(idx, targets)
+
+        # Check the shape of the logits
+        self.assertEqual(logits.shape, (5, self.config.vocab_size))
+        self.assertIsNotNone(loss)  # Loss should not be None when targets are provided
+        self.assertIsInstance(loss, torch.Tensor, "Loss should be a tensor!")
+        self.assertGreaterEqual(loss.item(), 0, "Loss should be non-negative!")
+
+    def test_forward_equivalence(self):
+        idx = torch.randint(0, self.config.vocab_size, (5,))  # 5 random indices
+        logits, _ = self.model.forward(idx)
+
+        # Check that the computation of output logits is equivalent to matrix
+        # multiplication of the one-hot encoded indices
+        x = F.one_hot(idx, num_classes=self.config.vocab_size).float()
+        self.assertTrue(
+            torch.equal(logits, x @ self.model.logits),
+            msg="Result must agree with matrix multiplication of one-hot encodings!",
+        )
 
 
 if __name__ == "__main__":
