@@ -47,7 +47,6 @@ class TestBigramModel(unittest.TestCase):
         self.assertIsNone(loss, "Loss should be None when targets are not provided!")
 
     def test_forward_with_targets(self):
-        # Test forward pass with targets
         idx = torch.randint(0, self.config.vocab_size, (5,))  # Random indices
         targets = torch.randint(0, self.config.vocab_size, (5,))  # Random targets
         logits, loss = self.model.forward(idx, targets)
