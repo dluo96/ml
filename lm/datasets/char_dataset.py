@@ -16,6 +16,22 @@ class CharDataset(Dataset):
         return self.X.numel()
 
     def _create_dataset(self) -> tuple[torch.Tensor, torch.Tensor]:
+        """Create input-target pairs for all words in the dataset.
+
+        For example, the word 'emma' will produce 5 examples corresponding to:
+            - "." -> "e"
+            - "e" -> "m"
+            - "m" -> "m"
+            - "m" -> "a"
+            - "a" -> "."
+
+        In other words,
+            - When the input to the NN is 0 ("."), the desired label is 5 ("e")
+            - When the input to the NN is 5 ("e"), the desired label is 13 ("m")
+            - When the input to the NN is 13 ("m"), the desired label is 13 ("m")
+            - When the input to the NN is 13 ("m"), the desired label is 1 ("a")
+            - When the input to the NN is 1 ("a"), the desired label is 0 (".")
+        """
         xs, ys = [], []
         for w in self.words:
             chs = ["."] + list(w) + ["."]

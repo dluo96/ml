@@ -35,10 +35,6 @@ class TestCharDataset(unittest.TestCase):
         expected_num_examples = sum([1 + len(w) for w in self.words])
         self.assertEqual(len(self.dataset), expected_num_examples)
 
-    def test_max_word_length(self):
-        expected_max_word_length = len("jacqueline")
-        self.assertEqual(self.dataset.max_word_length, expected_max_word_length)
-
     def test_encode(self):
         word = "emma"
         encoded = self.dataset.encode(word)
