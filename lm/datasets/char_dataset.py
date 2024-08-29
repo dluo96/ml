@@ -5,13 +5,30 @@ from torch.utils.data import Dataset
 class CharDataset(Dataset):
     def __init__(self, words: list[str]):
         self.words = words
-        self.max_word_length = max(len(w) for w in words)
         self.unique_chars = ["."] + sorted(list(set("".join(words))))
         self.ctoi = {c: i for i, c in enumerate(self.unique_chars)}
         self.itoc = {i: c for i, c in enumerate(self.unique_chars)}
 
+        # Pre-compute dataset
+        self.X, self.Y = self._create_dataset()
+
     def __len__(self) -> int:
-        return len(self.words)
+        return self.X.numel()
+
+    def _create_dataset(self) -> tuple[torch.Tensor, torch.Tensor]:
+        xs, ys = [], []
+        for w in self.words:
+            chs = ["."] + list(w) + ["."]
+            for ch1, ch2 in zip(chs, chs[1:]):  # zip truncates the longer iterable
+                ix1 = self.ctoi[ch1]
+                ix2 = self.ctoi[ch2]
+                xs.append(ix1)
+                ys.append(ix2)
+
+        xs = torch.tensor(xs, dtype=torch.long)
+        ys = torch.tensor(ys, dtype=torch.long)
+
+        return xs, ys
 
     def get_vocab_size(self) -> int:
         return len(self.unique_chars)
@@ -25,15 +42,4 @@ class CharDataset(Dataset):
         return word
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
-        word = self.words[idx]
-        ix = self.encode(word)
-
-        # Initialise input/target tensors with padding (+1 is for start token)
-        x = torch.zeros(self.max_word_length + 1, dtype=torch.long)
-        y = torch.zeros(self.max_word_length + 1, dtype=torch.long)
-
-        x[1 : 1 + len(ix)] = ix  # Shift by 1 to leave room for the start token "."
-        y[: len(ix)] = ix  # Copy encoded word to target tensor
-        y[len(ix) + 1 :] = -1  # Mask loss for inactive positions with -1
-
-        return x, y
+        return self.X[idx], self.Y[idx]
