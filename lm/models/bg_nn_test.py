@@ -1,6 +1,7 @@
 import unittest
 
 import torch
+import torch.nn.functional as F
 
 from lm.models.bg_nn import Bigram
 
@@ -44,6 +45,14 @@ class TestBigramModel(unittest.TestCase):
         # Check the shape of the logits
         self.assertEqual(logits.shape, (5, self.config.vocab_size))
         self.assertIsNone(loss, "Loss should be None when targets are not provided!")
+
+        # Check that the computation of output logits is equivalent to matrix
+        # multiplication of the one-hot encoded indices
+        x = F.one_hot(idx, num_classes=self.config.vocab_size).float()
+        self.assertTrue(
+            torch.equal(logits, x @ self.model.logits),
+            msg="Result must agree with matrix multiplication of one-hot encodings!",
+        )
 
     def test_forward_with_targets(self):
         # Test forward pass with targets
