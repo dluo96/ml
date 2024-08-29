@@ -19,7 +19,7 @@ def main() -> None:
     data_dir = pathlib.Path(__file__).parent
     words = open(f"{data_dir}/names.txt", "r").read().splitlines()
     dataset = CharDataset(words)
-    train_loader = DataLoader(dataset, batch_size=2)
+    train_loader = DataLoader(dataset, batch_size=8)
 
     # Model
     vocab_size = dataset.get_vocab_size()

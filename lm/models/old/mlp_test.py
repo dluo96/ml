@@ -9,7 +9,7 @@ from lm.models.old.mlp import MLP
 class TestBigram(unittest.TestCase):
     def setUp(self):
         # Setup that runs before each test
-        data_dir = pathlib.Path(__file__).parent.parent
+        data_dir = pathlib.Path(__file__).parent.parent.parent
         self.words = open(f"{data_dir}/names.txt", "r").read().splitlines()
         self.model = MLP(self.words)
 

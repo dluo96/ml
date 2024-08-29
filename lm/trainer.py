@@ -37,8 +37,10 @@ class Trainer:
         total_loss = 0.0
 
         for batch in self.train_loader:
-            # Forward pass, compute loss, backward pass
-            logits, loss = self.model(batch)
+            X, Y = batch
+
+            # Forward pass
+            logits, loss = self.model(idx=X, targets=Y)
 
             # Backward pass and parameter updates
             self.model.zero_grad(set_to_none=True)  # Zero the gradients
