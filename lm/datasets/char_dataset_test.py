@@ -65,10 +65,15 @@ class TestCharDataset(unittest.TestCase):
 
     def test_dataloader(self):
         B = 2  # Batch size
+        num_iter = 0
         dataloader = DataLoader(self.dataset, batch_size=B, drop_last=True)
         for batch_x, batch_y in dataloader:
             self.assertEqual(batch_x.shape, (B, self.dataset.max_word_length + 1))
             self.assertEqual(batch_y.shape, (B, self.dataset.max_word_length + 1))
+            num_iter += 1
+
+        expected_num_iter = len(self.words) // B
+        self.assertEqual(num_iter, expected_num_iter)
 
 
 if __name__ == "__main__":
