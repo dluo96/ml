@@ -8,7 +8,7 @@ from lm.models.bg_nn import Bigram
 
 class TestBigramModel(unittest.TestCase):
     class Config:
-        vocab_size = 10  # Example vocabulary size for testing purposes
+        vocab_size = 27  # Example vocabulary size for testing purposes
 
     def setUp(self):
         self.config = self.Config()
