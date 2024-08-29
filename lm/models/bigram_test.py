@@ -40,7 +40,7 @@ class TestBigramModel(unittest.TestCase):
 
     def test_forward_no_targets(self):
         idx = torch.randint(0, self.config.vocab_size, (5,))  # 5 random indices
-        logits, loss = self.model.forward(idx)
+        logits, loss = self.model(idx)
 
         # Check the shape of the logits
         self.assertEqual(logits.shape, (5, self.config.vocab_size))
@@ -49,7 +49,7 @@ class TestBigramModel(unittest.TestCase):
     def test_forward_with_targets(self):
         idx = torch.randint(0, self.config.vocab_size, (5,))  # Random indices
         targets = torch.randint(0, self.config.vocab_size, (5,))  # Random targets
-        logits, loss = self.model.forward(idx, targets)
+        logits, loss = self.model(idx, targets)
 
         # Check the shape of the logits
         self.assertEqual(logits.shape, (5, self.config.vocab_size))
@@ -59,7 +59,7 @@ class TestBigramModel(unittest.TestCase):
 
     def test_forward_equivalence(self):
         idx = torch.randint(0, self.config.vocab_size, (5,))  # 5 random indices
-        logits, _ = self.model.forward(idx)
+        logits, _ = self.model(idx)
 
         # Check that the computation of output logits is equivalent to matrix
         # multiplication of the one-hot encoded indices
