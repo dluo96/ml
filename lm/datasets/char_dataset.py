@@ -16,7 +16,7 @@ class CharDataset(Dataset):
         return self.X.numel()
 
     def _create_dataset(self) -> tuple[torch.Tensor, torch.Tensor]:
-        """Create input-target pairs for all words in the dataset.
+        """Create input-target pairs from all the words in the dataset.
 
         For example, the word 'emma' will produce 5 examples corresponding to:
             - "." -> "e"
