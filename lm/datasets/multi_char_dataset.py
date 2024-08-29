@@ -16,7 +16,6 @@ class MultiCharDataset(Dataset):
         self.X, self.Y = self._create_dataset(self.words)
 
     def __len__(self) -> int:
-        # return len(self.words)
         return self.Y.numel()
 
     def _create_dataset(self, words: list[str]) -> tuple[torch.Tensor, torch.Tensor]:
