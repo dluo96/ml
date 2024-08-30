@@ -70,7 +70,8 @@ class TestMLP(unittest.TestCase):
 
     def test_forward_with_targets(self):
         # Generate a batch of 5 input sequences each of length `block_size` as well as
-        # a batch of 5 targets (labels)
+        # a batch of 5 targets (labels) each of length 1 (we are only predicting the
+        # next character)
         idx = torch.randint(0, self.config.vocab_size, (5, self.config.block_size))
         targets = torch.randint(0, self.config.vocab_size, (5,))
 
