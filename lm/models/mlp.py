@@ -42,5 +42,28 @@ class MLP(nn.Module):
         loss = None
         if targets is not None:
             loss = F.cross_entropy(logits, targets)
+            """The line `loss = F.cross_entropy(logits, targets)` is equivalent to:
+
+            counts = logits.exp()
+            p = counts / counts.sum(dim=1, keepdim=True)
+
+            # Extract probabilities for labels (the actual characters)
+            n_examples = embs.shape[0]
+            p_labels = p[torch.arange(n_examples), targets]
+
+            # Compute negative log likelihood
+            loss = -p_labels.log().mean()
+
+            However, `F.cross_entropy` is preferred for a few reasons:
+                1. Forward pass is much more efficient: it does not create any additional
+                    tensors - PyTorch instead runs it in a fused kernel.
+                2. Backward pass is much more efficient: it is easier to backpropagate
+                    through.
+                3. It is more numerically stable. Internally, `F.cross_entropy` computes
+                    the max value that occurs in the logits and subtracts it from all
+                    logits to prevent overflow. This is known as the log-sum-exp trick.
+                    Importantly, any offset subtracted from the logits will produce the
+                    exact same output probabilities.
+            """
 
         return logits, loss
