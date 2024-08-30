@@ -73,23 +73,11 @@ class TestMLP(unittest.TestCase):
             loss.item(), float, msg="Loss tensor should only contain a single float!"
         )
 
-    def test_embedding_lookup_and_concatenation(self):
-        # Test embedding lookup and concatenation logic
-        idx = torch.randint(
-            0, self.config.vocab_size, (5, self.config.block_size)
-        )  # Batch of 5
-        embs = []
-        for k in range(self.config.block_size):
-            tok_emb = self.model.lookup_table(
-                idx
-            )  # token embeddings of shape (b, n_embd)
-            idx = torch.roll(idx, 1, 1)
-            idx[:, 0] = self.config.vocab_size  # special <BLANK> token
-            embs.append(tok_emb)
-
-        # Ensure embeddings are correctly concatenated
-        x = torch.cat(embs, -1)
-        self.assertEqual(x.shape, (5, self.config.block_size * self.config.n_embd))
+    def test_lookup_table(self):
+        B = 5  # Batch size
+        idx = torch.randint(0, self.config.vocab_size, (B, self.config.block_size))
+        emb = self.model.lookup_table(idx)
+        self.assertEqual(emb.shape, (B, self.config.block_size, self.config.n_embd))
 
 
 if __name__ == "__main__":
