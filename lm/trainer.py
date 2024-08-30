@@ -31,7 +31,7 @@ class Trainer:
             # Evaluate
             if epoch % 20 == 0:
                 train_loss = self.evaluate(self.train_loader)
-                logging.info(f"Epoch: {epoch} | Train loss: {train_loss:4f}")
+                logging.info(f"Epoch: {epoch} | Train loss: {train_loss:.4f}")
 
     def train_epoch(self):
         self.model.train()  # Set PyTorch module to training mode
@@ -42,9 +42,11 @@ class Trainer:
             # Forward pass
             logits, loss = self.model(idx=X, targets=Y)
 
-            # Backward pass and parameter updates
+            # Backward pass
             self.model.zero_grad(set_to_none=True)  # Zero the gradients
             loss.backward()
+
+            # Parameter updates
             self.optimizer.step()
 
     @torch.inference_mode()  # More efficient than torch.no_grad()
