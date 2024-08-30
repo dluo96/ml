@@ -13,7 +13,8 @@ class MLP(nn.Module):
         self.vocab_size = config.vocab_size
         self.block_size = config.block_size
 
-        self.lookup_table = nn.Embedding(self.vocab_size + 1, config.n_embd)
+        # Define model layers
+        self.lookup_table = nn.Embedding(self.vocab_size, config.n_embd)  # Removed +1
         self.mlp = nn.Sequential(
             nn.Linear(self.block_size * config.n_embd, config.n_embd2),
             nn.Tanh(),
@@ -27,16 +28,15 @@ class MLP(nn.Module):
         self, idx: torch.Tensor, targets: torch.Tensor | None = None
     ) -> tuple[torch.Tensor, torch.Tensor | None]:
         # Get embeddings for the previous `block_size` tokens
-        embs = []
-        for k in range(self.block_size):
-            tok_emb = self.lookup_table(idx)  # (batch_size, block_size, n_embd)
-            idx = torch.roll(idx, 1, 1)
-            idx[:, 0] = self.vocab_size  # special <BLANK> token
-            embs.append(tok_emb)
+        embs = self.lookup_table(idx)
 
-        # Concat the embeddings together and pass through an MLP
-        x = torch.cat(embs, -1)  # (b, t, n_embd * block_size)
-        logits = self.mlp(x)
+        # To perform matrix multiplication, we need to concatenate the embeddings.
+        # The shape goes from
+        # (batch_size, block_size, n_embd) to (batch_size, block_size * n_embd)
+        embs = embs.view(embs.shape[0], -1)
+
+        # Pass through the MLP
+        logits = self.mlp(embs)
 
         # Compute loss if targets are provided
         loss = None
