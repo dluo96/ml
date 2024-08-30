@@ -5,7 +5,8 @@ from torch.nn import functional as F
 
 class MLP(nn.Module):
     """MLP which takes the previous `block_size` characters, embeds them with a lookup
-    table, concatenates the embeddings, and predicts the next character with an MLP.
+    table, concatenates the `block_size` embeddings, and predicts the next character
+    with an MLP.
     """
 
     def __init__(self, config):
