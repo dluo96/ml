@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-from lm.main import ModelConfig
+from lm.model_config import ModelConfig
 
 
 class MLP(nn.Module):

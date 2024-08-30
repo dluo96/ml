@@ -3,21 +3,13 @@ import unittest
 import torch
 import torch.nn as nn
 
+from lm.model_config import ModelConfig
 from lm.models.mlp import MLP
-
-
-class MockConfig:
-    def __init__(self, vocab_size, block_size, n_embd, n_embd2):
-        self.vocab_size = vocab_size
-        self.block_size = block_size
-        self.n_embd = n_embd
-        self.n_embd2 = n_embd2
 
 
 class TestMLP(unittest.TestCase):
     def setUp(self):
-        # Mock configuration for testing
-        self.config = MockConfig(vocab_size=27, block_size=3, n_embd=4, n_embd2=8)
+        self.config = ModelConfig(vocab_size=27, block_size=3, n_embd=4, n_embd2=8)
         self.model = MLP(self.config)
 
     def test_init(self):
