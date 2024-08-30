@@ -3,15 +3,13 @@ import unittest
 import torch
 import torch.nn.functional as F
 
+from lm.model_config import ModelConfig
 from lm.models.bigram import Bigram
 
 
 class TestBigramModel(unittest.TestCase):
-    class Config:
-        vocab_size = 27  # Example vocabulary size for testing purposes
-
     def setUp(self):
-        self.config = self.Config()
+        self.config = ModelConfig(vocab_size=27)
         self.model = Bigram(self.config)
 
     def test_init(self):
