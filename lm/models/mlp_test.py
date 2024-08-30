@@ -46,7 +46,11 @@ class TestMLP(unittest.TestCase):
         B = 5  # Batch size
         idx = torch.randint(0, self.config.vocab_size, (B, self.config.block_size))
         emb = self.model.lookup_table(idx)
-        self.assertEqual(emb.shape, (B, self.config.block_size, self.config.n_embd))
+        self.assertEqual(
+            emb.shape,
+            (B, self.config.block_size, self.config.n_embd),
+            msg="Embeddings must have shape (batch_size, block_size, embedding dim.)!",
+        )
 
     def test_forward_without_targets(self):
         # Generate a batch of 5 sequences each of length `block_size`
