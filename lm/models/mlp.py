@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
+from lm.main import ModelConfig
+
 
 class MLP(nn.Module):
     """MLP which takes the previous `block_size` characters, embeds them with a lookup
@@ -9,7 +11,7 @@ class MLP(nn.Module):
     with an MLP.
     """
 
-    def __init__(self, config):
+    def __init__(self, config: ModelConfig):
         super().__init__()
         self.vocab_size = config.vocab_size
         self.block_size = config.block_size

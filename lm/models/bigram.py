@@ -2,13 +2,15 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
+from lm.main import ModelConfig
+
 
 class Bigram(nn.Module):
     """Bigram 'neural network' language model: simply a lookup table of logits for the
     next character given a previous character.
     """
 
-    def __init__(self, config):
+    def __init__(self, config: ModelConfig):
         super().__init__()
         N = config.vocab_size
         self.logits = nn.Parameter(torch.zeros(N, N))
