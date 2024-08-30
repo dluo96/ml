@@ -25,13 +25,13 @@ class TestMLP(unittest.TestCase):
         self.assertEqual(self.model.block_size, self.config.block_size)
 
         # Run a few checks on the lookup table
+        self.assertIsInstance(self.model.lookup_table, nn.Embedding)
+        self.assertIsInstance(self.model.lookup_table.weight, nn.Parameter)
         self.assertEqual(
             self.model.lookup_table.weight.shape,
             (self.config.vocab_size, self.config.n_embd),
             msg="Lookup table must have shape (vocab size, embedding dimensionality)!",
         )
-        self.assertIsInstance(self.model.lookup_table, nn.Embedding)
-        self.assertIsInstance(self.model.lookup_table.weight, nn.Parameter)
         self.assertIn(
             self.model.lookup_table.weight,
             self.model.parameters(),
