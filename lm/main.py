@@ -1,5 +1,4 @@
 import pathlib
-from dataclasses import dataclass
 
 import torch
 from torch.utils.data import DataLoader
@@ -9,14 +8,6 @@ from lm.datasets.multi_char_dataset import MultiCharDataset
 from lm.models.bigram import Bigram
 from lm.models.mlp import MLP
 from lm.trainer import Trainer
-
-
-@dataclass
-class ModelConfig:
-    vocab_size: int | None = None
-    block_size: int | None = None
-    n_embd: int | None = None
-    n_embd2: int | None = None
 
 
 def main() -> None:
@@ -33,9 +24,15 @@ def main() -> None:
         config = ModelConfig(vocab_size=vocab_size)
         model = Bigram(config)
     elif choice == "mlp":
+        # import random
+        # random.seed(0)
+        # random.shuffle(words)
+        # n1 = int(0.8 * len(words))
+        # n2 = int(0.9 * len(words))
+        # train_words, val_words, test_words = words[:n1], words[n1:n2], words[n2:]
         dataset = MultiCharDataset(words, block_size=3)
         vocab_size = dataset.get_vocab_size()
-        train_loader = DataLoader(dataset, batch_size=2**10)
+        train_loader = DataLoader(dataset, batch_size=2**14)
         config = ModelConfig(vocab_size=vocab_size, block_size=3, n_embd=64, n_embd2=64)
         model = MLP(config)
     else:
@@ -47,7 +44,7 @@ def main() -> None:
 
     # Consolidate everything in the trainer
     trainer = Trainer(
-        num_epochs=10000,
+        num_epochs=20_000,
         train_loader=train_loader,
         model=model,
         optimizer=optimizer,
