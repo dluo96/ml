@@ -50,22 +50,28 @@ class TestMLP(unittest.TestCase):
         logits, loss = self.model(idx)
         self.assertEqual(
             logits.shape,
-            (5, self.config.block_size, self.config.vocab_size),
-            msg="Logits must have shape (batch_size, block_size, vocab_size)!",
+            (5, self.config.vocab_size),
+            msg="Logits must have shape (batch_size, vocab_size)!",
         )
         self.assertIsNone(loss, msg="Loss should be None if targets are not provided!")
 
     def test_forward_with_targets(self):
         # Generate a batch of 5 input sequences each of length `block_size` as well as
-        # a batch of 5 labels/targets
+        # a batch of 5 targets (labels)
         idx = torch.randint(0, self.config.vocab_size, (5, self.config.block_size))
         targets = torch.randint(0, self.config.vocab_size, (5,))
 
         # Forward pass
         logits, loss = self.model(idx, targets)
-        self.assertIsNotNone(loss)  # Loss should not be None if targets are provided
-        self.assertIsInstance(loss, torch.Tensor)
+        self.assertEqual(logits.shape, (5, self.config.vocab_size))
         self.assertEqual(loss.shape, ())
+        self.assertIsNotNone(
+            loss, msg="Loss should not be None if targets are provided!"
+        )
+        self.assertIsInstance(loss, torch.Tensor)
+        self.assertIsInstance(
+            loss.item(), float, msg="Loss tensor should only contain a single float!"
+        )
 
     def test_embedding_lookup_and_concatenation(self):
         # Test embedding lookup and concatenation logic
