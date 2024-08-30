@@ -7,8 +7,6 @@ from lm.models.mlp import MLP
 
 
 class MockConfig:
-    """Mock configuration class to initialize MLP."""
-
     def __init__(self, vocab_size, block_size, n_embd, n_embd2):
         self.vocab_size = vocab_size
         self.block_size = block_size
@@ -25,15 +23,23 @@ class TestMLP(unittest.TestCase):
     def test_init(self):
         self.assertEqual(self.model.vocab_size, self.config.vocab_size)
         self.assertEqual(self.model.block_size, self.config.block_size)
+
+        # Run a few checks on the lookup table
         self.assertEqual(
             self.model.lookup_table.weight.shape,
-            (self.config.vocab_size + 1, self.config.n_embd),
+            (self.config.vocab_size, self.config.n_embd),
+            msg="Lookup table must have shape (vocab size, embedding dimensionality)!",
         )
-        # Check that the lookup table is a module parameter
+        self.assertIsInstance(self.model.lookup_table, nn.Embedding)
+        self.assertIsInstance(self.model.lookup_table.weight, nn.Parameter)
         self.assertIn(
             self.model.lookup_table.weight,
             self.model.parameters(),
-            "nn.Embedding is automatically registered as a module parameter!",
+            msg="nn.Embedding should be automatically registered as a module parameter!",
+        )
+        self.assertTrue(
+            self.model.lookup_table.weight.requires_grad,
+            msg="Gradients of lookup table elements should be tracked!",
         )
 
     def test_forward_without_targets(self):
