@@ -42,15 +42,24 @@ class TestMLP(unittest.TestCase):
             msg="Gradients of lookup table elements should be tracked!",
         )
 
+    def test_lookup_table(self):
+        B = 5  # Batch size
+        idx = torch.randint(0, self.config.vocab_size, (B, self.config.block_size))
+        emb = self.model.lookup_table(idx)
+        self.assertEqual(emb.shape, (B, self.config.block_size, self.config.n_embd))
+
     def test_forward_without_targets(self):
         # Generate a batch of 5 sequences each of length `block_size`
-        idx = torch.randint(0, self.config.vocab_size, (5, self.config.block_size))
+        batch_size = 5
+        idx = torch.randint(
+            0, self.config.vocab_size, (batch_size, self.config.block_size)
+        )
 
         # Forward pass
         logits, loss = self.model(idx)
         self.assertEqual(
             logits.shape,
-            (5, self.config.vocab_size),
+            (batch_size, self.config.vocab_size),
             msg="Logits must have shape (batch_size, vocab_size)!",
         )
         self.assertIsNone(loss, msg="Loss should be None if targets are not provided!")
@@ -72,12 +81,6 @@ class TestMLP(unittest.TestCase):
         self.assertIsInstance(
             loss.item(), float, msg="Loss tensor should only contain a single float!"
         )
-
-    def test_lookup_table(self):
-        B = 5  # Batch size
-        idx = torch.randint(0, self.config.vocab_size, (B, self.config.block_size))
-        emb = self.model.lookup_table(idx)
-        self.assertEqual(emb.shape, (B, self.config.block_size, self.config.n_embd))
 
 
 if __name__ == "__main__":
