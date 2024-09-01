@@ -33,7 +33,8 @@ class RNN(nn.Module):
         # Create a batch of starting hidden states
         h_prev = self.start.expand((b, -1))
 
-        # Sequentially iterate over the inputs and update the RNN state each tick
+        # Sequentially iterate over the input characters and
+        # update the RNN state each tick
         hiddens = []
         for i in range(t):
             xt = emb[:, i, :]  # (b, n_embd)
@@ -43,7 +44,7 @@ class RNN(nn.Module):
 
         # Decode the outputs
         hidden = torch.stack(hiddens, 1)  # (b, t, n_embd2)
-        logits = self.lm_head(hidden)
+        logits = self.lm_head(hidden)  # (b, t, vocab_size)
 
         # Compute loss if targets are provided
         loss = None

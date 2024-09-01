@@ -75,7 +75,9 @@ class TestRNN(unittest.TestCase):
         self.assertEqual(
             logits.shape,
             (batch_size, self.config.block_size, self.config.vocab_size),
-            msg="Logits must have shape (batch_size, sequence length, vocab_size)!",
+            msg="The output logits must have shape (batch_size, block_size, vocab_size) "
+            "because the RNN generates predictions at each step of the input sequence, "
+            "effectively providing a prediction for every input position!",
         )
         self.assertIsNone(loss, msg="Loss should be None if targets are not provided!")
 
