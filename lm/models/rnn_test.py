@@ -64,7 +64,7 @@ class TestRNN(unittest.TestCase):
         )
 
     def test_forward_without_targets(self):
-        # Generate a batch of sequences
+        # Generate a batch of input sequences
         batch_size = 5
         idx = torch.randint(
             0, self.config.vocab_size, (batch_size, self.config.block_size)
@@ -75,19 +75,27 @@ class TestRNN(unittest.TestCase):
         self.assertEqual(
             logits.shape,
             (batch_size, self.config.block_size, self.config.vocab_size),
-            msg="The output logits must have shape (batch_size, block_size, vocab_size) "
+            msg="Output logits must have shape (batch_size, block_size, vocab_size) "
             "because the RNN generates predictions at each step of the input sequence, "
             "effectively providing a prediction for every input position!",
         )
         self.assertIsNone(loss, msg="Loss should be None if targets are not provided!")
 
     def test_forward_with_targets(self):
-        # Generate a batch of input sequences and targets
-        batch_size = 5
-        idx = torch.randint(
-            0, self.config.vocab_size, (batch_size, self.config.block_size)
-        )
-        targets = torch.randint(0, self.config.vocab_size, (batch_size,))
+        # Generate a batch of input sequences and targets.
+        # Since the RNN predicts the next character at each step of the input sequence,
+        # the targets should have the same shape as the input sequence idx to provide a
+        # target for each prediction at each time step.
+        # batch_size = 5
+        # idx = torch.randint(
+        #     0, self.config.vocab_size, (batch_size, self.config.block_size)
+        # )
+        batch_size = 1
+        idx = torch.tensor([[0, 5, 13]])  # ".", "e", "m"
+        targets = torch.tensor([[5, 13, 13]])  # "e", "m", "m"
+        # targets = torch.randint(
+        #     0, self.config.vocab_size, (batch_size, self.config.block_size)
+        # )
 
         # Forward pass with targets
         logits, loss = self.model(idx, targets)

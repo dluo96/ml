@@ -49,8 +49,12 @@ class RNN(nn.Module):
         # Compute loss if targets are provided
         loss = None
         if targets is not None:
-            # loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1), ignore_index=-1)
-            loss = F.cross_entropy(logits, targets)
+            loss = F.cross_entropy(
+                logits.view(-1, logits.size(-1)),  # (b, t, v) -> (b * t, v)
+                targets.view(-1),  # (b, t) -> (b * t,)
+                ignore_index=-1,  # Specifies a target value that is ignored and does
+                # not contribute to the input gradient
+            )
 
         return logits, loss
 
