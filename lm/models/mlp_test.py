@@ -24,9 +24,8 @@ class TestMLP(unittest.TestCase):
             (self.config.vocab_size, self.config.n_embd),
             msg="Lookup table must have shape (vocab size, embedding dimensionality)!",
         )
-        self.assertIn(
-            self.model.lookup_table.weight,
-            self.model.parameters(),
+        self.assertTrue(
+            "lookup_table.weight" in dict(self.model.named_parameters()),
             msg="nn.Embedding should be automatically registered as a module parameter!",
         )
         self.assertTrue(
