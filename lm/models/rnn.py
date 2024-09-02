@@ -11,7 +11,7 @@ class RNN(nn.Module):
     cell to predict the next character based on the hidden state at each step.
     """
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config: ModelConfig, cell_type: str):
         super().__init__()
         self.block_size = config.block_size
         self.vocab_size = config.vocab_size
@@ -21,7 +21,14 @@ class RNN(nn.Module):
 
         # Define model layers
         self.lookup_table = nn.Embedding(config.vocab_size, config.n_embd)
-        self.cell = RNNCell(config)
+
+        if cell_type == "rnn":
+            self.cell = RNNCell(config)
+        elif cell_type == "gru":
+            self.cell = GRUCell(config)
+        else:
+            raise ValueError(f"Cell type {cell_type} is not recognised!")
+
         self.lm_head = nn.Linear(config.n_embd2, self.vocab_size)
 
     def get_block_size(self) -> int:
@@ -77,4 +84,37 @@ class RNNCell(nn.Module):
     def forward(self, xt: T, h_prev: T) -> T:
         xh = torch.cat([xt, h_prev], dim=1)
         ht = F.tanh(self.xh_to_h(xh))
+        return ht
+
+
+class GRUCell(nn.Module):
+    """Compared to the RNN cell, the GRU cell uses a slightly more complicated
+    recurrence formula that makes the GRU more expressive and easier to optimize.
+    """
+
+    def __init__(self, config):
+        super().__init__()
+        # input, forget, output, gate
+        self.xh_to_z = nn.Linear(config.n_embd + config.n_embd2, config.n_embd2)
+        self.xh_to_r = nn.Linear(config.n_embd + config.n_embd2, config.n_embd2)
+        self.xh_to_hbar = nn.Linear(config.n_embd + config.n_embd2, config.n_embd2)
+
+    def forward(self, xt: T, hprev: T) -> T:
+        # Concatenate x_{t} and h_{t-1}
+        xh = torch.cat([xt, hprev], dim=1)
+
+        # Use the reset gate to wipe some channels of the hidden state to zero
+        r = F.sigmoid(self.xh_to_r(xh))
+        hprev_reset = r * hprev
+
+        # Calculate the candidate new hidden state, hbar
+        xhr = torch.cat([xt, hprev_reset], dim=1)
+        hbar = F.tanh(self.xh_to_hbar(xhr))
+
+        # Calculate the switch gate that determines if each channel should be updated at all
+        z = F.sigmoid(self.xh_to_z(xh))
+
+        # Blend the previous hidden state and the new candidate hidden state
+        ht = (1 - z) * hprev + z * hbar
+
         return ht

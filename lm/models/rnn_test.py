@@ -3,14 +3,17 @@ import unittest
 import torch
 import torch.nn as nn
 
-from lm.models.rnn import RNN, RNNCell
+from lm.models.rnn import RNN, GRUCell, RNNCell
 from lm.types import ModelConfig
 
 
 class TestRNN(unittest.TestCase):
     def setUp(self):
         self.config = ModelConfig(vocab_size=27, block_size=3, n_embd=4, n_embd2=8)
-        self.model = RNN(self.config)
+
+        # Overridden in subclasses
+        self.cell_type = "rnn"
+        self.model = RNN(self.config, cell_type=self.cell_type)
 
     def test_init(self):
         # Check that the model attributes are set correctly
@@ -42,14 +45,20 @@ class TestRNN(unittest.TestCase):
             msg="Start parameter must have shape (1, hidden state embedding size)!",
         )
 
-        # Check the RNNCell is properly initialized
-        self.assertIsInstance(self.model.cell, RNNCell)
-        self.assertIsInstance(
-            self.model.cell.xh_to_h,
-            nn.Linear,
-            msg="RNNCell should contain a linear layer to map the input x_{t} and the "
-            "previous hidden state h_{t-1} to the next hidden state h_{t}!",
-        )
+        # Check the RNN cell is properly initialized
+        if self.cell_type == "rnn":
+            self.assertIsInstance(self.model.cell, RNNCell)
+            self.assertIsInstance(
+                self.model.cell.xh_to_h,
+                nn.Linear,
+                msg="RNNCell should contain a linear layer to map the input x_{t} and "
+                "the previous hidden state h_{t-1} to the next hidden state h_{t}!",
+            )
+        elif self.cell_type == "gru":
+            self.assertIsInstance(self.model.cell, GRUCell)
+            self.assertIsInstance(self.model.cell.xh_to_z, nn.Linear)
+            self.assertIsInstance(self.model.cell.xh_to_r, nn.Linear)
+            self.assertIsInstance(self.model.cell.xh_to_hbar, nn.Linear)
 
     def test_lookup_table(self):
         batch_size = 5
@@ -111,6 +120,13 @@ class TestRNN(unittest.TestCase):
         self.assertIsInstance(
             loss.item(), float, msg="Loss tensor should only contain a single float!"
         )
+
+
+class TestGRU(TestRNN):
+    def setUp(self):
+        super().setUp()
+        self.cell_type = "gru"
+        self.model = RNN(self.config, cell_type=self.cell_type)
 
 
 if __name__ == "__main__":
