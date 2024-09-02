@@ -10,7 +10,7 @@ from lm.types import ModelConfig
 
 
 def main() -> None:
-    choice = "rnn"
+    choice = "gru"
 
     # Load data
     data_dir = pathlib.Path(__file__).parent
@@ -51,7 +51,19 @@ def main() -> None:
             n_embd=64,
             n_embd2=64,
         )
-        model = RNN(config)
+        model = RNN(config, cell_type="rnn")
+    elif choice == "gru":
+        dataset = SequenceDataset(words)
+        vocab_size = dataset.get_vocab_size()
+        block_size = dataset.get_output_length()
+        train_loader = DataLoader(dataset, batch_size=2**10)
+        config = ModelConfig(
+            vocab_size=vocab_size,
+            block_size=block_size,
+            n_embd=64,
+            n_embd2=64,
+        )
+        model = RNN(config, cell_type="gru")
     else:
         raise ValueError(f"Model type {choice} is not recognized!")
 
