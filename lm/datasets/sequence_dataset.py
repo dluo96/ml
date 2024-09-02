@@ -25,6 +25,13 @@ class SequenceDataset(Dataset):
         return word
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
+        """Retrieves the input and target tensors for a given index.
+
+        For example, for `max_word_length=10`, suppose we have the idx representing the
+        word "emma". Then, the input and target are:
+            - Input:  [0,  5, 13, 13, 1,  0,  0,  0,  0,  0,  0]
+            - Target: [5, 13, 13,  1, 0, -1, -1, -1, -1, -1, -1]
+        """
         word = self.words[idx]
         ix = self.encode(word)
 
@@ -32,8 +39,15 @@ class SequenceDataset(Dataset):
         x = torch.zeros(self.max_word_length + 1, dtype=torch.long)
         y = torch.zeros(self.max_word_length + 1, dtype=torch.long)
 
-        x[1 : 1 + len(ix)] = ix  # Shift by 1 to leave room for the start token "."
-        y[: len(ix)] = ix  # Copy encoded word to target tensor
-        y[len(ix) + 1 :] = -1  # Mask loss for inactive positions with -1
+        # Populate the input. The right shift of 1 leaves room for the start token "."
+        x[1 : 1 + len(ix)] = ix
+
+        # Populate the target. Copy the encoded word to target tensor
+        y[: len(ix)] = ix
+
+        # Mask the loss (calculated later using F.cross_entropy) for inactive positions
+        # with -1. This is done with the keyword argument `ignore_index=-1`, which
+        # specifies a target value that is ignored.
+        y[len(ix) + 1 :] = -1
 
         return x, y
