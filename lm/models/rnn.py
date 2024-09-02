@@ -6,6 +6,11 @@ from lm.types import ModelConfig, T
 
 
 class RNN(nn.Module):
+    """Recurrent neural network (RNN) which takes the previous `block_size` characters,
+    embeds them with a lookup table, and sequentially processes them through an RNN
+    cell to predict the next character based on the hidden state at each step.
+    """
+
     def __init__(self, config: ModelConfig):
         super().__init__()
         self.block_size = config.block_size
