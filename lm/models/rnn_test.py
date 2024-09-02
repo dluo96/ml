@@ -82,33 +82,35 @@ class TestRNN(unittest.TestCase):
         self.assertIsNone(loss, msg="Loss should be None if targets are not provided!")
 
     def test_forward_with_targets(self):
-        # Generate a batch of input sequences and targets.
+        # Craft an example output of `SequenceDataset.__getitem__()`
+        x = torch.tensor([0, 5, 13, 13, 1,  0,  0,  0,  0,  0,  0,  0])  # fmt: skip
+        y = torch.tensor([5, 13, 13, 1, 0, -1, -1, -1, -1, -1, -1, -1])
+
         # Since the RNN predicts the next character at each step of the input sequence,
-        # the targets should have the same shape as the input sequence idx to provide a
-        # target for each prediction at each time step.
-        # batch_size = 5
-        # idx = torch.randint(
-        #     0, self.config.vocab_size, (batch_size, self.config.block_size)
-        # )
-        batch_size = 1
-        idx = torch.tensor([[0, 5, 13]])  # ".", "e", "m"
-        targets = torch.tensor([[5, 13, 13]])  # "e", "m", "m"
-        # targets = torch.randint(
-        #     0, self.config.vocab_size, (batch_size, self.config.block_size)
-        # )
+        # the target should have the same shape as the input sequence `idx` to provide
+        # a target for each prediction at each time step.
+        # Reshape to be consistent with `block_size`
+        block_size = 3
+        x = x.view(-1, block_size)
+        y = y.view(-1, block_size)
+
+        # Infer batch size
+        batch_size = x.shape[0]
 
         # Forward pass with targets
-        logits, loss = self.model(idx, targets)
+        logits, loss = self.model(idx=x, targets=y)
         self.assertEqual(
             logits.shape,
             (batch_size, self.config.block_size, self.config.vocab_size),
-            msg="Logits must have shape (batch_size, sequence length, vocab_size)!",
+            msg="Logits must have shape (batch_size, block_size, vocab_size)!",
         )
-        # self.assertIsNotNone(loss, msg="Loss should not be None if targets are provided!")
-        # self.assertIsInstance(loss, torch.Tensor)
-        # self.assertIsInstance(
-        #     loss.item(), float, msg="Loss tensor should only contain a single float!"
-        # )
+        self.assertIsNotNone(
+            loss, msg="Loss should not be None if targets are provided!"
+        )
+        self.assertIsInstance(loss, torch.Tensor)
+        self.assertIsInstance(
+            loss.item(), float, msg="Loss tensor should only contain a single float!"
+        )
 
 
 if __name__ == "__main__":
