@@ -5,14 +5,16 @@ from torch.utils.data import DataLoader
 
 from lm.datasets.char_dataset import CharDataset
 from lm.datasets.multi_char_dataset import MultiCharDataset
+from lm.datasets.sequence_dataset import SequenceDataset
 from lm.model_config import ModelConfig
 from lm.models.bigram import Bigram
 from lm.models.mlp import MLP
+from lm.models.rnn import RNN
 from lm.trainer import Trainer
 
 
 def main() -> None:
-    choice = "mlp"
+    choice = "rnn"
 
     # Load data
     data_dir = pathlib.Path(__file__).parent
@@ -33,9 +35,22 @@ def main() -> None:
         # train_words, val_words, test_words = words[:n1], words[n1:n2], words[n2:]
         dataset = MultiCharDataset(words, block_size=3)
         vocab_size = dataset.get_vocab_size()
+        block_size = dataset.get_output_length()
         train_loader = DataLoader(dataset, batch_size=2**14)
         config = ModelConfig(vocab_size=vocab_size, block_size=3, n_embd=64, n_embd2=64)
         model = MLP(config)
+    elif choice == "rnn":
+        dataset = SequenceDataset(words)
+        vocab_size = dataset.get_vocab_size()
+        block_size = dataset.get_output_length()
+        train_loader = DataLoader(dataset, batch_size=2**10)
+        config = ModelConfig(
+            vocab_size=vocab_size,
+            block_size=block_size,
+            n_embd=64,
+            n_embd2=64,
+        )
+        model = RNN(config)
     else:
         raise ValueError(f"Model type {choice} is not recognized!")
 
