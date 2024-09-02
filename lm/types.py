@@ -1,5 +1,9 @@
 from dataclasses import dataclass
 
+import torch
+
+T = torch.Tensor
+
 
 @dataclass
 class ModelConfig:

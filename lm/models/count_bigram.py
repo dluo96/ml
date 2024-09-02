@@ -1,5 +1,7 @@
 import torch
 
+from lm.types import T
+
 
 class Bigram:
     """Bigram character-level language model where 'training' consists of counting
@@ -13,7 +15,7 @@ class Bigram:
         self.itoc = {i: c for i, c in enumerate(unique_chars)}
         self.n_unique_chars = len(unique_chars)
 
-    def create_bigram_tensor(self, words: list[str]) -> torch.Tensor:
+    def create_bigram_tensor(self, words: list[str]) -> T:
         # Use a single token "." in favour of "<S>" and "<E>"
         bigram_tensor = torch.zeros(
             (self.n_unique_chars, self.n_unique_chars),

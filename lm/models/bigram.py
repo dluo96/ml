@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-from lm.model_config import ModelConfig
+from lm.types import ModelConfig, T
 
 
 class Bigram(nn.Module):
@@ -18,9 +18,7 @@ class Bigram(nn.Module):
     def get_block_size(self) -> int:
         return 1  # Bigram model only uses one previous character to predict the next
 
-    def forward(
-        self, idx: torch.Tensor, targets: torch.Tensor | None = None
-    ) -> tuple[torch.Tensor, torch.Tensor | None]:
+    def forward(self, idx: T, targets: T | None = None) -> tuple[T, T | None]:
         logits = self.logits[idx]  # Forward pass
         """
         Equivalently, the forward pass can be expressed as a matrix multiplication:

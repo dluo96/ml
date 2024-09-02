@@ -4,9 +4,9 @@ import torch
 from torch.utils.data import DataLoader
 
 from lm.datasets import CharDataset, MultiCharDataset, SequenceDataset
-from lm.model_config import ModelConfig
 from lm.models import MLP, RNN, Bigram
 from lm.trainer import Trainer
+from lm.types import ModelConfig
 
 
 def main() -> None:
