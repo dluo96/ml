@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 
 from lm.datasets.char_dataset import CharDataset
 from lm.datasets.multi_char_dataset import MultiCharDataset
+from lm.model_config import ModelConfig
 from lm.models.bigram import Bigram
 from lm.models.mlp import MLP
 from lm.trainer import Trainer
