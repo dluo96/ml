@@ -37,11 +37,9 @@ class TestSequenceDataset(unittest.TestCase):
         )
 
         # Check max word length
-        self.assertEqual(
-            self.dataset.max_word_length,
-            len("jacqueline"),  # Longest word in toy dataset
-            msg="Max word length should be 10",
-        )
+        expected_max_word_length = len("jacqueline")  # Longest word in toy dataset
+        self.assertEqual(self.dataset.max_word_length, expected_max_word_length)
+        self.assertEqual(self.dataset.get_output_length(), expected_max_word_length)
 
         # Check size of dataset
         self.assertEqual(len(self.dataset), len(self.words))
@@ -52,6 +50,12 @@ class TestSequenceDataset(unittest.TestCase):
         encoded_expected = torch.tensor([5, 13, 13, 1])
         self.assertTrue(torch.equal(encoded, encoded_expected))
 
+    def test_decode(self):
+        idx = torch.tensor([0, 3, 10, 6])
+        decoded = self.dataset.decode(idx)
+        expected_decoded = ".cjf"
+        self.assertEqual(decoded, expected_decoded)
+
     def test_encode_decode(self):
         word = "emma"
         self.assertEqual(
@@ -61,19 +65,24 @@ class TestSequenceDataset(unittest.TestCase):
         )
 
     def test_getitem(self):
+        # Run a few checks for "emma" (first word in the dataset)
         x, y = self.dataset[0]
-
-        # Verify the first word is "emma"
         self.assertEqual(self.dataset.decode(x), ".emma......")
-
-        # Check that the input/target tensors have the correct shape
         max_word_length = len("jacqueline")  # Longest word in the toy dataset
         self.assertEqual(x.shape, (max_word_length + 1,))
-        self.assertEqual(x.shape, (max_word_length + 1,))
-
-        # Check that the input/target tensors are correct for "emma"
+        self.assertEqual(y.shape, (max_word_length + 1,))
         expected_x = torch.tensor([0, 5, 13, 13, 1,  0,  0,  0,  0,  0,  0])  # fmt: skip
         expected_y = torch.tensor([5, 13, 13, 1, 0, -1, -1, -1, -1, -1, -1])
+        self.assertTrue(torch.equal(x, expected_x))
+        self.assertTrue(torch.equal(y, expected_y))
+
+        # Run a few checks for "isabella" (second word in the dataset)
+        x, y = self.dataset[1]
+        self.assertEqual(self.dataset.decode(x), ".isabella..")
+        self.assertEqual(x.shape, (max_word_length + 1,))
+        self.assertEqual(y.shape, (max_word_length + 1,))
+        expected_x = torch.tensor([0,  9, 19, 1, 2,  5, 12, 12, 1,  0,  0])  # fmt: skip
+        expected_y = torch.tensor([9, 19,  1, 2, 5, 12, 12,  1, 0, -1, -1])  # fmt: skip
         self.assertTrue(torch.equal(x, expected_x))
         self.assertTrue(torch.equal(y, expected_y))
 
