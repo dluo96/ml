@@ -16,7 +16,8 @@ class RNN(nn.Module):
         self.block_size = config.block_size
         self.vocab_size = config.vocab_size
 
-        # Initialise the beginning hidden state (1 means it is for a single sequence)
+        # Initialise the beginning hidden state h_{0}
+        # The 1 means it is for a single sequence
         self.start = nn.Parameter(torch.zeros(1, config.n_embd2))
 
         # Define model layers

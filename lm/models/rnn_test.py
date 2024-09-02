@@ -123,6 +123,16 @@ class TestRNN(unittest.TestCase):
             loss.item(), float, msg="Loss tensor should only contain a single float!"
         )
 
+        # Check that F.cross_entropy() with `ignore_index=-1` correctly ignores index
+        # values of -1 by comparing the loss
+        x_trunc = torch.tensor([0,  5, 13, 13, 1,  0])  # fmt: skip
+        y_trunc = torch.tensor([5, 13, 13,  1, 0, -1])  # fmt: skip
+        block_size = 3
+        x_trunc = x_trunc.view(-1, block_size)
+        y_trunc = y_trunc.view(-1, block_size)
+        _, loss_trunc = self.model(idx=x, targets=y)
+        self.assertTrue(torch.equal(loss, loss_trunc))
+
 
 class TestGRU(TestRNN):
     def setUp(self):
