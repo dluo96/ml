@@ -3,13 +3,9 @@ import pathlib
 import torch
 from torch.utils.data import DataLoader
 
-from lm.datasets.char_dataset import CharDataset
-from lm.datasets.multi_char_dataset import MultiCharDataset
-from lm.datasets.sequence_dataset import SequenceDataset
+from lm.datasets import CharDataset, MultiCharDataset, SequenceDataset
 from lm.model_config import ModelConfig
-from lm.models.bigram import Bigram
-from lm.models.mlp import MLP
-from lm.models.rnn import RNN
+from lm.models import MLP, RNN, Bigram
 from lm.trainer import Trainer
 
 
