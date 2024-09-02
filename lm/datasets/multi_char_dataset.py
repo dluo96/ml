@@ -53,5 +53,8 @@ class MultiCharDataset(Dataset):
     def get_vocab_size(self) -> int:
         return len(self.unique_chars)
 
+    def get_output_length(self) -> int:
+        return self.block_size
+
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         return self.X[idx], self.Y[idx]

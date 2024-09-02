@@ -49,6 +49,9 @@ class CharDataset(Dataset):
     def get_vocab_size(self) -> int:
         return len(self.unique_chars)
 
+    def get_output_length(self) -> int:
+        return 1
+
     def encode(self, word: str) -> torch.Tensor:
         ix = torch.tensor([self.ctoi[ch] for ch in word])
         return ix

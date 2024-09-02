@@ -37,7 +37,12 @@ def main() -> None:
         vocab_size = dataset.get_vocab_size()
         block_size = dataset.get_output_length()
         train_loader = DataLoader(dataset, batch_size=2**14)
-        config = ModelConfig(vocab_size=vocab_size, block_size=3, n_embd=64, n_embd2=64)
+        config = ModelConfig(
+            vocab_size=vocab_size,
+            block_size=block_size,
+            n_embd=64,
+            n_embd2=64,
+        )
         model = MLP(config)
     elif choice == "rnn":
         dataset = SequenceDataset(words)
