@@ -59,6 +59,8 @@ class TestRNN(unittest.TestCase):
             self.assertIsInstance(self.model.cell.xh_to_z, nn.Linear)
             self.assertIsInstance(self.model.cell.xh_to_r, nn.Linear)
             self.assertIsInstance(self.model.cell.xh_to_hbar, nn.Linear)
+        else:
+            raise ValueError(f"Cell type {self.cell_type} is not recognised!")
 
     def test_lookup_table(self):
         batch_size = 5
