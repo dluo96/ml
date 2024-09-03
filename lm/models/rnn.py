@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from lm.types import ModelConfig, T
+from lm.types import ModelConfig, Tensor
 
 
 class RNN(nn.Module):
@@ -35,34 +35,37 @@ class RNN(nn.Module):
     def get_block_size(self) -> int:
         return self.block_size
 
-    def forward(self, idx: T, targets: T | None = None) -> tuple[T, T | None]:
-        b, t = idx.size()
+    def forward(
+        self, idx: Tensor, targets: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
+        # Batch size (B) and sequence length (T)
+        B, T = idx.size()
 
         # Find the embedding for each index
-        emb = self.lookup_table(idx)  # (b, t, n_embd)
+        emb = self.lookup_table(idx)  # (B, T, n_embd)
 
         # Create a batch of starting hidden states
-        h_prev = self.start.expand((b, -1))
+        h_prev = self.start.expand((B, -1))
 
         # Sequentially iterate over the input characters and
         # update the RNN state each tick
         hiddens = []
-        for i in range(t):
-            xt = emb[:, i, :]  # (b, n_embd)
-            ht = self.cell(xt, h_prev)  # (b, n_embd2)
+        for i in range(T):
+            xt = emb[:, i, :]  # (B, n_embd)
+            ht = self.cell(xt, h_prev)  # (B, n_embd2)
             h_prev = ht
             hiddens.append(ht)
 
         # Decode the outputs
-        hidden = torch.stack(hiddens, 1)  # (b, t, n_embd2)
-        logits = self.lm_head(hidden)  # (b, t, vocab_size)
+        hidden = torch.stack(hiddens, 1)  # (B, T, n_embd2)
+        logits = self.lm_head(hidden)  # (B, T, V)
 
         # Compute loss if targets are provided
         loss = None
         if targets is not None:
             loss = F.cross_entropy(
-                logits.view(-1, logits.size(-1)),  # (b, t, v) -> (b * t, v)
-                targets.view(-1),  # (b, t) -> (b * t,)
+                logits.view(-1, logits.size(-1)),  # (B, T, V) -> (B * T, V)
+                targets.view(-1),  # (B, T) -> (B * T,)
                 ignore_index=-1,  # Specifies a target value that is ignored and does
                 # not contribute to the input gradient
             )
@@ -82,7 +85,7 @@ class RNNCell(nn.Module):
         # output is h_{t}
         self.xh_to_h = nn.Linear(config.n_embd + config.n_embd2, config.n_embd2)
 
-    def forward(self, xt: T, h_prev: T) -> T:
+    def forward(self, xt: Tensor, h_prev: Tensor) -> Tensor:
         xh = torch.cat([xt, h_prev], dim=1)
         ht = F.tanh(self.xh_to_h(xh))
         return ht
@@ -100,7 +103,7 @@ class GRUCell(nn.Module):
         self.xh_to_r = nn.Linear(config.n_embd + config.n_embd2, config.n_embd2)
         self.xh_to_hbar = nn.Linear(config.n_embd + config.n_embd2, config.n_embd2)
 
-    def forward(self, xt: T, hprev: T) -> T:
+    def forward(self, xt: Tensor, hprev: Tensor) -> Tensor:
         # Concatenate x_{t} and h_{t-1}
         xh = torch.cat([xt, hprev], dim=1)
 

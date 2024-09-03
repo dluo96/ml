@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import torch
 
-T = torch.Tensor
+Tensor = torch.Tensor
 
 
 @dataclass

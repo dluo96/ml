@@ -1,7 +1,7 @@
 import torch.nn as nn
 from torch.nn import functional as F
 
-from lm.types import ModelConfig, T
+from lm.types import ModelConfig, Tensor
 
 
 class MLP(nn.Module):
@@ -26,7 +26,9 @@ class MLP(nn.Module):
     def get_block_size(self) -> int:
         return self.block_size
 
-    def forward(self, idx: T, targets: T | None = None) -> tuple[T, T | None]:
+    def forward(
+        self, idx: Tensor, targets: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
         # Get embeddings for the previous `block_size` tokens
         embs = self.lookup_table(idx)
 
