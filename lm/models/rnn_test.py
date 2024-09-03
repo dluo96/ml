@@ -94,8 +94,8 @@ class TestRNN(unittest.TestCase):
 
     def test_forward_with_targets(self):
         # Craft an example output of `SequenceDataset.__getitem__()`
-        x = torch.tensor([0, 5, 13, 13, 1,  0,  0,  0,  0,  0,  0,  0])  # fmt: skip
-        y = torch.tensor([5, 13, 13, 1, 0, -1, -1, -1, -1, -1, -1, -1])
+        x = torch.tensor([0,  5, 13, 13, 1,  0,  0,  0,  0,  0,  0,  0])  # fmt: skip
+        y = torch.tensor([5, 13, 13,  1, 0, -1, -1, -1, -1, -1, -1, -1])  # fmt: skip
 
         # Since the RNN predicts the next character at each step of the input sequence,
         # the target should have the same shape as the input sequence `idx` to provide
