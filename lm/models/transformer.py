@@ -116,8 +116,8 @@ class Transformer(nn.Module):
         # Define model layers
         self.transformer = nn.ModuleDict(
             dict(
-                wte=nn.Embedding(config.vocab_size, config.n_embd),
-                wpe=nn.Embedding(config.block_size, config.n_embd),
+                lookup_tok_emb=nn.Embedding(config.vocab_size, config.n_embd),
+                lookup_pos_emb=nn.Embedding(config.block_size, config.n_embd),
                 h=nn.ModuleList([Block(config) for _ in range(config.n_layer)]),
                 ln_f=nn.LayerNorm(config.n_embd),
             )
@@ -142,8 +142,8 @@ class Transformer(nn.Module):
         pos = torch.arange(0, T, dtype=torch.long).unsqueeze(0)  # shape (1, T)
 
         # Forward the GPT model itself
-        tok_emb = self.transformer.wte(idx)  # (B, T, n_embd)
-        pos_emb = self.transformer.wpe(pos)  # (1, T, n_embd)
+        tok_emb = self.transformer.lookup_tok_emb(idx)  # (B, T, n_embd)
+        pos_emb = self.transformer.lookup_pos_emb(pos)  # (1, T, n_embd)
         x = tok_emb + pos_emb
         for block in self.transformer.h:
             x = block(x)
