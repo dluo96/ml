@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from lm.types import Tensor
+from lm.types import ModelConfig, Tensor
 
 
 class NewGELU(nn.Module):
@@ -22,12 +22,13 @@ class CausalSelfAttention(nn.Module):
     Alternatively, it is possible to use `torch.nn.MultiheadAttention`.
     """
 
-    def __init__(self, config):
+    def __init__(self, config: ModelConfig):
         super().__init__()
         # Embedding dimensionality must be divisible by number of heads
         assert config.n_embd % config.n_head == 0
 
-        # Key, query, and value projections for all heads, but in a batch
+        # Key, query, and value projections for all heads, but in a batch.
+        # The 3 is because of key, query, and value
         self.c_attn = nn.Linear(config.n_embd, 3 * config.n_embd)
 
         # Output projection
@@ -79,3 +80,27 @@ class CausalSelfAttention(nn.Module):
         y = self.c_proj(y)  # (B, T, C)
 
         return y
+
+
+class Block(nn.Module):
+    """A transformer block."""
+
+    def __init__(self, config: ModelConfig):
+        super().__init__()
+        self.ln_1 = nn.LayerNorm(config.n_embd)
+        self.attn = CausalSelfAttention(config)
+        self.ln_2 = nn.LayerNorm(config.n_embd)
+        self.mlp = nn.ModuleDict(
+            dict(
+                c_fc=nn.Linear(config.n_embd, 4 * config.n_embd),
+                c_proj=nn.Linear(4 * config.n_embd, config.n_embd),
+                act=NewGELU(),
+            )
+        )
+        m = self.mlp
+        self.mlpf = lambda x: m.c_proj(m.act(m.c_fc(x)))  # MLP forward
+
+    def forward(self, x: Tensor) -> Tensor:
+        x = x + self.attn(self.ln_1(x))
+        x = x + self.mlpf(self.ln_2(x))
+        return x

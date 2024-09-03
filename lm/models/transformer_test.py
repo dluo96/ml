@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from lm.models.transformer import CausalSelfAttention
+from lm.models.transformer import Block, CausalSelfAttention, NewGELU
 from lm.types import ModelConfig
 
 
@@ -77,6 +77,75 @@ class TestCausalSelfAttention(unittest.TestCase):
                     torch.equal(att, torch.tril(att)),
                     msg="Attention matrix must be lower triangular!",
                 )
+
+
+class TestBlock(unittest.TestCase):
+    def setUp(self):
+        self.config = ModelConfig(n_embd=64, n_head=4, block_size=10)
+        self.model = Block(self.config)
+
+    def test_init(self):
+        # Check the LayerNorm layers
+        self.assertIsInstance(self.model.ln_1, nn.LayerNorm)
+        self.assertIsInstance(self.model.ln_2, nn.LayerNorm)
+        self.assertEqual(self.model.ln_1.normalized_shape, (self.config.n_embd,))
+        self.assertEqual(self.model.ln_2.normalized_shape, (self.config.n_embd,))
+
+        # Check the CausalSelfAttention layer
+        self.assertIsInstance(self.model.attn, CausalSelfAttention)
+
+        # Check the MLP structure
+        self.assertIsInstance(self.model.mlp, nn.ModuleDict)
+        self.assertIn("c_fc", self.model.mlp)
+        self.assertIn("c_proj", self.model.mlp)
+        self.assertIn("act", self.model.mlp)
+        self.assertIsInstance(self.model.mlp["c_fc"], nn.Linear)
+        self.assertIsInstance(self.model.mlp["c_proj"], nn.Linear)
+        self.assertIsInstance(self.model.mlp["act"], NewGELU)
+        self.assertEqual(
+            self.model.mlp["c_fc"].weight.shape,
+            (4 * self.config.n_embd, self.config.n_embd),
+        )
+        self.assertEqual(
+            self.model.mlp["c_proj"].weight.shape,
+            (self.config.n_embd, 4 * self.config.n_embd),
+        )
+
+    def test_forward(self):
+        # Create random input tensor
+        batch_size = 2
+        seq_length = self.config.block_size
+        x = torch.randn(batch_size, seq_length, self.config.n_embd)
+
+        # Forward pass
+        y = self.model(x)
+
+        # Check output shape
+        self.assertEqual(
+            y.shape,
+            (batch_size, seq_length, self.config.n_embd),
+            msg="Output must have shape (batch_size, seq_length, embedding dim.)!",
+        )
+
+    def test_residual_connections(self):
+        # Create random input tensor
+        batch_size = 2
+        seq_length = self.config.block_size
+        x = torch.randn(batch_size, seq_length, self.config.n_embd)
+
+        # Perform forward pass
+        y = self.model(x)
+
+        # Check that residual connections are preserved
+        with torch.no_grad():
+            attn_output = self.model.attn(self.model.ln_1(x))
+            mlp_output = self.model.mlpf(self.model.ln_2(x + attn_output))
+            expected_output = x + attn_output + mlp_output
+
+        self.assertTrue(
+            torch.equal(y, expected_output),
+            msg="Residual connections are not preserved properly!",
+        )
 
 
 if __name__ == "__main__":
