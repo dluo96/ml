@@ -208,8 +208,9 @@ class TestTransformer(unittest.TestCase):
         self.assertEqual(
             x.shape,
             (batch_size, seq_length, self.config.n_embd),
-            msg="Sum of token embeddings and positional embeddings must have shape"
-            "(B, T, n_embd)",
+            msg="Sum of token embeddings and positional embeddings must have shape "
+            "(B, T, n_embd) because the positional embeddings are broadcasted across "
+            "the batches!",
         )
 
     def test_forward_without_targets(self):
