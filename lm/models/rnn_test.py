@@ -130,7 +130,7 @@ class TestRNN(unittest.TestCase):
         block_size = 3
         x_trunc = x_trunc.view(-1, block_size)
         y_trunc = y_trunc.view(-1, block_size)
-        _, loss_trunc = self.model(idx=x, targets=y)
+        _, loss_trunc = self.model(idx=x_trunc, targets=y_trunc)
         self.assertTrue(torch.equal(loss, loss_trunc))
 
 
