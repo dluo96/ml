@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from lm.models.transformer import Block, CausalSelfAttention, NewGELU
+from lm.models.transformer import Block, CausalSelfAttention, NewGELU, Transformer
 from lm.types import ModelConfig
 
 
@@ -124,7 +124,7 @@ class TestBlock(unittest.TestCase):
         self.assertEqual(
             y.shape,
             (batch_size, seq_length, self.config.n_embd),
-            msg="Output must have shape (batch_size, seq_length, embedding dim.)!",
+            msg="Output must have shape (batch_size, seq_length, embedding dim.)",
         )
 
     def test_residual_connections(self):
@@ -146,6 +146,133 @@ class TestBlock(unittest.TestCase):
             torch.equal(y, expected_output),
             msg="Residual connections are not preserved properly!",
         )
+
+
+class TestTransformer(unittest.TestCase):
+    def setUp(self):
+        self.config = ModelConfig(
+            vocab_size=27,
+            block_size=6,
+            n_embd=64,
+            n_layer=7,
+            n_head=4,
+        )
+        self.model = Transformer(self.config)
+
+    def test_init(self):
+        # Check if the model's block size matches the config
+        self.assertEqual(self.model.block_size, self.config.block_size)
+
+        # Ensure all layers are properly initialized
+        self.assertIsInstance(self.model.transformer, nn.ModuleDict)
+        self.assertIsInstance(self.model.transformer["lookup_tok_emb"], nn.Embedding)
+        self.assertIsInstance(self.model.transformer["lookup_pos_emb"], nn.Embedding)
+        self.assertIsInstance(self.model.transformer["ln_f"], nn.LayerNorm)
+        self.assertIsInstance(self.model.transformer["h"], nn.ModuleList)
+        self.assertEqual(
+            len(self.model.transformer["h"]),
+            self.config.n_layer,
+            msg=f"Transformer should have {self.config.n_layer} transformer blocks!",
+        )
+
+        # Check that lm_head is correctly initialized
+        self.assertIsInstance(self.model.lm_head, nn.Linear)
+        self.assertEqual(
+            self.model.lm_head.weight.shape,
+            (self.config.vocab_size, self.config.n_embd),
+            msg="lm_head must have shape (vocab_size, n_embd)",
+        )
+
+    def test_lookup_embedding_layers(self):
+        batch_size = 3
+        seq_length = 5
+        idx = torch.randint(0, self.config.vocab_size, (batch_size, seq_length))
+        pos = torch.arange(0, seq_length).unsqueeze(0)
+
+        tok_emb = self.model.transformer["lookup_tok_emb"](idx)
+        pos_emb = self.model.transformer["lookup_pos_emb"](pos)
+
+        self.assertEqual(
+            tok_emb.shape,
+            (batch_size, seq_length, self.config.n_embd),
+            msg="Token embedding must have shape (B, T, n_embd)",
+        )
+        self.assertEqual(
+            pos_emb.shape,
+            (1, seq_length, self.config.n_embd),
+            msg="Position embedding must have shape (1, T, n_embd)",
+        )
+
+        # Verify that broadcasting is done correctly
+        x = tok_emb + pos_emb
+        self.assertEqual(
+            x.shape,
+            (batch_size, seq_length, self.config.n_embd),
+            msg="Sum of token embeddings and positional embeddings must have shape"
+            "(B, T, n_embd)",
+        )
+
+    def test_forward_without_targets(self):
+        # Generate a batch of input sequences
+        batch_size, seq_length = 3, 5
+        idx = torch.randint(0, self.config.vocab_size, (batch_size, seq_length))
+
+        # Forward pass without targets
+        logits, loss = self.model(idx)
+        self.assertEqual(
+            logits.shape,
+            (batch_size, seq_length, self.config.vocab_size),
+            msg="Output logits must have shape (B, T, vocab_size)",
+        )
+        self.assertIsNone(loss, msg="Loss should be None if targets are not provided!")
+
+    def test_forward_with_targets(self):
+        """Since the Transformer predicts the next character at each position of the
+        input sequence, the target should have the same shape as the input sequence
+        `idx` to provide a target for the prediction at each position.
+        """
+        # Craft an example output of `SequenceDataset.__getitem__()`
+        x = torch.tensor([0,  5, 13, 13, 1,  0,  0,  0,  0,  0,  0,  0])  # fmt: skip
+        y = torch.tensor([5, 13, 13,  1, 0, -1, -1, -1, -1, -1, -1, -1])  # fmt: skip
+
+        x = x.view(-1, self.config.block_size)
+        y = y.view(-1, self.config.block_size)
+
+        # Infer batch size and sequence length
+        B, T = x.shape
+
+        # Forward pass with targets
+        logits, loss = self.model(idx=x, targets=y)
+        self.assertEqual(
+            logits.shape,
+            (B, T, self.config.vocab_size),
+            msg="Logits must have shape (B, T, vocab_size)",
+        )
+        self.assertIsNotNone(
+            loss, msg="Loss should not be None if targets are provided!"
+        )
+        self.assertIsInstance(loss, torch.Tensor)
+        self.assertIsInstance(
+            loss.item(), float, msg="Loss tensor should contain a single float!"
+        )
+
+        # Check that F.cross_entropy() with `ignore_index=-1` correctly ignores index
+        # values of -1 by comparing the loss
+        x_trunc = torch.tensor([0,  5, 13, 13, 1,  0])  # fmt: skip
+        y_trunc = torch.tensor([5, 13, 13,  1, 0, -1])  # fmt: skip
+        x_trunc = x_trunc.view(-1, self.config.block_size)
+        y_trunc = y_trunc.view(-1, self.config.block_size)
+        _, loss_trunc = self.model(idx=x_trunc, targets=y_trunc)
+        self.assertTrue(torch.equal(loss, loss_trunc))
+
+    def test_sequence_too_long(self):
+        # Check that an assertion is raised for sequence length > block size
+        batch_size = 1
+        idx = torch.randint(
+            0, self.config.vocab_size, (batch_size, self.config.block_size + 10)
+        )
+        with self.assertRaises(AssertionError):
+            self.model(idx)
 
 
 if __name__ == "__main__":
