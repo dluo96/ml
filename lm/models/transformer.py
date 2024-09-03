@@ -46,7 +46,7 @@ class CausalSelfAttention(nn.Module):
         self.n_head = config.n_head
         self.n_embd = config.n_embd
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         B, T, C = x.size()  # Batch size, sequence length, embedding dim. (n_embd)
 
         # Calculate query, key, values for all heads in batch
@@ -104,3 +104,59 @@ class Block(nn.Module):
         x = x + self.attn(self.ln_1(x))
         x = x + self.mlpf(self.ln_2(x))
         return x
+
+
+class Transformer(nn.Module):
+    """Transformer language model, exactly as seen in GPT-2."""
+
+    def __init__(self, config: ModelConfig):
+        super().__init__()
+        self.block_size = config.block_size
+
+        # Define model layers
+        self.transformer = nn.ModuleDict(
+            dict(
+                wte=nn.Embedding(config.vocab_size, config.n_embd),
+                wpe=nn.Embedding(config.block_size, config.n_embd),
+                h=nn.ModuleList([Block(config) for _ in range(config.n_layer)]),
+                ln_f=nn.LayerNorm(config.n_embd),
+            )
+        )
+        self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
+
+        # Report number of parameters, excluding the decoder parameters in `lm_head`
+        n_params = sum(p.numel() for p in self.transformer.parameters())
+        print(f"Number of parameters: {(n_params / 1e6,):.2fM}")
+
+    def get_block_size(self) -> int:
+        return self.block_size
+
+    def forward(
+        self, idx: Tensor, targets: Tensor | None = None
+    ) -> tuple[Tensor, Tensor | None]:
+        B, T = idx.size()
+
+        err_msg = f"Cannot forward sequence of length {T} because {self.block_size=}."
+        assert T <= self.block_size, err_msg
+
+        pos = torch.arange(0, T, dtype=torch.long).unsqueeze(0)  # shape (1, T)
+
+        # Forward the GPT model itself
+        tok_emb = self.transformer.wte(idx)  # (B, T, n_embd)
+        pos_emb = self.transformer.wpe(pos)  # (1, T, n_embd)
+        x = tok_emb + pos_emb
+        for block in self.transformer.h:
+            x = block(x)
+        x = self.transformer.ln_f(x)
+        logits = self.lm_head(x)
+
+        # Compute loss if targets are provided
+        loss = None
+        if targets is not None:
+            loss = F.cross_entropy(
+                logits.view(-1, logits.size(-1)),  # (B, T, V) -> (B * T, V)
+                targets.view(-1),  # (B, T) -> (B * T,)
+                ignore_index=-1,  # Specifies a target value that is ignored
+            )
+
+        return logits, loss
