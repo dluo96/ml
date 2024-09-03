@@ -238,6 +238,7 @@ class TestTransformer(unittest.TestCase):
         x = torch.tensor([0,  5, 13, 13, 1,  0,  0,  0,  0,  0,  0,  0])  # fmt: skip
         y = torch.tensor([5, 13, 13,  1, 0, -1, -1, -1, -1, -1, -1, -1])  # fmt: skip
 
+        # Reshape to (B, T)
         x = x.view(-1, self.config.block_size)
         y = y.view(-1, self.config.block_size)
 
