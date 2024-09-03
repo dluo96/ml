@@ -243,6 +243,7 @@ class TestTransformer(unittest.TestCase):
 
         # Forward pass with targets
         logits, loss = self.model(idx=x, targets=y)
+
         self.assertEqual(
             logits.shape,
             (B, T, self.config.vocab_size),

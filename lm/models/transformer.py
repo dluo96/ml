@@ -113,7 +113,8 @@ class Transformer(nn.Module):
         super().__init__()
         self.block_size = config.block_size
 
-        # Define model layers
+        # Define model layers. Importantly, the token embeddings and positional
+        # embeddings are learnable parameters!
         self.transformer = nn.ModuleDict(
             dict(
                 lookup_tok_emb=nn.Embedding(config.vocab_size, config.n_embd),
