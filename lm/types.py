@@ -11,3 +11,4 @@ class ModelConfig:
     block_size: int | None = None
     n_embd: int | None = None
     n_embd2: int | None = None
+    n_head: int | None = None

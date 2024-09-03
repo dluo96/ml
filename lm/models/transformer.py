@@ -48,26 +48,34 @@ class CausalSelfAttention(nn.Module):
     def forward(self, x):
         B, T, C = x.size()  # Batch size, sequence length, embedding dim. (n_embd)
 
+        # Calculate query, key, values for all heads in batch
+        qkv = self.c_attn(x)  # (B, T, 3*C)
+        q, k, v = qkv.split(self.n_embd, dim=2)  # Each has shape (B, T, C)
+
+        # Multi-head attention computes multiple attention heads in parallel, allowing
+        # each head to focus on different aspects of the input data relationships
         # fmt: off
-        # Calculate query, key, values for all heads in batch and move head forward to
-        # be the batch dim
-        q, k, v  = self.c_attn(x).split(self.n_embd, dim=2)
         k = k.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)  # (B, nh, T, hs)
         q = q.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)  # (B, nh, T, hs)
         v = v.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)  # (B, nh, T, hs)
         # fmt: on
 
-        # Causal self-attention; Self-attend: (B, nh, T, hs) x (B, nh, hs, T) -> (B, nh, T, T)
+        # Causal self-attention: (B, nh, T, hs) x (B, nh, hs, T) -> (B, nh, T, T)
         att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
 
+        # Apply causal mask to prevent attending to future positions by setting those
+        # positions to -inf, ensuring they become zero after applying softmax
         att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float("-inf"))
         att = F.softmax(att, dim=-1)
+
         y = att @ v  # (B, nh, T, T) x (B, nh, T, hs) -> (B, nh, T, hs)
 
-        # Re-assemble all head outputs side by side
-        y = y.transpose(1, 2).contiguous().view(B, T, C)
+        # Combine the output from all attention heads by transposing and reshaping
+        # back to the original embedding dimension:
+        # (B, nh, T, hs) -> (B, T, nh, hs) -> (B, T, C)
+        y = y.transpose(1, 2).contiguous().view(B, T, C)  # (B, T, C)
 
         # Output projection
-        y = self.c_proj(y)
+        y = self.c_proj(y)  # (B, T, C)
 
         return y
