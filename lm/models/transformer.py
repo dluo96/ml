@@ -107,7 +107,14 @@ class Block(nn.Module):
 
 
 class Transformer(nn.Module):
-    """Transformer language model, exactly as seen in GPT-2."""
+    """Transformer language model, exactly as seen in GPT-2.
+
+    Represents a decoder-only architecture used for autoregressive tasks, such as text
+    generation (like GPT-2). There is no separate encoder, as this model is not
+    designed for tasks that require encoding a source sequence and decoding to a
+    target sequence (like machine translation). Instead, it is focused on generating
+    text based on previous context.
+    """
 
     def __init__(self, config: ModelConfig):
         super().__init__()
@@ -149,6 +156,11 @@ class Transformer(nn.Module):
         for block in self.transformer.h:
             x = block(x)
         x = self.transformer.ln_f(x)
+
+        # Project the hidden states of the transformer blocks back to the size of the
+        # vocabulary to predict the next token. The output of this layer is used to
+        # generate probabilities over the vocabulary for each token position in the
+        # sequence.
         logits = self.lm_head(x)
 
         # Compute loss if targets are provided
