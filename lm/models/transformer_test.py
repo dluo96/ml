@@ -301,8 +301,6 @@ class TestTransformer(unittest.TestCase):
             torch.equal(generated_seq[:, :T0], idx),
             msg="The first part of the generated sequence must be the same as the input!",
         )
-
-        # Check that the sequence only contains valid indices (0 to vocab_size - 1)
         self.assertTrue(
             torch.all(generated_seq >= 0)
             and torch.all(generated_seq < self.config.vocab_size),
