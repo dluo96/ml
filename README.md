@@ -1,4 +1,4 @@
-# Language Modelling
+# Character-level Language Models
 
 This repo contains code for training and sampling from character-level language models.
 

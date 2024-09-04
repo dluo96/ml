@@ -118,7 +118,7 @@ class Transformer(nn.Module):
 
     def __init__(self, config: ModelConfig):
         super().__init__()
-        self.block_size = config.block_size
+        self.block_size = config.block_size  # Maximum context length for predictions
 
         # Define model layers. Importantly, the token embeddings and positional
         # embeddings are learnable parameters!

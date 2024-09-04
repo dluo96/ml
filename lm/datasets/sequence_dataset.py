@@ -34,6 +34,13 @@ class SequenceDataset(Dataset):
         word "emma". Then, the input and target are:
             - Input:  [0,  5, 13, 13, 1,  0,  0,  0,  0,  0,  0]
             - Target: [5, 13, 13,  1, 0, -1, -1, -1, -1, -1, -1]
+
+        For the RNN/GRU/Transformer models, this means that:
+            - When the input is [0], the target is 5.
+            - When the input is [0, 5], the target is 13.
+            - When the input is [0, 5, 13], the target is 13.
+            - When the input is [0, 5, 13, 13], the target is 1.
+            - When the input is [0, 5, 13, 13, 1], the target is 0.
         """
         word = self.words[idx]
         ix = self.encode(word)
