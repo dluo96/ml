@@ -68,7 +68,7 @@ def main() -> None:
         dataset = SequenceDataset(words)
         vocab_size = dataset.get_vocab_size()
         block_size = dataset.get_output_length()
-        train_loader = DataLoader(dataset, batch_size=2**8)
+        train_loader = DataLoader(dataset, batch_size=2**10)
         config = ModelConfig(
             vocab_size=vocab_size,
             block_size=block_size,
