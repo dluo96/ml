@@ -1,5 +1,4 @@
 import argparse
-import pathlib
 
 import torch
 from torch.utils.data import DataLoader
