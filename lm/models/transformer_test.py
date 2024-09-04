@@ -291,14 +291,12 @@ class TestTransformer(unittest.TestCase):
         # Generate new tokens
         generated_seq = self.model.generate(idx, max_new_chars)
 
-        # Check if the output tensor has the correct shape
+        # Run a few checks on the generated sequence
         self.assertEqual(
             generated_seq.shape,
             (B, T0 + max_new_chars),
             msg=f"Generated sequence must have shape (B=1, T={T0 + max_new_chars}).",
         )
-
-        # Check that the first part of the generated sequence is the same as the input
         self.assertTrue(
             torch.equal(generated_seq[:, :T0], idx),
             msg="The first part of the generated sequence must be the same as the input!",
@@ -308,7 +306,8 @@ class TestTransformer(unittest.TestCase):
         self.assertTrue(
             torch.all(generated_seq >= 0)
             and torch.all(generated_seq < self.config.vocab_size),
-            msg="Generated sequence must only contain valid character indices!",
+            msg="Generated sequence must only contain valid character indices (ranging"
+            "from 0 to vocab_size-1)",
         )
 
         # Try another input tensor that is longer: ".em" with shape (B=1, T=3)
