@@ -39,69 +39,46 @@ def main() -> None:
 
     torch.manual_seed(args.seed)
 
-    # Load data
+    # Create dataset and dataloader
     words = open(args.input_file, "r").read().splitlines()
-
     if args.type == "bigram":
         dataset = CharDataset(words)
-        vocab_size = dataset.get_vocab_size()
-        train_loader = DataLoader(dataset, batch_size=args.batch_size)
-        config = ModelConfig(vocab_size=vocab_size)
+    elif args.type == "mlp":
+        dataset = MultiCharDataset(words, block_size=3)
+    elif args.type in ["rnn", "gru", "transformer"]:
+        dataset = SequenceDataset(words)
+    else:
+        raise ValueError(f"Model type {args.type} is not recognized!")
+
+    train_loader = DataLoader(
+        dataset,
+        batch_size=args.batch_size,
+        pin_memory=True,
+        num_workers=args.num_workers,
+    )
+
+    # Extract vocabulary size and block size
+    vocab_size = dataset.get_vocab_size()
+    block_size = dataset.get_output_length()  # Only used for RNN/GRU/Transformer
+
+    # Create model
+    config = ModelConfig(
+        vocab_size=vocab_size,
+        block_size=block_size,
+        n_embd=args.n_embd,
+        n_embd2=args.n_embd2,
+        n_layer=args.n_layer,
+        n_head=args.n_head,
+    )
+    if args.type == "bigram":
         model = Bigram(config)
     elif args.type == "mlp":
-        # import random
-        # random.seed(0)
-        # random.shuffle(words)
-        # n1 = int(0.8 * len(words))
-        # n2 = int(0.9 * len(words))
-        # train_words, val_words, test_words = words[:n1], words[n1:n2], words[n2:]
-        dataset = MultiCharDataset(words, block_size=3)
-        vocab_size = dataset.get_vocab_size()
-        block_size = dataset.get_output_length()
-        train_loader = DataLoader(dataset, batch_size=args.batch_size)
-        config = ModelConfig(
-            vocab_size=vocab_size,
-            block_size=block_size,
-            n_embd=64,
-            n_embd2=64,
-        )
         model = MLP(config)
     elif args.type == "rnn":
-        dataset = SequenceDataset(words)
-        vocab_size = dataset.get_vocab_size()
-        block_size = dataset.get_output_length()
-        train_loader = DataLoader(dataset, batch_size=args.batch_size)
-        config = ModelConfig(
-            vocab_size=vocab_size,
-            block_size=block_size,
-            n_embd=64,
-            n_embd2=64,
-        )
         model = RNN(config, cell_type="rnn")
     elif args.type == "gru":
-        dataset = SequenceDataset(words)
-        vocab_size = dataset.get_vocab_size()
-        block_size = dataset.get_output_length()
-        train_loader = DataLoader(dataset, batch_size=args.batch_size)
-        config = ModelConfig(
-            vocab_size=vocab_size,
-            block_size=block_size,
-            n_embd=64,
-            n_embd2=64,
-        )
         model = RNN(config, cell_type="gru")
     elif args.type == "transformer":
-        dataset = SequenceDataset(words)
-        vocab_size = dataset.get_vocab_size()
-        block_size = dataset.get_output_length()
-        train_loader = DataLoader(dataset, batch_size=args.batch_size)
-        config = ModelConfig(
-            vocab_size=vocab_size,
-            block_size=block_size,
-            n_embd=64,
-            n_layer=4,
-            n_head=4,
-        )
         model = Transformer(config)
     else:
         raise ValueError(f"Model type {args.type} is not recognized!")
