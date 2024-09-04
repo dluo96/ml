@@ -58,7 +58,7 @@ def main() -> None:
 
     # Extract vocabulary size and block size
     vocab_size = dataset.get_vocab_size()
-    block_size = dataset.get_output_length()  # Only used for RNN/GRU/Transformer
+    block_size = dataset.get_output_length()
 
     # Create model
     config = ModelConfig(
