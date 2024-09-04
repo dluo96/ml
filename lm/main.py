@@ -10,7 +10,7 @@ from lm.trainer import Trainer
 
 
 def main() -> None:
-    choice = "rnn"
+    choice = "transformer"
 
     # Load data
     data_dir = pathlib.Path(__file__).parent
