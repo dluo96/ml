@@ -173,3 +173,25 @@ class Transformer(nn.Module):
             )
 
         return logits, loss
+
+    @torch.no_grad()
+    def generate(self, idx: Tensor, max_new_chars: int) -> Tensor:
+        """Generate `max_new_chars` tokens after the given sequence."""
+        self.eval()
+        for _ in range(max_new_chars):
+            # Forward pass to obtain the logits
+            logits, _ = self.forward(idx)
+
+            # Focus only on the last "time step"
+            logits = logits[:, -1, :]
+
+            # Apply softmax to get probabilities
+            probs = F.softmax(logits, dim=-1)  # (B, V)
+
+            # Sample from the distribution to get the next character
+            idx_next = torch.multinomial(probs, num_samples=1)  # (B, 1)
+
+            # Append sampled index to the running sequence
+            idx = torch.cat([idx, idx_next], dim=1)  # (B, T+1)
+
+        return idx

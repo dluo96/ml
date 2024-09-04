@@ -270,7 +270,7 @@ class TestTransformer(unittest.TestCase):
         _, loss_trunc = self.model(idx=x_trunc, targets=y_trunc)
         self.assertTrue(torch.equal(loss, loss_trunc))
 
-    def test_sequence_too_long(self):
+    def test_forward_sequence_too_long(self):
         # Check that an assertion is raised for sequence length > block size
         batch_size = 1
         idx = torch.randint(
@@ -278,6 +278,58 @@ class TestTransformer(unittest.TestCase):
         )
         with self.assertRaises(AssertionError):
             self.model(idx)
+
+    def test_generate(self):
+        # Set a random seed for reproducibility
+        torch.manual_seed(0)
+
+        # Input tensor: start token (".") with shape (B=1, T=1)
+        idx = torch.zeros((1, 1), dtype=torch.long)
+        B, T0 = idx.size()
+        max_new_chars = 5  # Number of new tokens to generate
+
+        # Generate new tokens
+        generated_seq = self.model.generate(idx, max_new_chars)
+
+        # Check if the output tensor has the correct shape
+        self.assertEqual(
+            generated_seq.shape,
+            (B, T0 + max_new_chars),
+            msg=f"Generated sequence must have shape (B=1, T={T0 + max_new_chars}).",
+        )
+
+        # Check that the first part of the generated sequence is the same as the input
+        self.assertTrue(
+            torch.equal(generated_seq[:, :T0], idx),
+            msg="The first part of the generated sequence must be the same as the input!",
+        )
+
+        # Check that the sequence only contains valid indices (0 to vocab_size - 1)
+        self.assertTrue(
+            torch.all(generated_seq >= 0)
+            and torch.all(generated_seq < self.config.vocab_size),
+            msg="Generated sequence must only contain valid character indices!",
+        )
+
+        # Try another input tensor that is longer: ".em" with shape (B=1, T=3)
+        idx = torch.tensor([[0, 5, 13]], dtype=torch.long)
+        B, T0 = idx.size()
+        max_new_chars = 3
+        generated_seq = self.model.generate(idx, max_new_chars)
+        self.assertEqual(
+            generated_seq.shape,
+            (B, T0 + max_new_chars),
+            msg=f"Generated sequence must have shape (B={B}, T={T0 + max_new_chars}).",
+        )
+        self.assertTrue(
+            torch.equal(generated_seq[:, :T0], idx),
+            msg="The first part of the generated sequence must be the same as the input!",
+        )
+        self.assertTrue(
+            torch.all(generated_seq >= 0)
+            and torch.all(generated_seq < self.config.vocab_size),
+            msg="Generated sequence must only contain valid character indices!",
+        )
 
 
 if __name__ == "__main__":
