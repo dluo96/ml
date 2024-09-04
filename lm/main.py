@@ -32,6 +32,7 @@ def main() -> None:
     parser.add_argument("--batch-size", type=int, default=2**10, help="Batch size")
     parser.add_argument("--learning-rate", type=float, default=0.01, help="Learning rate")
     parser.add_argument("--weight-decay", type=float, default=0.01, help="Weight decay")
+    parser.add_argument("--num-epochs", type=int, default=10_000, help="Number of complete passes through the dataset")
     # fmt: on
 
     args = parser.parse_args()
@@ -44,7 +45,7 @@ def main() -> None:
     if args.type == "bigram":
         dataset = CharDataset(words)
         vocab_size = dataset.get_vocab_size()
-        train_loader = DataLoader(dataset, batch_size=2**14)
+        train_loader = DataLoader(dataset, batch_size=args.batch_size)
         config = ModelConfig(vocab_size=vocab_size)
         model = Bigram(config)
     elif args.type == "mlp":
@@ -57,7 +58,7 @@ def main() -> None:
         dataset = MultiCharDataset(words, block_size=3)
         vocab_size = dataset.get_vocab_size()
         block_size = dataset.get_output_length()
-        train_loader = DataLoader(dataset, batch_size=2**14)
+        train_loader = DataLoader(dataset, batch_size=args.batch_size)
         config = ModelConfig(
             vocab_size=vocab_size,
             block_size=block_size,
@@ -69,7 +70,7 @@ def main() -> None:
         dataset = SequenceDataset(words)
         vocab_size = dataset.get_vocab_size()
         block_size = dataset.get_output_length()
-        train_loader = DataLoader(dataset, batch_size=2**10)
+        train_loader = DataLoader(dataset, batch_size=args.batch_size)
         config = ModelConfig(
             vocab_size=vocab_size,
             block_size=block_size,
@@ -81,7 +82,7 @@ def main() -> None:
         dataset = SequenceDataset(words)
         vocab_size = dataset.get_vocab_size()
         block_size = dataset.get_output_length()
-        train_loader = DataLoader(dataset, batch_size=2**10)
+        train_loader = DataLoader(dataset, batch_size=args.batch_size)
         config = ModelConfig(
             vocab_size=vocab_size,
             block_size=block_size,
@@ -93,7 +94,7 @@ def main() -> None:
         dataset = SequenceDataset(words)
         vocab_size = dataset.get_vocab_size()
         block_size = dataset.get_output_length()
-        train_loader = DataLoader(dataset, batch_size=2**10)
+        train_loader = DataLoader(dataset, batch_size=args.batch_size)
         config = ModelConfig(
             vocab_size=vocab_size,
             block_size=block_size,
@@ -105,13 +106,18 @@ def main() -> None:
     else:
         raise ValueError(f"Model type {args.type} is not recognized!")
 
+    # Optimizer
     optimizer = torch.optim.AdamW(
-        model.parameters(), lr=0.01, weight_decay=0.01, betas=(0.9, 0.99), eps=1e-8
+        model.parameters(),
+        lr=args.learning_rate,
+        weight_decay=args.weight_decay,
+        betas=(0.9, 0.99),
+        eps=1e-8,
     )
 
     # Consolidate everything in the trainer
     trainer = Trainer(
-        num_epochs=20_000,
+        num_epochs=args.num_epochs,
         train_loader=train_loader,
         model=model,
         optimizer=optimizer,
