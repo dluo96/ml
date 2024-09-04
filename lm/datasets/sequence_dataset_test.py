@@ -39,7 +39,7 @@ class TestSequenceDataset(unittest.TestCase):
         # Check max word length
         expected_max_word_length = len("jacqueline")  # Longest word in toy dataset
         self.assertEqual(self.dataset.max_word_length, expected_max_word_length)
-        self.assertEqual(self.dataset.get_output_length(), expected_max_word_length)
+        self.assertEqual(self.dataset.get_output_length(), expected_max_word_length + 1)
 
         # Check size of dataset
         self.assertEqual(len(self.dataset), len(self.words))

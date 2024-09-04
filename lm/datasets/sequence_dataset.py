@@ -17,7 +17,7 @@ class SequenceDataset(Dataset):
         return len(self.unique_chars)
 
     def get_output_length(self) -> int:
-        return self.max_word_length
+        return self.max_word_length + 1  # +1 for start token "."
 
     def encode(self, word: str) -> torch.Tensor:
         ix = torch.tensor([self.ctoi[ch] for ch in word])
