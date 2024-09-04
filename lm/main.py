@@ -1,3 +1,4 @@
+import argparse
 import pathlib
 
 import torch
@@ -10,19 +11,43 @@ from lm.trainer import Trainer
 
 
 def main() -> None:
-    choice = "transformer"
+    # fmt: off
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Character-level language models")
+
+    # System and I/O
+    parser.add_argument("--input-file", type=str, default="names.txt", help="Input file with one word per line")
+    parser.add_argument("--device", type=str, default="cpu", help="Device to use: cpu|cuda)")
+    parser.add_argument("--num-workers", type=int, default=0, help="Number of dataloader workers")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
+
+    # Model
+    parser.add_argument("--type", type=str, default="transformer", help="Model to use: bigram|mlp|rnn|gru|transformer")
+    parser.add_argument("--n-embd", type=int, default=64, help="Embedding dimension")
+    parser.add_argument("--n-embd2", type=int, default=64, help="Second embedding dimension")
+    parser.add_argument("--n-layer", type=int, default=4, help="Number of consecutive transformer blocks")
+    parser.add_argument("--n-head", type=int, default=4, help="Number of attention heads in each transformer block")
+
+    # Optimization
+    parser.add_argument("--batch-size", type=int, default=2**10, help="Batch size")
+    parser.add_argument("--learning-rate", type=float, default=0.01, help="Learning rate")
+    parser.add_argument("--weight-decay", type=float, default=0.01, help="Weight decay")
+    # fmt: on
+
+    args = parser.parse_args()
+
+    torch.manual_seed(args.seed)
 
     # Load data
-    data_dir = pathlib.Path(__file__).parent
-    words = open(f"{data_dir}/names.txt", "r").read().splitlines()
+    words = open(args.input_file, "r").read().splitlines()
 
-    if choice == "bigram":
+    if args.type == "bigram":
         dataset = CharDataset(words)
         vocab_size = dataset.get_vocab_size()
         train_loader = DataLoader(dataset, batch_size=2**14)
         config = ModelConfig(vocab_size=vocab_size)
         model = Bigram(config)
-    elif choice == "mlp":
+    elif args.type == "mlp":
         # import random
         # random.seed(0)
         # random.shuffle(words)
@@ -40,7 +65,7 @@ def main() -> None:
             n_embd2=64,
         )
         model = MLP(config)
-    elif choice == "rnn":
+    elif args.type == "rnn":
         dataset = SequenceDataset(words)
         vocab_size = dataset.get_vocab_size()
         block_size = dataset.get_output_length()
@@ -52,7 +77,7 @@ def main() -> None:
             n_embd2=64,
         )
         model = RNN(config, cell_type="rnn")
-    elif choice == "gru":
+    elif args.type == "gru":
         dataset = SequenceDataset(words)
         vocab_size = dataset.get_vocab_size()
         block_size = dataset.get_output_length()
@@ -64,7 +89,7 @@ def main() -> None:
             n_embd2=64,
         )
         model = RNN(config, cell_type="gru")
-    elif choice == "transformer":
+    elif args.type == "transformer":
         dataset = SequenceDataset(words)
         vocab_size = dataset.get_vocab_size()
         block_size = dataset.get_output_length()
@@ -78,7 +103,7 @@ def main() -> None:
         )
         model = Transformer(config)
     else:
-        raise ValueError(f"Model type {choice} is not recognized!")
+        raise ValueError(f"Model type {args.type} is not recognized!")
 
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=0.01, weight_decay=0.01, betas=(0.9, 0.99), eps=1e-8
