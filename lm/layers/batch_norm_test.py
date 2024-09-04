@@ -1,7 +1,6 @@
 import unittest
 
 import torch
-from torch.testing import assert_allclose
 
 from lm.layers.batch_norm import BatchNorm1D
 
@@ -20,10 +19,10 @@ class TestBatchNorm1D(unittest.TestCase):
         self.assertEqual(self.bn.beta.shape, (self.dim,))
         self.assertEqual(self.bn.running_mean.shape, (self.dim,))
         self.assertEqual(self.bn.running_var.shape, (self.dim,))
-        assert_allclose(self.bn.gamma, torch.ones(self.dim))
-        assert_allclose(self.bn.beta, torch.zeros(self.dim))
-        assert_allclose(self.bn.running_mean, torch.zeros(self.dim))
-        assert_allclose(self.bn.running_var, torch.ones(self.dim))
+        self.assertTrue(torch.equal(self.bn.gamma, torch.ones(self.dim)))
+        self.assertTrue(torch.equal(self.bn.beta, torch.zeros(self.dim)))
+        self.assertTrue(torch.equal(self.bn.running_mean, torch.zeros(self.dim)))
+        self.assertTrue(torch.equal(self.bn.running_var, torch.ones(self.dim)))
 
     def test_parameters(self):
         # Ensure that the parameters method returns gamma and beta
@@ -79,15 +78,13 @@ class TestBatchNorm1D(unittest.TestCase):
         )
 
         # Ensure running mean and variance are not updated
-        assert_allclose(
-            self.bn.running_mean,
-            running_mean_orig,
-            msg="Running mean should not be updated during evaluation!",
+        self.assertTrue(
+            torch.equal(self.bn.running_mean, running_mean_orig),
+            msg="Running mean should NOT be updated during evaluation!",
         )
-        assert_allclose(
-            self.bn.running_var,
-            running_var_orig,
-            msg="Running variance should not be updated during evaluation!",
+        self.assertTrue(
+            torch.equal(self.bn.running_var, running_var_orig),
+            msg="Running variance should NOT be updated during evaluation!",
         )
 
 

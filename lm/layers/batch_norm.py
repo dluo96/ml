@@ -8,8 +8,8 @@ class BatchNorm1D:
         self.training = True
 
         # Parameters (trained with backpropagation)
-        self.gamma = torch.ones(dim)
-        self.beta = torch.zeros(dim)
+        self.gamma = torch.ones(dim)  # Determines scale
+        self.beta = torch.zeros(dim)  # Determines shift
 
         # Buffers (trained with a running 'momentum update')
         self.running_mean = torch.zeros(dim)
