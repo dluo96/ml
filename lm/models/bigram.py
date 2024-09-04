@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-from lm.types import ModelConfig, Tensor
+from lm.model_config import ModelConfig, Tensor
 
 
 class Bigram(nn.Module):

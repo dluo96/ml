@@ -5,8 +5,8 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+from lm.model_config import ModelConfig
 from lm.models.transformer import Block, CausalSelfAttention, NewGELU, Transformer
-from lm.types import ModelConfig
 
 
 class TestCausalSelfAttention(unittest.TestCase):

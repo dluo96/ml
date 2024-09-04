@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from lm.types import ModelConfig, Tensor
+from lm.model_config import ModelConfig, Tensor
 
 
 class RNN(nn.Module):

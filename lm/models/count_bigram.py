@@ -1,6 +1,6 @@
 import torch
 
-from lm.types import Tensor
+from lm.model_config import Tensor
 
 
 class Bigram:

@@ -4,13 +4,13 @@ import torch
 from torch.utils.data import DataLoader
 
 from lm.datasets import CharDataset, MultiCharDataset, SequenceDataset
-from lm.models import MLP, RNN, Bigram
+from lm.model_config import ModelConfig
+from lm.models import MLP, RNN, Bigram, Transformer
 from lm.trainer import Trainer
-from lm.types import ModelConfig
 
 
 def main() -> None:
-    choice = "gru"
+    choice = "rnn"
 
     # Load data
     data_dir = pathlib.Path(__file__).parent
@@ -64,6 +64,19 @@ def main() -> None:
             n_embd2=64,
         )
         model = RNN(config, cell_type="gru")
+    elif choice == "transformer":
+        dataset = SequenceDataset(words)
+        vocab_size = dataset.get_vocab_size()
+        block_size = dataset.get_output_length()
+        train_loader = DataLoader(dataset, batch_size=2**8)
+        config = ModelConfig(
+            vocab_size=vocab_size,
+            block_size=block_size,
+            n_embd=64,
+            n_layer=4,
+            n_head=4,
+        )
+        model = Transformer(config)
     else:
         raise ValueError(f"Model type {choice} is not recognized!")
 
