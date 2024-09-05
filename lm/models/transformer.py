@@ -34,6 +34,10 @@ class CausalSelfAttention(nn.Module):
         # Output projection
         self.c_proj = nn.Linear(config.n_embd, config.n_embd)
 
+        # Regularization
+        self.attn_dropout = nn.Dropout(config.dropout)
+        self.resid_dropout = nn.Dropout(config.dropout)
+
         # Causal mask to ensure that attention is only applied to the left in the input
         # sequence
         self.register_buffer(
@@ -69,15 +73,18 @@ class CausalSelfAttention(nn.Module):
         att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float("-inf"))
         att = F.softmax(att, dim=-1)
 
+        # Apply dropout to the attention weights
+        att = self.attn_dropout(att)
+
         y = att @ v  # (B, nh, T, T) x (B, nh, T, hs) -> (B, nh, T, hs)
 
         # Combine the output from all attention heads by transposing and reshaping
         # back to the original embedding dimension:
-        # (B, nh, T, hs) -> (B, T, nh, hs) -> (B, T, C)
+        # (B, nh, T, hs) -> (B, T, nh, hs) -> (B, T, nh * hs) = (B, T, C)
         y = y.transpose(1, 2).contiguous().view(B, T, C)  # (B, T, C)
 
-        # Output projection
-        y = self.c_proj(y)  # (B, T, C)
+        # Output projection followed by dropout
+        y = self.resid_dropout(self.c_proj(y))  # (B, T, C)
 
         return y
 
@@ -93,12 +100,13 @@ class Block(nn.Module):
         self.mlp = nn.ModuleDict(
             dict(
                 c_fc=nn.Linear(config.n_embd, 4 * config.n_embd),
-                c_proj=nn.Linear(4 * config.n_embd, config.n_embd),
                 act=NewGELU(),
+                c_proj=nn.Linear(4 * config.n_embd, config.n_embd),
+                dropout=nn.Dropout(config.dropout),
             )
         )
         m = self.mlp
-        self.mlpf = lambda x: m.c_proj(m.act(m.c_fc(x)))  # MLP forward
+        self.mlpf = lambda x: m.dropout(m.c_proj(m.act(m.c_fc(x))))  # MLP forward
 
     def forward(self, x: Tensor) -> Tensor:
         x = x + self.attn(self.ln_1(x))

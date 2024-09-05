@@ -26,9 +26,10 @@ def main() -> None:
     parser.add_argument("--n-embd2", type=int, default=64, help="Second embedding dimension")
     parser.add_argument("--n-layer", type=int, default=4, help="Number of consecutive transformer blocks")
     parser.add_argument("--n-head", type=int, default=4, help="Number of attention heads in each transformer block")
+    parser.add_argument("--dropout", type=float, default=0.2, help="Dropout probability")
 
     # Optimization
-    parser.add_argument("--batch-size", type=int, default=2**10, help="Batch size")
+    parser.add_argument("--batch-size", type=int, default=2**12, help="Batch size")
     parser.add_argument("--learning-rate", type=float, default=0.01, help="Learning rate")
     parser.add_argument("--weight-decay", type=float, default=0.01, help="Weight decay")
     parser.add_argument("--num-epochs", type=int, default=10_000, help="Number of complete passes through the dataset")
@@ -36,6 +37,7 @@ def main() -> None:
 
     args = parser.parse_args()
 
+    # Set seed for reproducibility
     torch.manual_seed(args.seed)
 
     # Create dataset and dataloader
@@ -68,6 +70,7 @@ def main() -> None:
         n_embd2=args.n_embd2,
         n_layer=args.n_layer,
         n_head=args.n_head,
+        dropout=args.dropout,
     )
     if args.type == "bigram":
         model = Bigram(config)

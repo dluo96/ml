@@ -11,7 +11,7 @@ from lm.models.transformer import Block, CausalSelfAttention, NewGELU, Transform
 
 class TestCausalSelfAttention(unittest.TestCase):
     def setUp(self):
-        self.config = ModelConfig(n_embd=64, n_head=4, block_size=8)
+        self.config = ModelConfig(n_embd=64, n_head=4, block_size=8, dropout=0.2)
         self.model = CausalSelfAttention(self.config)
 
     def test_init(self):
@@ -169,6 +169,7 @@ class TestTransformer(unittest.TestCase):
             n_embd=64,
             n_layer=7,
             n_head=4,
+            dropout=0.2,
         )
         self.model = Transformer(self.config)
 
@@ -245,7 +246,15 @@ class TestTransformer(unittest.TestCase):
         input sequence, the target should have the same shape as the input sequence
         `idx` to provide a target for the prediction at each position.
         """
-        torch.manual_seed(42)
+        # Set the model to evaluation mode to disable dropout. This is necessary to
+        # ensure that the loss is deterministic (dropout introduces randomness) and
+        # can be compared across runs, in particular `loss` and `loss_trunc`. Even
+        # though the seed is set, the dropout layer will turn off a different set of
+        # neurons in each forward pass. This is why we need to disable dropout.
+        self.model.eval()
+
+        # Set a random seed for reproducibility
+        torch.manual_seed(0)
 
         # Craft an example output of `SequenceDataset.__getitem__()`
         x = torch.tensor([0,  5, 13, 13, 1,  0,  0,  0,  0,  0,  0,  0])  # fmt: skip
