@@ -2,18 +2,18 @@ import torch
 
 
 class BatchNorm1D:
-    def __init__(self, dim: int, eps: float = 1e-5, momentum: float = 0.1):
+    def __init__(self, n_embd: int, eps: float = 1e-5, momentum: float = 0.1):
         self.eps = eps
         self.momentum = momentum
         self.training = True
 
         # Parameters (trained with backpropagation)
-        self.gamma = torch.ones(dim)  # Determines scale
-        self.beta = torch.zeros(dim)  # Determines shift
+        self.gamma = torch.ones(n_embd)  # Determines scale
+        self.beta = torch.zeros(n_embd)  # Determines shift
 
         # Buffers (trained with a running 'momentum update')
-        self.running_mean = torch.zeros(dim)
-        self.running_var = torch.ones(dim)
+        self.running_mean = torch.zeros(n_embd)
+        self.running_var = torch.ones(n_embd)
 
     def parameters(self) -> list[torch.Tensor]:
         return [self.gamma, self.beta]
