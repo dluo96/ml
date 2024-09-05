@@ -57,6 +57,10 @@ class TestCausalSelfAttention(unittest.TestCase):
         # Check the shape of the output
         self.assertEqual(y.shape, (batch_size, sequence_length, self.config.n_embd))
 
+        # Check that the final dropout is applied correctly in the forward pass
+        num_zero = torch.sum(y == 0).item()
+        self.assertGreater(num_zero, 0, msg="Output must contain 0s due to dropout!")
+
     def test_attention_is_lower_triangular(self):
         # Generate a random input tensor
         B = 2  # Batch size
