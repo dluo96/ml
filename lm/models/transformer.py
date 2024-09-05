@@ -1,3 +1,4 @@
+import logging
 import math
 
 import torch
@@ -142,7 +143,7 @@ class Transformer(nn.Module):
 
         # Report number of parameters, excluding the decoder parameters in `lm_head`
         n_params = sum(p.numel() for p in self.transformer.parameters())
-        print(f"Number of parameters: {(n_params / 1e6):.2f}M")
+        logging.info(f"Number of parameters: {(n_params / 1e6):.2f}M")
 
     def get_block_size(self) -> int:
         return self.block_size
