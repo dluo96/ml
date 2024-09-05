@@ -1,6 +1,8 @@
 # Character-level Language Models
 
 This repo contains code for training and sampling from character-level language models.
+It is based on [makemore](https://github.com/karpathy/makemore) by Andrej Karpathy,
+which I highly recommend!
 
 Table of language models and their associated dataset:
 
