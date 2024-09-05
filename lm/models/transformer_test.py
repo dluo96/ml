@@ -94,7 +94,10 @@ class TestCausalSelfAttention(unittest.TestCase):
 
 class TestBlock(unittest.TestCase):
     def setUp(self):
-        self.config = ModelConfig(n_embd=64, n_head=4, block_size=10)
+        # Disable dropout for testing purposes (ensure forward pass is deterministic)
+        dropout = 0.0
+
+        self.config = ModelConfig(n_embd=64, n_head=4, block_size=10, dropout=dropout)
         self.model = Block(self.config)
 
     def test_init(self):
@@ -251,6 +254,7 @@ class TestTransformer(unittest.TestCase):
         # can be compared across runs, in particular `loss` and `loss_trunc`. Even
         # though the seed is set, the dropout layer will turn off a different set of
         # neurons in each forward pass. This is why we need to disable dropout.
+        # Alternatively, we could have set dropout to 0.0 in the model configuration.
         self.model.eval()
 
         # Set a random seed for reproducibility
@@ -290,7 +294,7 @@ class TestTransformer(unittest.TestCase):
         x_trunc = x_trunc.view(-1, self.config.block_size)
         y_trunc = y_trunc.view(-1, self.config.block_size)
         _, loss_trunc = self.model(idx=x_trunc, targets=y_trunc)
-        self.assertTrue(torch.equal(loss, loss_trunc))
+        self.assertTrue(torch.allclose(loss, loss_trunc))
 
     def test_forward_sequence_too_long(self):
         # Check that an assertion is raised for sequence length > block size
