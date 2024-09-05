@@ -8,7 +8,7 @@ from lm.layers.batch_norm import BatchNorm1D
 class TestBatchNorm1D(unittest.TestCase):
     def setUp(self):
         self.dim = 5
-        self.batch_size = 10
+        self.batch_size = 32
         self.eps = 1e-5
         self.momentum = 0.1
         self.bn = BatchNorm1D(dim=self.dim, eps=self.eps, momentum=self.momentum)
@@ -46,6 +46,18 @@ class TestBatchNorm1D(unittest.TestCase):
             out.shape,
             (self.batch_size, self.dim),
             msg="Output shape is incorrect during training!",
+        )
+
+        # Check that the mean and variance are (close to) 0 and 1, respectively
+        expected_mean = torch.zeros(self.dim, dtype=torch.float32)
+        self.assertTrue(
+            torch.allclose(out.mean(dim=0), expected_mean, atol=1e-3),
+            msg="Mean of the BatchNorm output should be (close to) 0",
+        )
+        expected_var = torch.ones(self.dim, dtype=torch.float32)
+        self.assertTrue(
+            torch.allclose(out.var(dim=0), expected_var, atol=1e-3),
+            msg="Variance of the BatchNorm output should be (close to) 1",
         )
 
         # Check that running mean and variance are updated
