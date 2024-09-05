@@ -28,6 +28,19 @@ class TestCausalSelfAttention(unittest.TestCase):
             self.model.bias.shape,
             (1, 1, self.config.block_size, self.config.block_size),
         )
+        expected_bias = torch.tensor(
+            [
+                [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+                [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0],
+                [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0],
+                [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0],
+                [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            ]
+        )
+        self.assertTrue(torch.equal(self.model.bias[0, 0, :, :], expected_bias))
 
         # Check that the causal mask is NOT registered as a parameter
         self.assertTrue("bias" not in dict(self.model.named_parameters()))
