@@ -40,12 +40,12 @@ class TestLayerNorm(unittest.TestCase):
 
         # Check that the mean and variance, calculated across the embedding dimension,
         # are (close to) 0 and 1, respectively
-        expected_mean = torch.zeros(self.n_embd, dtype=torch.float32)
+        expected_mean = torch.zeros(self.batch_size, dtype=torch.float32)
         self.assertTrue(
             torch.allclose(out.mean(dim=1), expected_mean, atol=1e-3),
             msg="Mean of the LayerNorm output should be (close to) 0",
         )
-        expected_var = torch.ones(self.n_embd, dtype=torch.float32)
+        expected_var = torch.ones(self.batch_size, dtype=torch.float32)
         self.assertTrue(
             torch.allclose(out.var(dim=1), expected_var, atol=1e-3),
             msg="Variance of the LayerNorm output should be (close to) 1",
