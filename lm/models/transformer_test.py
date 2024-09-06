@@ -22,6 +22,10 @@ class TestCausalSelfAttention(unittest.TestCase):
         self.assertIsInstance(self.model.c_attn, nn.Linear)
         self.assertIsInstance(self.model.c_proj, nn.Linear)
 
+        # Ensure that the dropout layers are initialized correctly
+        self.assertIsInstance(self.model.attn_dropout, nn.Dropout)
+        self.assertIsInstance(self.model.resid_dropout, nn.Dropout)
+
         # Check that the causal mask is registered as a buffer
         self.assertTrue(hasattr(self.model, "bias"))
         self.assertEqual(
@@ -119,9 +123,11 @@ class TestBlock(unittest.TestCase):
         self.assertIn("c_fc", self.model.mlp)
         self.assertIn("c_proj", self.model.mlp)
         self.assertIn("act", self.model.mlp)
+        self.assertIn("dropout", self.model.mlp)
         self.assertIsInstance(self.model.mlp["c_fc"], nn.Linear)
         self.assertIsInstance(self.model.mlp["c_proj"], nn.Linear)
         self.assertIsInstance(self.model.mlp["act"], NewGELU)
+        self.assertIsInstance(self.model.mlp["dropout"], nn.Dropout)
         self.assertEqual(
             self.model.mlp["c_fc"].weight.shape,
             (4 * self.config.n_embd, self.config.n_embd),
