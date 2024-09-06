@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from lm.layers.layer_norm import LayerNorm
+from lm.normalization.layer_norm import LayerNorm
 
 
 class TestLayerNorm(unittest.TestCase):

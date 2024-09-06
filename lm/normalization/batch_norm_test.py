@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from lm.layers.batch_norm import BatchNorm1D
+from lm.normalization.batch_norm import BatchNorm1D
 
 
 class TestBatchNorm1D(unittest.TestCase):
