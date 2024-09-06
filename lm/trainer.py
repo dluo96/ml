@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="%(asctime)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
@@ -16,25 +16,32 @@ class Trainer:
         self,
         num_epochs: int,
         train_loader: DataLoader,
+        val_loader: DataLoader,
         model: nn.Module,
         optimizer: torch.optim.Optimizer,
     ) -> None:
         self.num_epochs = num_epochs
         self.train_loader = train_loader
+        self.val_loader = val_loader
         self.model = model
         self.optimizer = optimizer
 
     def train(self) -> None:
         for epoch in range(self.num_epochs):
-            self.train_epoch()
+            train_loss = self.train_epoch()
 
             # Evaluate
             if epoch % 20 == 0:
-                train_loss = self.evaluate(self.train_loader)
-                logging.info(f"Epoch: {epoch} | Train loss: {train_loss:.4f}")
+                valid_loss = self.evaluate(self.val_loader)
+                logging.info(
+                    f"Epoch: {epoch} | "
+                    f"Train loss: {train_loss:.4f} | "
+                    f"Validation loss: {valid_loss:.4f}"
+                )
 
-    def train_epoch(self):
+    def train_epoch(self) -> float:
         self.model.train()  # Set PyTorch module to training mode
+        total_loss = 0.0
 
         for batch in self.train_loader:
             X, Y = batch
@@ -48,6 +55,12 @@ class Trainer:
 
             # Parameter updates
             self.optimizer.step()
+
+            # Accumulate loss
+            total_loss += loss.item()
+
+        mean_loss = total_loss / len(self.train_loader)
+        return mean_loss
 
     @torch.inference_mode()  # More efficient than torch.no_grad()
     def evaluate(self, dataloader: DataLoader) -> float:

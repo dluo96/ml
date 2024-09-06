@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 import torch
 from torch.utils.data import DataLoader
@@ -36,31 +37,54 @@ def main() -> None:
     # fmt: on
 
     args = parser.parse_args()
+    for arg_name, arg_value in vars(args).items():
+        logging.info(f"{arg_name}: {arg_value}")
 
     # Set seed for reproducibility
     torch.manual_seed(args.seed)
 
     # Create dataset and dataloader
     words = open(args.input_file, "r").read().splitlines()
+
+    # Split the input data into a training set and validation set
+    # The validation set is the smallest of 1000 words or 10% of the dataset
+    size_val_set = min(1000, int(len(words) * 0.1))
+    shuffled_indices = torch.randperm(len(words)).tolist()
+    train_words = [words[i] for i in shuffled_indices[:-size_val_set]]
+    val_words = [words[i] for i in shuffled_indices[-size_val_set:]]
+    logging.info(
+        f"Split the dataset: {len(train_words)} words in the training set "
+        f"and {len(val_words)} words in the validation set."
+    )
+
     if args.type == "bigram":
-        dataset = CharDataset(words)
+        train_dataset = CharDataset(train_words)
+        val_dataset = CharDataset(val_words)
     elif args.type == "mlp":
-        dataset = MultiCharDataset(words, block_size=3)
+        train_dataset = MultiCharDataset(train_words, block_size=3)
+        val_dataset = MultiCharDataset(val_words, block_size=3)
     elif args.type in ["rnn", "gru", "transformer"]:
-        dataset = SequenceDataset(words)
+        train_dataset = SequenceDataset(train_words)
+        val_dataset = SequenceDataset(val_words)
     else:
         raise ValueError(f"Model type {args.type} is not recognized!")
 
     train_loader = DataLoader(
-        dataset,
+        train_dataset,
+        batch_size=args.batch_size,
+        pin_memory=True,
+        num_workers=args.num_workers,
+    )
+    val_loader = DataLoader(
+        val_dataset,
         batch_size=args.batch_size,
         pin_memory=True,
         num_workers=args.num_workers,
     )
 
     # Extract vocabulary size and block size
-    vocab_size = dataset.get_vocab_size()
-    block_size = dataset.get_output_length()
+    vocab_size = train_dataset.get_vocab_size()
+    block_size = train_dataset.get_output_length()
 
     # Create model
     config = ModelConfig(
@@ -98,6 +122,7 @@ def main() -> None:
     trainer = Trainer(
         num_epochs=args.num_epochs,
         train_loader=train_loader,
+        val_loader=val_loader,
         model=model,
         optimizer=optimizer,
     )
