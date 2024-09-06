@@ -137,7 +137,7 @@ def main() -> None:
         val_loader=val_loader,
         model=model,
         optimizer=optimizer,
-        device=args.device,
+        device=device,
     )
 
     # Launch training
