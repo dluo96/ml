@@ -7,12 +7,9 @@ from lm.model_config import ModelConfig, Tensor
 
 class Bigram(nn.Module):
     """Bigram 'neural network' language model: simply a lookup table of logits for the
-    next character given a previous character.
-
-    The neural network has a single layer with no activation function. The weight
-    matrix `W` is equivalent to the log of the bigram counts tensor in `Bigram`.
-
-    The average negative log likelihood (NLL) is minimised using gradient descent.
+    next character given a previous character. This 'neural network' has a single layer
+    with no activation function. The average negative log likelihood (NLL) is minimised
+    using gradient descent.
     """
 
     def __init__(self, config: ModelConfig):
