@@ -109,8 +109,17 @@ def main() -> None:
     else:
         raise ValueError(f"Model type {args.type} is not recognized!")
 
+    # Determine device
+    if args.device == "cuda" and torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif args.device == "cpu":
+        device = torch.device("cpu")
+    else:
+        raise ValueError(f"Device {args.device} is not recognized!")
+    logging.info(f"Using device: {device}")
+
     # Move model to device
-    model.to(args.device)
+    model.to(device)
 
     # Optimizer
     optimizer = torch.optim.AdamW(
