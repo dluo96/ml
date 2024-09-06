@@ -191,10 +191,10 @@ class Transformer(nn.Module):
         self.eval()
         for _ in range(max_new_chars):
             # Forward pass to obtain the logits
-            logits, _ = self.forward(idx)
+            logits, _ = self.forward(idx)  # (B, T, V)
 
             # Focus only on the last "time step"
-            logits = logits[:, -1, :]
+            logits = logits[:, -1, :]  # (B, V)
 
             # Apply softmax to get probabilities
             probs = F.softmax(logits, dim=-1)  # (B, V)

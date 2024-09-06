@@ -322,9 +322,9 @@ class TestTransformer(unittest.TestCase):
         # Input tensor: start token (".") with shape (B=1, T=1)
         idx = torch.zeros((1, 1), dtype=torch.long)
         B, T0 = idx.size()
-        max_new_chars = 5  # Number of new tokens to generate
+        max_new_chars = 5  # Number of new characters to generate
 
-        # Generate new tokens
+        # Generate new characters
         generated_seq = self.model.generate(idx, max_new_chars)
 
         # Run a few checks on the generated sequence
