@@ -2,6 +2,7 @@ import unittest
 
 import torch
 import torch.nn as nn
+from torch.nn import functional as F
 
 from lm.model_config import ModelConfig
 from lm.models.mlp import MLP
@@ -76,6 +77,30 @@ class TestMLP(unittest.TestCase):
         self.assertIsInstance(loss, torch.Tensor)
         self.assertIsInstance(
             loss.item(), float, msg="Loss tensor should only contain a single float!"
+        )
+
+    def test_forward_equivalence_loss(self):
+        idx = torch.randint(0, self.config.vocab_size, (5, self.config.block_size))
+        targets = torch.randint(0, self.config.vocab_size, (5,))
+
+        # Forward pass
+        _, loss = self.model(idx, targets)
+
+        # Manual forward pass with equivalent loss calculation
+        embs = self.model.lookup_table(idx)
+        embs = embs.view(embs.shape[0], -1)
+        logits = self.model.mlp(embs)
+        # Equivalent calculation of cross entropy loss
+        counts = logits.exp()
+        p = counts / counts.sum(dim=1, keepdim=True)
+        n_examples = embs.shape[0]
+        p_labels = p[torch.arange(n_examples), targets]
+        loss_manual = -p_labels.log().mean()
+
+        self.assertTrue(
+            torch.allclose(loss, loss_manual),
+            msg="F.cross_entropy calculation must be equivalent to the manual "
+            "calculation of average negative log likelihood!",
         )
 
 
