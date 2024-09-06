@@ -67,6 +67,52 @@ class TestBigramModel(unittest.TestCase):
             msg="Result must agree with matrix multiplication of one-hot encodings!",
         )
 
+    def test_generate(self):
+        # Input tensor: start token (".") with shape (B=1, T=1)
+        idx = torch.zeros((1, 1), dtype=torch.long)
+        B, T0 = idx.size()
+        max_new_chars = 5  # Number of new characters to generate
+
+        # Generate new characters
+        generated_seq = self.model.generate(idx, max_new_chars)
+
+        # Run a few checks on the generated sequence
+        self.assertEqual(
+            generated_seq.shape,
+            (B, T0 + max_new_chars),
+            msg=f"Generated sequence must have shape (B=1, T={T0 + max_new_chars}).",
+        )
+        self.assertTrue(
+            torch.equal(generated_seq[:, :T0], idx),
+            msg="The first part of the generated sequence must be the same as the input!",
+        )
+        self.assertTrue(
+            torch.all(generated_seq >= 0)
+            and torch.all(generated_seq < self.config.vocab_size),
+            msg="Generated sequence must only contain valid character indices (ranging"
+            "from 0 to vocab_size-1)",
+        )
+
+        # Try another input tensor that is longer: ".em" with shape (B=1, T=3)
+        idx = torch.tensor([[0, 5, 13]], dtype=torch.long)
+        B, T0 = idx.size()
+        max_new_chars = 3
+        generated_seq = self.model.generate(idx, max_new_chars)
+        self.assertEqual(
+            generated_seq.shape,
+            (B, T0 + max_new_chars),
+            msg=f"Generated sequence must have shape (B={B}, T={T0 + max_new_chars}).",
+        )
+        self.assertTrue(
+            torch.equal(generated_seq[:, :T0], idx),
+            msg="The first part of the generated sequence must be the same as the input!",
+        )
+        self.assertTrue(
+            torch.all(generated_seq >= 0)
+            and torch.all(generated_seq < self.config.vocab_size),
+            msg="Generated sequence must only contain valid character indices!",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
