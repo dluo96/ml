@@ -17,7 +17,7 @@ def main() -> None:
 
     # System and I/O
     parser.add_argument("--input-file", type=str, default="names.txt", help="Input file with one word per line")
-    parser.add_argument("--device", type=str, default="cpu", help="Device to use: cpu|cuda)")
+    parser.add_argument("--device", type=str, default="cpu", help="Device to use: cpu|gpu)")
     parser.add_argument("--num-workers", type=int, default=0, help="Number of dataloader workers")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
 
@@ -109,8 +109,12 @@ def main() -> None:
     else:
         raise ValueError(f"Model type {args.type} is not recognized!")
 
+    # Calculate and report the number of model parameters
+    num_params = sum(p.numel() for p in model.parameters())
+    logging.info(f"The {args.type} model has {(num_params / 1e6):.2f}M parameters.")
+
     # Determine device
-    if args.device == "cuda" and torch.cuda.is_available():
+    if args.device == "gpu" and torch.cuda.is_available():
         device = torch.device("cuda")
     elif args.device == "cpu":
         device = torch.device("cpu")
