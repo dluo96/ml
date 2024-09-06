@@ -156,7 +156,9 @@ class Transformer(nn.Module):
         err_msg = f"Cannot forward sequence of length {T} because {self.block_size=}."
         assert T <= self.block_size, err_msg
 
-        pos = torch.arange(0, T, dtype=torch.long).unsqueeze(0)  # shape (1, T)
+        # Create positional indices
+        device = idx.device
+        pos = torch.arange(0, T, dtype=torch.long, device=device).unsqueeze(0)  # (1, T)
 
         # Forward the GPT model itself
         tok_emb = self.transformer.lookup_tok_emb(idx)  # (B, T, n_embd)
