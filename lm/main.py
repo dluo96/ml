@@ -109,6 +109,9 @@ def main() -> None:
     else:
         raise ValueError(f"Model type {args.type} is not recognized!")
 
+    # Move model to device
+    model.to(args.device)
+
     # Optimizer
     optimizer = torch.optim.AdamW(
         model.parameters(),
@@ -125,6 +128,7 @@ def main() -> None:
         val_loader=val_loader,
         model=model,
         optimizer=optimizer,
+        device=args.device,
     )
 
     # Launch training

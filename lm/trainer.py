@@ -19,12 +19,14 @@ class Trainer:
         val_loader: DataLoader,
         model: nn.Module,
         optimizer: torch.optim.Optimizer,
+        device: torch.device,
     ) -> None:
         self.num_epochs = num_epochs
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.model = model
         self.optimizer = optimizer
+        self.device = device
 
     def train(self) -> None:
         for epoch in range(self.num_epochs):
@@ -45,6 +47,10 @@ class Trainer:
         losses = []
         for batch in self.train_loader:
             X, Y = batch
+
+            # Move to device
+            X = X.to(self.device, non_blocking=True)
+            Y = Y.to(self.device, non_blocking=True)
 
             # Forward pass
             logits, loss = self.model(idx=X, targets=Y)
@@ -70,6 +76,8 @@ class Trainer:
         losses = []
         for batch in dataloader:
             X, Y = batch
+            X = X.to(self.device, non_blocking=True)
+            Y = Y.to(self.device, non_blocking=True)
             logits, loss = self.model(idx=X, targets=Y)
             losses.append(loss.item())
 
