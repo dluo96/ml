@@ -41,8 +41,8 @@ class Trainer:
 
     def train_epoch(self) -> float:
         self.model.train()  # Set PyTorch module to training mode
-        total_loss = 0.0
 
+        losses = []
         for batch in self.train_loader:
             X, Y = batch
 
@@ -56,10 +56,10 @@ class Trainer:
             # Parameter updates
             self.optimizer.step()
 
-            # Accumulate loss
-            total_loss += loss.item()
+            # Append loss
+            losses.append(loss.item())
 
-        mean_loss = total_loss / len(self.train_loader)
+        mean_loss = torch.tensor(losses).mean().item()
         return mean_loss
 
     @torch.inference_mode()  # More efficient than torch.no_grad()
@@ -74,4 +74,7 @@ class Trainer:
             losses.append(loss.item())
 
         mean_loss = torch.tensor(losses).mean().item()
+
+        self.model.train()  # Reset module back to training mode
+
         return mean_loss
