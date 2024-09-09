@@ -7,6 +7,11 @@ class LayerNorm:
     Because the calculation of mean and variance is not across examples, we don't need
     a running mean and variance. It also follows that there is no distinction between
     training and evaluation.
+
+    With batch normalization, there was coupling between examples in the batch. This
+    turned out to be good for training because it regularises the network. However,
+    some ML practitioners decided to get around this by introducing other normalization
+    methods such as LayerNorm, InstanceNorm, and GroupNorm.
     """
 
     def __init__(self, n_embd: int, eps: float = 1e-5):
