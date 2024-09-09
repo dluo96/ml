@@ -2,6 +2,23 @@ import torch
 
 
 class BatchNorm1D:
+    """Batch normalization is used to control the statistics of activations in a
+    neural network. It helps ensure that the pre-activation values are not too
+    spread out or too close together. This can help with training stability because it
+    can prevent the gradients from becoming too small or too large. It is common to put
+    it after layers with a multiplication, such as a linear layer or a convolutional
+    layer.
+
+    Consider the case where the activation function is tanh(x). If x is too spread out,
+    tanh(x) will saturate at -1 or +1, causing the gradients to vanish (recall that
+    d/dx tanh(x) = 1 - tanh^2(x)). This can lead to dead neurons that do not learn.
+    The same reasoning applies to other activation functions including ReLU and sigmoid.
+
+    Before batch normalization, ML practitioners avoided the saturation problem by
+    initialising the neural network weights carefully such as using Kaiming/He or
+    Xavier initialisation.
+    """
+
     def __init__(self, n_embd: int, eps: float = 1e-5, momentum: float = 0.1):
         self.eps = eps
         self.momentum = momentum
