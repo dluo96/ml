@@ -99,7 +99,7 @@ class TestBatchNorm1D(unittest.TestCase):
             msg="Running variance should NOT be updated during evaluation!",
         )
 
-    def test_mean_and_std_of_preactivations_before_and_after_batch_norm(self):
+    def test_preactivations_before_and_after_batch_norm(self):
         torch.manual_seed(24)
         tolerance = 0.01
 
