@@ -61,11 +61,12 @@ class MLP(nn.Module):
                     tensors - PyTorch instead runs it in a fused kernel.
                 2. Backward pass is much more efficient: it is easier to backpropagate
                     through.
-                3. It is more numerically stable. Internally, `F.cross_entropy` computes
-                    the max value that occurs in the logits and subtracts it from all
-                    logits to prevent overflow. This is known as the log-sum-exp trick.
-                    Importantly, any offset subtracted from the logits will produce the
-                    exact same output probabilities.
+                3. It is more numerically stable. Internally, for each batch,
+                    `F.cross_entropy` computes the max value that occurs in the logits
+                    and subtracts it from all logits in that batch to prevent overflow
+                    of the exp(). This is known as the log-sum-exp trick. Importantly,
+                    any offset subtracted from the logits will produce the exact same
+                    output probabilities.
             """
 
         return logits, loss
