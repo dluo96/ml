@@ -130,16 +130,42 @@ class TestBatchNorm1D(unittest.TestCase):
         w2 = torch.randn(n_embd, n_embd)
         w3 = torch.randn(n_embd, n_embd)
 
-        # Apply three linear layers
+        # Apply three linear layers without batch normalization
         pre_activations = ((x @ w1) @ w2) @ w3
 
         # Check that tanh is saturated (all neurons are close/equal to -1 or +1)
         activations = torch.tanh(pre_activations)
-        self.assertGreaterEqual(
+        self.assertGreater(
             (activations.abs() > 0.99).sum().item(),
             activations.numel() * 0.9,
-            msg="tanh should be saturated for 90% or more of neurons because we did "
-            "not apply batch normalization!",
+            msg="tanh should be saturated because we didn't apply batch normalization!"
+            "More than than 90% of the neurons should be dead (close to -1 or +1).",
+        )
+
+    def test_tanh_activations_with_batch_norm(self):
+        torch.manual_seed(0)
+        batch_size = 1000
+        n_embd = 10
+        x = torch.randn(batch_size, n_embd)
+        w1 = torch.randn(n_embd, n_embd)
+        w2 = torch.randn(n_embd, n_embd)
+        w3 = torch.randn(n_embd, n_embd)
+
+        # Define three batch normalization layers
+        bn1 = BatchNorm1D(n_embd)
+        bn2 = BatchNorm1D(n_embd)
+        bn3 = BatchNorm1D(n_embd)
+
+        # Apply three linear layers each followed by batch normalization
+        pre_activations = bn3(bn2((bn1(x @ w1) @ w2)) @ w3)
+
+        # Check that tanh is not saturated
+        activations = torch.tanh(pre_activations)
+        self.assertLess(
+            (activations.abs() > 0.99).sum().item(),
+            activations.numel() * 0.1,
+            msg="tanh should NOT be saturated because we applied batch normalization!"
+            "Less than 10% of the neurons should be close to -1 or +1.",
         )
 
 
