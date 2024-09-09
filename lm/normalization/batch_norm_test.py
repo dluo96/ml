@@ -99,6 +99,49 @@ class TestBatchNorm1D(unittest.TestCase):
             msg="Running variance should NOT be updated during evaluation!",
         )
 
+    def test_impact_on_tanh(self):
+        torch.manual_seed(24)
+
+        x = torch.randn(10_000, 10)
+        w = torch.randn(10, 200)
+        y = x @ w
+
+        # Check that input distribution is standard normal
+        self.assertAlmostEquals(x.mean().item(), 0, delta=0.05)
+        self.assertAlmostEquals(x.std().item(), 1, delta=0.05)
+
+        # Check that output distribution has larger standard deviation
+        self.assertAlmostEquals(y.mean().item(), 0, delta=0.05)
+        self.assertGreater(y.std().item(), 3)
+
+        # Apply batch normalization and check that the output distribution is now
+        # standard normal
+        bn = BatchNorm1D(n_embd=200)
+        y_bn = bn(y)
+        self.assertAlmostEquals(y_bn.mean().item(), 0, delta=0.05)
+        self.assertAlmostEquals(y_bn.std().item(), 1, delta=0.05)
+
+    def test_tanh_activations_without_batch_norm(self):
+        torch.manual_seed(0)
+        batch_size = 1000
+        n_embd = 10
+        x = torch.randn(batch_size, n_embd)
+        w1 = torch.randn(n_embd, n_embd)
+        w2 = torch.randn(n_embd, n_embd)
+        w3 = torch.randn(n_embd, n_embd)
+
+        # Apply three linear layers
+        pre_activations = ((x @ w1) @ w2) @ w3
+
+        # Check that tanh is saturated (all neurons are close/equal to -1 or +1)
+        activations = torch.tanh(pre_activations)
+        self.assertGreaterEqual(
+            (activations.abs() > 0.99).sum().item(),
+            activations.numel() * 0.9,
+            msg="tanh should be saturated for 90% or more of neurons because we did "
+            "not apply batch normalization!",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
