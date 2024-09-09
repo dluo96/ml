@@ -99,27 +99,30 @@ class TestBatchNorm1D(unittest.TestCase):
             msg="Running variance should NOT be updated during evaluation!",
         )
 
-    def test_impact_on_tanh(self):
+    def test_mean_and_std_before_and_after_batch_norm(self):
         torch.manual_seed(24)
+        tolerance = 0.01
 
         x = torch.randn(10_000, 10)
         w = torch.randn(10, 200)
         y = x @ w
 
         # Check that input distribution is standard normal
-        self.assertAlmostEquals(x.mean().item(), 0, delta=0.05)
-        self.assertAlmostEquals(x.std().item(), 1, delta=0.05)
+        self.assertAlmostEquals(x.mean().item(), 0, delta=tolerance)
+        self.assertAlmostEquals(x.std().item(), 1, delta=tolerance)
 
         # Check that output distribution has larger standard deviation
-        self.assertAlmostEquals(y.mean().item(), 0, delta=0.05)
-        self.assertGreater(y.std().item(), 3)
+        self.assertAlmostEquals(y.mean().item(), 0, delta=tolerance)
+        self.assertGreater(
+            y.std().item(), 3, msg="Output standard deviation should be larger than 3"
+        )
 
         # Apply batch normalization and check that the output distribution is now
         # standard normal
         bn = BatchNorm1D(n_embd=200)
         y_bn = bn(y)
-        self.assertAlmostEquals(y_bn.mean().item(), 0, delta=0.05)
-        self.assertAlmostEquals(y_bn.std().item(), 1, delta=0.05)
+        self.assertAlmostEquals(y_bn.mean().item(), 0, delta=0.01)
+        self.assertAlmostEquals(y_bn.std().item(), 1, delta=0.01)
 
     def test_tanh_activations_without_batch_norm(self):
         torch.manual_seed(0)
