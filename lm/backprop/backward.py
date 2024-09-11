@@ -175,34 +175,43 @@ def test_manual_backward():
     # affect the loss.
     assert torch.allclose(dlogit_maxes, torch.zeros_like(dlogit_maxes))
 
-    # Second incoming edge for logits
-    # logit_maxes = logits.max(dim=1, keepdim=True).values
-    dlm_dl = torch.zeros_like(logits)
+    # `logit_maxes = logits.max(dim=1, keepdim=True).values`
+    # `logits` has shape (B, V)
+    # This is the 2nd branch where `logits` is used, hence we need to accumulate.
+    # First, calculate the local derivative dlogit_maxes/dlogits
+    local_derivative = torch.zeros_like(logits)
     indices = logits.max(dim=1, keepdim=True).indices
-    dlm_dl[torch.arange(B), indices] = 1.0
-    dlogits_2nd = dlogit_maxes * dlm_dl
-    dlogits += dlogits_2nd
+    local_derivative[torch.arange(B), indices] = 1.0
+    dlogits_branch_2 = dlogit_maxes * local_derivative
+    dlogits += dlogit_maxes * local_derivative
     assert compare("dlogits", dlogits, logits)
+    # Note also that this contribution should be zero since `dlogit_maxes` is 0
+    assert torch.allclose(dlogits_branch_2, torch.zeros_like(dlogits_branch_2))
 
-    # Note also that this contribution should be zero since dlogit_maxes is 0
-    assert torch.allclose(dlogits_2nd, torch.zeros_like(dlogits_2nd))
+    """
+    `logits = h @ W2 + b2`
+    
+    To understand how backpropagation works on a matrix multiplication, consider the
+    small example f = a @ b + c:
+    
+          f11 = a11 * b11 + a12 * b21 + c1
+          f12 = a11 * b12 + a12 * b22 + c2
+          f21 = a21 * b11 + a22 * b21 + c1
+          f22 = a21 * b12 + a22 * b22 + c2
 
-    # To understand how backpropagation works on a matrix multiplication, consider the
-    # small example f = a @ b + c
-    #       f11 = a11 * b11 + a12 * b21 + c1
-    #       f12 = a11 * b12 + a12 * b22 + c2
-    #       f21 = a21 * b11 + a22 * b21 + c1
-    #       f22 = a21 * b12 + a22 * b22 + c2
-    #
-    # Using the chain rule, we have:
-    #       dLda11 = dLdf11 * b11 + dLdf12 * b12
-    #       dLda12 = dLdf11 * b21 + dLdf12 * b22
-    #       dLda21 = dLdf21 * b11 + dLdf22 * b12
-    #       dLda22 = dLdf21 * b21 + dLdf22 * b22
-    #
-    # The addition is because we have to sum contributions.
-    # Clearly, dLda = dLdf @ b^T, so the derivative of a matmul is another matmul.
-    # In our case (logits = h @ W2 + b2), dLda is dh, dLdf is dlogits, and b is W2.
+    Using the chain rule, we have:
+    
+        dLda11 = dLdf11 * b11 + dLdf12 * b12
+        dLda12 = dLdf11 * b21 + dLdf12 * b22
+        dLda21 = dLdf21 * b11 + dLdf22 * b12
+        dLda22 = dLdf21 * b21 + dLdf22 * b22
+
+    The addition is because we have to sum contributions. Clearly, 
+    
+        dLda = dLdf @ b^T
+        
+    In our case (`logits = h @ W2 + b2`), dLda is dh, dLdf is dlogits, and b is W2.
+    """
     dh = dlogits @ W2.T
     assert compare("dh", dh, h)
 
@@ -219,16 +228,23 @@ def test_manual_backward():
     db2 = (dlogits * 1.0).sum(dim=0, keepdim=True)
     assert compare("db2", db2, b2)
 
-    # h = torch.tanh(hpreact)
+    # `h = torch.tanh(hpreact)`
     # dL/dhpreact = dL/dh * dh/dhpreact = dL/dh * sech^2(hpreact)
     # = dL/dh * (1 - tanh^2(hpreact)) = dL/dh * (1-h^2)
     dhpreact = dh * (1 - h ** 2)
     assert compare("dhpreact", dhpreact, hpreact)
 
-    # hpreact = bngain * bnraw + bnbias
-    # bngain has shape (1, 64), bnraw has shape (32, 64), bnbias has shape (1, 64)
-    # Thus, bngain and bnbias are broadcasted, and we need to do a sum because they
-    # are effectively used multiple times.
+    """
+    `hpreact = bngain * bnraw + bnbias`
+    
+    `bngain` has shape (1, 64),
+    `bnraw` has shape (32, 64), 
+    `bnbias` has shape (1, 64).
+    
+    Thus, `bngain` and `bnbias` are broadcasted along the 0th dimension, and we need to
+    do a sum because they are effectively used in multiple branches in the computation 
+    graph.
+    """
     dbngain = (dhpreact * bnraw).sum(dim=0, keepdim=True)
     assert compare("dbngain", dbngain, bngain)
     dbnraw = dhpreact * bngain
@@ -236,50 +252,68 @@ def test_manual_backward():
     dbnbias = (dhpreact * 1.0).sum(dim=0, keepdim=True)
     assert compare("dbnbias", dbnbias, bnbias)
 
-    # bnraw = bndiff * bnvar_inv
-    # bndiff has shape (32, 64), bnvar_inv has shape (1, 64)
-    # Thus, bnvar_inv is broadcasted and we need to do a sum
-    dbndiff = dbnraw * bnvar_inv  # Can't check yet since it is part of another branch
-    # assert compare("dbndiff", dbndiff, bndiff)
+    """
+    `bnraw = bndiff * bnvar_inv`
+    
+    `bndiff` has shape (32, 64),
+    `bnvar_inv` has shape (1, 64).
+    
+    Thus, `bnvar_inv` is broadcasted, and we need to do a sum when computing
+    `dbnvar_inv`. 
+    """
     dbnvar_inv = (dbnraw * bndiff).sum(dim=0, keepdim=True)
     assert compare("dbnvar_inv", dbnvar_inv, bnvar_inv)
 
-    # bnvar_inv = (bnvar + 1e-5).rsqrt()
+    dbndiff = dbnraw * bnvar_inv
+    # Can't check yet because `bndiff` is part of another branch
+
+    # `bnvar_inv = (bnvar + 1e-5).rsqrt()`
     # d/dx x^(-1/2) = -1/2 * x^(-3/2)
     dbnvar = dbnvar_inv * (-1/2 * (bnvar + 1e-5) ** (-3/2))
     assert compare("dbnvar", dbnvar, bnvar)
 
-    # bnvar = 1/(B-1) * bndiff2.sum(dim=0, keepdim=True)
-    # bnvar has shape (1, 64), bndiff2 has shape (32, 64)
-    # This isn't due to broadcasting, so no sum is needed.
-    # NOTE: notice the duality - when there is a sum over an axis in the forward pass,
-    # there is a corresponding broadcasting in the backward pass. Similarly, when there
-    # is a broadcast operation in the forward pass, this indicates a variable reuse and
-    # in the backward pass, this turns into a sum over the same dimension.
-    #
-    # Small example:
-    #       a11 a12
-    #       a21 a22
-    # Gives
-    #       b1 b2
-    # where
-    #       b1 = a11 + a21
-    #       b2 = a12 + a22
-    #
-    # Broadcasting: (1, 64) * (32, 64) -> (32, 64)
-    dbndiff2 = dbnvar * torch.ones_like(bndiff2) * 1.0/(B-1.0)
+    """
+    `bnvar = 1/(B-1) * bndiff2.sum(dim=0, keepdim=True)`
+    
+    `bnvar` has shape (1, 64), 
+    `bndiff2` has shape (32, 64).
+    
+    There is no broadcasting, so we don't need to sum gradients across dimension 0.
+    
+    NOTE: notice the duality - when there is a sum over a particular dimension in the
+    forward pass, there is a corresponding broadcasting along that same dimension in 
+    the backward pass. Similarly, when there is a broadcast operation in the forward 
+    pass, this indicates a variable reuse and in the backward pass, this turns into a
+    sum over the same dimension.
+
+    Small example:
+          a11 a12
+          a21 a22
+    Gives
+          b1 b2
+    where
+          b1 = a11 + a21
+          b2 = a12 + a22
+    """
+    # Broadcasting in backward pass: (1, n_hidden) * (B, n_hidden) -> (B, n_hidden)
+    dbndiff2 = dbnvar * torch.ones_like(bndiff2) * 1.0 / (B - 1.0)
     assert compare("dbndiff2", dbndiff2, bndiff2)
 
-    # bndiff2 = bndiff ** 2
-    # NOTE: need to accumulate
+    # `bndiff2 = bndiff ** 2`
+    # This is the 2nd branch where `bndiff` is used, so we accumulate:
     dbndiff += dbndiff2 * (2 * bndiff)
     assert compare("dbndiff", dbndiff, bndiff)
 
-    # bndiff = hprebn - bnmeani
-    # hprebn has shape (32, 64)
-    # bnmeani has shape (1, 64)
-    # Thus, bnmeani is broadcasted and we need to sum
-    dhprebn = dbndiff * 1.0  # Can't check yet
+    """
+    `bndiff = hprebn - bnmeani`
+    
+    `hprebn` has shape (32, 64),
+    `bnmeani` has shape (1, 64).
+    
+    Thus, `bnmeani` is broadcasted, and we need to sum its gradients along dimension 0.
+    """
+    dhprebn = dbndiff * 1.0
+    # Can't check `dhprebn` yet because `hprebn` is used in another branch
     dbnmeani = (dbndiff * -1.0).sum(dim=0, keepdim=True)
     assert compare("dbnmeani", dbnmeani, bnmeani)
 
