@@ -317,16 +317,25 @@ def test_manual_backward():
     dbnmeani = (dbndiff * -1.0).sum(dim=0, keepdim=True)
     assert compare("dbnmeani", dbnmeani, bnmeani)
 
-    # bnmeani = 1 / B * hprebn.sum(dim=0, keepdim=True)
-    # Sum in forward pass --> broadcast in backward pass
-    # Broadcasting: (1, 64) * (32, 64) -> (32, 64)
+    """
+    `bnmeani = 1 / B * hprebn.sum(dim=0, keepdim=True)`
+    
+    `hprebn` has shape (32, 64).
+    
+    Since we have a sum along dimension 0 in the forward pass, we need a broadcast in
+    dimension 0 in the backward pass. 
+    """
+    # Broadcasting: (1, n_hidden) * (B, n_hidden) -> (B, n_hidden)
     dhprebn += dbnmeani * (1/B * torch.ones_like(hprebn))
     assert compare("dhprebn", dhprebn, hprebn)
 
-    # hprebn = embcat @ W1 + b1
-    # embcat has shape (32, 30)
-    # W1 has shape (30, 64)
-    # b1 has shape (64,)
+    """
+    `hprebn = embcat @ W1 + b1`
+    
+    `embcat` has shape (32, 30),
+    `W1` has shape (30, 64),
+    `b1` has shape (64,).
+    """
     dembcat = dhprebn @ W1.T
     assert compare("dembcat", dembcat, embcat)
     dW1 = embcat.T @ dhprebn
@@ -334,17 +343,26 @@ def test_manual_backward():
     db1 = (dhprebn * 1.0).sum(dim=0, keepdim=True)
     assert compare("db1", db1, b1)
 
-    # embcat = emb.view(B, -1)
-    # embcat has shape (B, block_size * n_embd)
-    # emb has shape (B, block_size, n_embd)
-    # dL/demb = dL/dembcat * dembcat/demb
+    """
+    `embcat = emb.view(B, -1)`
+    
+    `embcat` has shape (B, block_size * n_embd),
+    `emb` has shape (B, block_size, n_embd).
+    
+    The view operation reorganised the array in the forward pass, so we just need to
+    revert this in the backward pass.
+    """
     demb = dembcat.view(emb.shape)
     assert compare("demb", demb, emb)
 
-    # emb = C[x_batch]
-    # C has shape (vocab_size, n_embd)
-    # x_batch has shape (B, block_size)
-    # dL/dC = dL/demb * demb/dC
+    """
+    `emb = C[x_batch]`
+    
+    `C` has shape (vocab_size, n_embd),
+    `x_batch` has shape (B, block_size).
+    
+    dL/dC = dL/demb * demb/dC
+    """
     dC = torch.zeros_like(C)
     for k in range(x_batch.shape[0]):
         for j in range(x_batch.shape[1]):
