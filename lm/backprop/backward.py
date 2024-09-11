@@ -108,8 +108,14 @@ def test_manual_backward():
     loss.backward()
 
     # Manual backwards pass
-    # `loss = -logprobs[torch.arange(B), y_batch].mean()`
-    # Only specific elements contribute to dL/dlogprobs
+    """
+    `loss = -logprobs[torch.arange(B), y_batch].mean()`
+    
+    Only the elements at positions (0, y_batch[0]), (1, y_batch[1]), ..., 
+    (batch_size-1, y_batch[batch_size-1]) of `logprobs` affect `loss`, hence these are
+    also the only elements in dloss/dlogprobs (=dlogprobs) that will have a nonzero 
+    gradient. 
+    """
     dlogprobs = torch.zeros_like(logprobs)
     dlogprobs[torch.arange(B), y_batch] = -1.0/B
     assert compare("dlogprobs", dlogprobs, logprobs)
@@ -117,62 +123,82 @@ def test_manual_backward():
     dprobs = 1.0/probs * dlogprobs  # Chain rule and d/dx ln(x) = 1/x
     assert compare("dprobs", dprobs, probs)
 
-    # `probs = counts * counts_sum_inv`
-    # `counts` has shape (B, vocab_size) and `counts_sum_inv` has shape (B, 1).
-    # Thus, `counts_sum_inv` is broadcasted to shape (B, vocab_size).
-    #
-    #   a11*b1 a12*b1 a13*b1 = c11 c12 c13
-    #   a21*b2 a22*b2 a23*b2 = c21 c22 c23
-    #   a31*b3 a32*b3 a33*b3 = c31 c32 c33
-    #
-    # The broadcasting means the variable (b1, b2, b3) is effectively used multiple
-    # times (3 in the example above). Thus, we need to accumulate the gradients every
-    # time we use it. This is also what PyTorch does during the backward pass: the
-    # gradient for each variable is summed across its branches.
+    """
+    `probs = counts * counts_sum_inv`
+    
+    `counts` has shape (B, vocab_size),
+    `counts_sum_inv` has shape (B, 1).
+    
+    Thus, `counts_sum_inv` is broadcasted to shape (B, vocab_size) in dimension 1.
+    Consider a toy example:
+
+        a11*b1 a12*b1 a13*b1 = c11 c12 c13
+        a21*b2 a22*b2 a23*b2 = c21 c22 c23
+        a31*b3 a32*b3 a33*b3 = c31 c32 c33
+
+    The broadcasting means that the variable (b1, b2, b3) is effectively used multiple
+    times (3 in the example above). Thus, we need to accumulate the gradients every
+    time we use it. This is also what PyTorch does during the backward pass: the
+    gradient for each variable is summed across its branches.
+    """
     dcounts_sum_inv = (dprobs * counts).sum(dim=1, keepdim=True)  # (B, 1)
     assert compare("dcounts_sum_inv", dcounts_sum_inv, counts_sum_inv)
     dcounts = dprobs * counts_sum_inv  # Broadcasting occurs: (B, V) x (B, 1) -> (B, V)
     # Can't check `dcounts` yet since `counts` is also used in another branch!
 
-    # `counts_sum_inv = counts_sum ** -1`
-    # `counts_sum` has shape (B, 1)
+    """
+    `counts_sum_inv = counts_sum ** -1`
+    
+    `counts_sum` has shape (B, 1). 
+    
+    d/dx x^(-1) = -1/x^2
+    """
     dcounts_sum = (-counts_sum ** -2) * dcounts_sum_inv  # (B, 1)
     assert compare("dcounts_sum", dcounts_sum, counts_sum)
 
-    # `counts_sum = counts.sum(dim=1, keepdim=True)`
-    # `counts` has shape (B, V)
-    # Two remarks:
-    #   1. This is the 2nd branch of `counts`, hence we need to accumulate.
-    #   2. Forward pass uses a sum, so backward pass needs to broadcast.
+    """
+    `counts_sum = counts.sum(dim=1, keepdim=True)`
+    
+    `counts` has shape (B, V).
+    
+    Two remarks:
+      1. This is the 2nd branch of `counts`, hence we need to accumulate.
+      2. Forward pass uses a sum, so backward pass needs to broadcast.
+      """
     dcounts += torch.ones_like(counts) * dcounts_sum  # (B, V) * (B, 1) -> (B, V)
     assert compare("dcounts", dcounts, counts)
 
-    # `counts = norm_logits.exp()`
-    # `norm_logits` has shape (B, V)
+    """
+    `counts = norm_logits.exp()`
+    
+    `norm_logits` has shape (B, V).
+    """
     dnorm_logits = norm_logits.exp() * dcounts
     assert compare("dnorm_logits", dnorm_logits, norm_logits)
 
-    # `norm_logits = logits - logit_maxes`
-    # `logits` has shape (B, V), `logit_maxes` has shape (B, 1).
+    """
+    `norm_logits = logits - logit_maxes`
+    
+    `logits` has shape (B, V), 
+    `logit_maxes` has shape (B, 1).
+    
+    Next, `logit_maxes` is broadcasted. Consider `c = a - b`:
+    
+        c11 c12 c13 = a11 a12 a13   b1
+        c21 c22 c23 = a21 a22 a23 - b2
+        c31 c32 c33 = a31 a32 a33   b3
+        
+    For example, c32 = a32 - b2. So (b1, b2, b3) is broadcasted across columns: thus, 
+    in the backward pass, because we keep reusing it, these are all separate branches
+    of use of that one variable, so we need to sum the gradients across the columns.
+    """
     dlogits = dnorm_logits * 1.0
     # Can't check `dlogits` yet because `logits` is used in another branch, namely the
     # one used to compute `logit_maxes`.
-    #
-    # Next, `logit_maxes` is broadcasted. Consider `c = a - b`:
-    #
-    #       c11 c12 c13 = a11 a12 a13   b1
-    #       c21 c22 c23 = a21 a22 a23 - b2
-    #       c31 c32 c33 = a31 a32 a33   b3
-    #
-    # For example, c32 = a32 - b2.
-    # (b1, b2, b3) is broadcasted across columns: thus, in the backward pass, because
-    # we keep reusing it, these are all separate branches of use of that one variable,
-    # and so we need to sum the gradients across the columns.
     dlogit_maxes = (dnorm_logits * -1.0).sum(dim=1, keepdim=True)
     assert compare("dlogits_maxes", dlogit_maxes, logit_maxes)
-    # In addition, `dlogit_maxes` should be close to 0: recall that
-    # subtracting it from the logits does not affect probs and therefore does not
-    # affect the loss.
+    # In addition, `dlogit_maxes` should be close to 0: recall that subtracting it from
+    # the logits does not affect probs and therefore does not affect the loss.
     assert torch.allclose(dlogit_maxes, torch.zeros_like(dlogit_maxes))
 
     """
