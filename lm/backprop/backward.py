@@ -120,7 +120,14 @@ def test_manual_backward():
     dlogprobs[torch.arange(B), y_batch] = -1.0/B
     assert compare("dlogprobs", dlogprobs, logprobs)
 
-    dprobs = 1.0/probs * dlogprobs  # Chain rule and d/dx ln(x) = 1/x
+    """
+    `logprobs = probs.log()`  
+    
+    `probs` has shape (B, vocab_size).
+    
+    Use the chain rule and d/dx ln(x) = 1/x
+    """
+    dprobs = 1.0/probs * dlogprobs
     assert compare("dprobs", dprobs, probs)
 
     """
@@ -141,10 +148,11 @@ def test_manual_backward():
     time we use it. This is also what PyTorch does during the backward pass: the
     gradient for each variable is summed across its branches.
     """
+    # Can't check `dcounts` yet since `counts` is also used in another branch!
+    dcounts = dprobs * counts_sum_inv  # Broadcasting occurs: (B, V) x (B, 1) -> (B, V)
+
     dcounts_sum_inv = (dprobs * counts).sum(dim=1, keepdim=True)  # (B, 1)
     assert compare("dcounts_sum_inv", dcounts_sum_inv, counts_sum_inv)
-    dcounts = dprobs * counts_sum_inv  # Broadcasting occurs: (B, V) x (B, 1) -> (B, V)
-    # Can't check `dcounts` yet since `counts` is also used in another branch!
 
     """
     `counts_sum_inv = counts_sum ** -1`
@@ -192,9 +200,10 @@ def test_manual_backward():
     in the backward pass, because we keep reusing it, these are all separate branches
     of use of that one variable, so we need to sum the gradients across the columns.
     """
-    dlogits = dnorm_logits * 1.0
     # Can't check `dlogits` yet because `logits` is used in another branch, namely the
     # one used to compute `logit_maxes`.
+    dlogits = dnorm_logits * 1.0
+
     dlogit_maxes = (dnorm_logits * -1.0).sum(dim=1, keepdim=True)
     assert compare("dlogits_maxes", dlogit_maxes, logit_maxes)
     # In addition, `dlogit_maxes` should be close to 0: recall that subtracting it from
@@ -305,16 +314,17 @@ def test_manual_backward():
     `bndiff` has shape (32, 64),
     `bnvar_inv` has shape (1, 64).
     
-    Thus, `bnvar_inv` is broadcasted, and we need to do a sum when computing
-    `dbnvar_inv`. 
+    Thus, `bnvar_inv` is broadcasted along dimension 0 and we need to do a sum along
+    this dimension when computing `dbnvar_inv`. 
     """
+    # Can't check yet because `bndiff` is used in another branch
+    dbndiff = dbnraw * bnvar_inv
+
     dbnvar_inv = (dbnraw * bndiff).sum(dim=0, keepdim=True)
     assert compare("dbnvar_inv", dbnvar_inv, bnvar_inv)
 
-    dbndiff = dbnraw * bnvar_inv
-    # Can't check yet because `bndiff` is used in another branch
-
-    """`bnvar_inv = (bnvar + 1e-5).rsqrt()`
+    """
+    `bnvar_inv = (bnvar + 1e-5).rsqrt()`
     
     `bnvar` has shape (1, 64).
     
@@ -369,8 +379,9 @@ def test_manual_backward():
     
     Thus, `bnmeani` is broadcasted, and we need to sum its gradients along dimension 0.
     """
-    dhprebn = dbndiff * 1.0
     # Can't check `dhprebn` yet because `hprebn` is used in another branch
+    dhprebn = dbndiff * 1.0
+
     dbnmeani = (dbndiff * -1.0).sum(dim=0, keepdim=True)
     assert compare("dbnmeani", dbnmeani, bnmeani)
 
