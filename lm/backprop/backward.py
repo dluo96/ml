@@ -175,10 +175,16 @@ def test_manual_backward():
     # affect the loss.
     assert torch.allclose(dlogit_maxes, torch.zeros_like(dlogit_maxes))
 
-    # `logit_maxes = logits.max(dim=1, keepdim=True).values`
-    # `logits` has shape (B, V)
-    # This is the 2nd branch where `logits` is used, hence we need to accumulate.
-    # First, calculate the local derivative dlogit_maxes/dlogits
+    """
+    `logit_maxes = logits.max(dim=1, keepdim=True).values`
+    
+    `logits` has shape (B, V).
+    
+    This is the second branch where `logits` is used, hence we need to accumulate its
+    gradient. 
+    
+    First, we calculate the local derivative dlogit_maxes/dlogits.
+    """
     local_derivative = torch.zeros_like(logits)
     indices = logits.max(dim=1, keepdim=True).indices
     local_derivative[torch.arange(B), indices] = 1.0
@@ -215,22 +221,37 @@ def test_manual_backward():
     dh = dlogits @ W2.T
     assert compare("dh", dh, h)
 
-    # Doing something similar for b gives: dLdb = a^T @ dLdf
-    # In our case, dLdb is dW2, a is h, and dLdf is dlogits
+    """
+    Doing something similar for b gives: 
+    
+        dLdb = a^T @ dLdf
+    
+    In our case, dLdb is dW2, a is h, and dLdf is dlogits.
+    """
     dW2 = h.T @ dlogits
     assert compare("dW2", dW2, W2)
 
-    # Now for the bias:
-    #       dL/dc1 = dLdf11 * 1 + dLdf21 * 1
-    #       dL/dc2 = dLdf12 * 1 + dLdf22 * 1
-    # This is summing across columns, so: dLdc = dLdf.sum(dim=1)
-    # In our case, dLdc is dLdb2 and dLdf is dlogits
+    """
+    Now for the bias:
+        dL/dc1 = dLdf11 * 1 + dLdf21 * 1
+        dL/dc2 = dLdf12 * 1 + dLdf22 * 1
+        
+    This is summing across columns, so: dLdc = dLdf.sum(dim=1).
+    In our case, dLdc is dLdb2 and dLdf is dlogits. 
+    """
     db2 = (dlogits * 1.0).sum(dim=0, keepdim=True)
     assert compare("db2", db2, b2)
 
-    # `h = torch.tanh(hpreact)`
-    # dL/dhpreact = dL/dh * dh/dhpreact = dL/dh * sech^2(hpreact)
-    # = dL/dh * (1 - tanh^2(hpreact)) = dL/dh * (1-h^2)
+    """
+    `h = torch.tanh(hpreact)`
+    
+    `hpreact` has shape (32, 64). 
+    
+    dL/dhpreact = dL/dh * dh/dhpreact 
+                = dL/dh * sech^2(hpreact)
+                = dL/dh * (1 - tanh^2(hpreact)) 
+                = dL/dh * (1 - h^2)
+    """
     dhpreact = dh * (1 - h ** 2)
     assert compare("dhpreact", dhpreact, hpreact)
 
@@ -265,10 +286,15 @@ def test_manual_backward():
     assert compare("dbnvar_inv", dbnvar_inv, bnvar_inv)
 
     dbndiff = dbnraw * bnvar_inv
-    # Can't check yet because `bndiff` is part of another branch
+    # Can't check yet because `bndiff` is used in another branch
 
-    # `bnvar_inv = (bnvar + 1e-5).rsqrt()`
-    # d/dx x^(-1/2) = -1/2 * x^(-3/2)
+    """`bnvar_inv = (bnvar + 1e-5).rsqrt()`
+    
+    `bnvar` has shape (1, 64).
+    
+    Use the power rule of differentiation:
+        d/dx x^(-1/2) = -1/2 * x^(-3/2)
+    """
     dbnvar = dbnvar_inv * (-1/2 * (bnvar + 1e-5) ** (-3/2))
     assert compare("dbnvar", dbnvar, bnvar)
 
@@ -299,8 +325,13 @@ def test_manual_backward():
     dbndiff2 = dbnvar * torch.ones_like(bndiff2) * 1.0 / (B - 1.0)
     assert compare("dbndiff2", dbndiff2, bndiff2)
 
-    # `bndiff2 = bndiff ** 2`
-    # This is the 2nd branch where `bndiff` is used, so we accumulate:
+    """`bndiff2 = bndiff ** 2`
+    
+    `bndiff` has shape (32, 64).
+    
+    This is the second branch where `bndiff` is used, so we need to accumulate the
+    gradients. 
+    """
     dbndiff += dbndiff2 * (2 * bndiff)
     assert compare("dbndiff", dbndiff, bndiff)
 
@@ -370,13 +401,19 @@ def test_manual_backward():
             dC[ix] += demb[k, j]  # Addition since a row could be used multiple times
     assert compare("dC", dC, C)
 
-    # Loss with a faster calculation of loss
+    """Backpropagating `loss = F.cross_entropy(logits, y_batch)`
+    
+    It can be shown that
+        dloss/dl_i = p_i        if i≠y
+        dloss/dl_i = p_i - 1    if i=y
+    """
+    # First, verify that the loss is the same
     loss_fast = F.cross_entropy(logits, y_batch)
     assert torch.allclose(loss_fast, loss)
-    # Simpler calculation of gradient of cross entropy
+    # Secondly, implement and check the faster gradient computation of cross entropy.
     dlogits = F.softmax(logits, dim=1)
-    dlogits[range(B), y_batch] -= 1
-    dlogits /= B
+    dlogits[range(B), y_batch] -= 1  # Since dloss/dl_i = p_i - 1 for i=y
+    dlogits /= B  # Need to divide since F.cross_entropy() computes the mean NLL
     assert compare("dlogits", dlogits, logits)
 
     # Faster calculation of batch norm
