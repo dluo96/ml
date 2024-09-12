@@ -39,17 +39,25 @@ class CausalSelfAttention(nn.Module):
         self.attn_dropout = nn.Dropout(config.dropout)
         self.resid_dropout = nn.Dropout(config.dropout)
 
-        # Causal mask to ensure that attention is only applied to the left in the input
-        # sequence
-        self.register_buffer(
-            "bias",
-            torch.tril(torch.ones(config.block_size, config.block_size)).view(
-                1, 1, config.block_size, config.block_size
-            ),
+        # Use flash attention if available (requires PyTorch >= 2.0)
+        self.use_flash_attn = hasattr(
+            torch.nn.functional, "scaled_dot_product_attention"
         )
+
+        # If not using flash attention, we need to manually construct an attention mask
+        if not self.use_flash_attn:
+            # Causal mask to ensure that attention is only applied to the left in the
+            # input sequence
+            self.register_buffer(
+                "bias",
+                torch.tril(torch.ones(config.block_size, config.block_size)).view(
+                    1, 1, config.block_size, config.block_size
+                ),
+            )
 
         self.n_head = config.n_head
         self.n_embd = config.n_embd
+        self.dropout = config.dropout
 
     def forward(self, x: Tensor) -> Tensor:
         B, T, C = x.size()  # Batch size, sequence length, embedding dim. (n_embd)
@@ -66,18 +74,30 @@ class CausalSelfAttention(nn.Module):
         v = v.view(B, T, self.n_head, C // self.n_head).transpose(1, 2)  # (B, nh, T, hs)
         # fmt: on
 
-        # Causal self-attention: (B, nh, T, hs) x (B, nh, hs, T) -> (B, nh, T, T)
-        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
+        if self.use_flash_attn:
+            # Efficient calculation of self attention using flash attention CUDA kernels
+            y = F.scaled_dot_product_attention(
+                q,
+                k,
+                v,
+                attn_mask=None,
+                dropout_p=self.dropout if self.training else 0,
+                is_causal=True,
+            )
+        else:
+            # Standard implementation of causal self attention
+            # (B, nh, T, hs) x (B, nh, hs, T) -> (B, nh, T, T)
+            att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
 
-        # Apply causal mask to prevent attending to future positions by setting those
-        # positions to -inf, ensuring they become zero after applying softmax
-        att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float("-inf"))
-        att = F.softmax(att, dim=-1)
+            # Apply causal mask to prevent attending to future positions by setting those
+            # positions to -inf, ensuring they become zero after applying softmax
+            att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float("-inf"))
+            att = F.softmax(att, dim=-1)
 
-        # Apply dropout to the attention weights
-        att = self.attn_dropout(att)
+            # Apply dropout to the attention weights
+            att = self.attn_dropout(att)
 
-        y = att @ v  # (B, nh, T, T) x (B, nh, T, hs) -> (B, nh, T, hs)
+            y = att @ v  # (B, nh, T, T) x (B, nh, T, hs) -> (B, nh, T, hs)
 
         # Combine the output from all attention heads by transposing and reshaping
         # back to the original embedding dimension:
