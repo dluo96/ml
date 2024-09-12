@@ -77,9 +77,9 @@ class CausalSelfAttention(nn.Module):
         if self.use_flash_attn:
             # Efficient calculation of self attention using flash attention CUDA kernels
             y = F.scaled_dot_product_attention(
-                q,
-                k,
-                v,
+                query=q,
+                key=k,
+                value=v,
                 attn_mask=None,
                 dropout_p=self.dropout if self.training else 0,
                 is_causal=True,
