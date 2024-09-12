@@ -39,9 +39,11 @@ class CausalSelfAttention(nn.Module):
         self.attn_dropout = nn.Dropout(config.dropout)
         self.resid_dropout = nn.Dropout(config.dropout)
 
-        # Use flash attention if available (requires PyTorch >= 2.0)
-        self.use_flash_attn = hasattr(
-            torch.nn.functional, "scaled_dot_product_attention"
+        # Enable flash attention if it is supported (requires PyTorch 2.0 or later) and
+        # if running on a CUDA GPU
+        self.use_flash_attn = (
+            hasattr(torch.nn.functional, "scaled_dot_product_attention")
+            and torch.cuda.is_available()
         )
 
         # If not using flash attention, we need to manually construct an attention mask
@@ -82,7 +84,7 @@ class CausalSelfAttention(nn.Module):
                 value=v,
                 attn_mask=None,
                 dropout_p=self.dropout if self.training else 0,
-                is_causal=True,
+                is_causal=True,  # Makes the attention mask lower triangular
             )
         else:
             # Standard implementation of causal self attention
