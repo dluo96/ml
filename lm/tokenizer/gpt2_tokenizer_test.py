@@ -97,28 +97,80 @@ class TestTokenizer(unittest.TestCase):
 
         # Run encoding without any merges
         self.tokenizer = Tokenizer(final_vocab_size=256)
-        vocab_size = len(self.tokenizer.encode(text))
-        self.assertEqual(vocab_size, 616)
+        num_tokens = len(self.tokenizer.encode(text))
+        self.assertEqual(num_tokens, 616)
         self.assertGreaterEqual(
-            vocab_size,
+            num_tokens,
             num_code_points,
-            msg="Every character will be encoded to at least 1 byte. Special "
-            "characters are usually encoded to 2/3/4 bytes, hence the vocabulary size "
-            "should be greater than or equal to the number of characters!",
+            msg="In UTF-8 encoding, every character is encoded to at least 1 byte "
+            "(special characters are typically encoded to 2/3/4 bytes), so the number "
+            "of tokens must be greater than or equal to the number of characters!",
         )
 
         # Run encoding with a single merge
-        self.tokenizer = Tokenizer(final_vocab_size=257)
-        self.assertEqual(len(self.tokenizer.encode(text)), 596)
+        final_vocab_size = 257
+        self.tokenizer = Tokenizer(final_vocab_size)
+        tokens = self.tokenizer.encode(text)
+        self.assertEqual(len(tokens), 596)
+        self.assertIn(final_vocab_size - 1, tokens, msg="Last token should be 256")
 
-        # assert top_pair == (101, 32)  # 101 is byte encoding for "e", 32 for " "
-        # assert chr(top_pair[0]) == "e"
-        # assert chr(top_pair[1]) == " "
+        # Run encoding with 10 merges
+        final_vocab_size = 266
+        self.tokenizer = Tokenizer(final_vocab_size)
+        tokens = self.tokenizer.encode(text)
+        self.assertIn(final_vocab_size - 1, tokens, msg="Last token should be 265")
+
+    def test_get_pair_counts(self):
+        # Test case 1: Normal list of integers
+        ids = [1, 2, 2, 3, 1, 2]
+        expected_pair_counts = {
+            (1, 2): 2,
+            (2, 2): 1,
+            (2, 3): 1,
+            (3, 1): 1,
+        }
+        pair_counts = self.tokenizer.get_pair_counts(ids)
+        self.assertEqual(pair_counts, expected_pair_counts)
+
+        # Test case 2: Empty list
+        ids = []
+        expected_pair_counts = {}
+        pair_counts = self.tokenizer.get_pair_counts(ids)
+        self.assertEqual(pair_counts, expected_pair_counts)
+
+        # Test case 3: List with one element
+        ids = [1]
+        expected_pair_counts = {}
+        pair_counts = self.tokenizer.get_pair_counts(ids)
+        self.assertEqual(pair_counts, expected_pair_counts)
+
+        # Test case 4: List with repeating consecutive elements
+        ids = [1, 1, 1, 1]
+        expected_pair_counts = {(1, 1): 3}
+        pair_counts = self.tokenizer.get_pair_counts(ids)
+        self.assertEqual(pair_counts, expected_pair_counts)
+
+        # Test case 5: Longer list of integers
+        ids = [1, 2, 3, 4, 5, 3, 4, 1, 2, 3, 4, 5]
+        expected_pair_counts = {
+            (1, 2): 2,
+            (2, 3): 2,
+            (3, 4): 3,
+            (4, 5): 2,
+            (5, 3): 1,
+            (4, 1): 1,
+        }
+        pair_counts = self.tokenizer.get_pair_counts(ids)
+        self.assertEqual(pair_counts, expected_pair_counts)
 
     def test_merge(self):
         self.assertEqual(
             self.tokenizer.merge([5, 6, 6, 7, 9, 1], pair=(6, 7), idx=99),
             [5, 6, 99, 9, 1],
+        )
+        self.assertEqual(
+            self.tokenizer.merge([1, 2, 1, 2, 1, 2], pair=(1, 2), idx=3),
+            [3, 3, 3],
         )
 
 

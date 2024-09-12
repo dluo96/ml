@@ -41,11 +41,15 @@ class Tokenizer:
 
         return ids
 
-    def merge(self, ids: list[int], pair: tuple[int, int], idx: int) -> list[int]:
-        """Create a new token (`idx`) for the provided `pair` and replace all occurrences
-        of it in `ids`.
+    def get_pair_counts(self, ids: list[int]) -> dict[tuple[int, int], int]:
+        pair_counts = {}
+        for pair in zip(ids, ids[1:]):  # Iterate consecutive elements
+            pair_counts[pair] = pair_counts.get(pair, 0) + 1
+        return pair_counts
 
-        This increases the vocabulary size by 1.
+    def merge(self, ids: list[int], pair: tuple[int, int], idx: int) -> list[int]:
+        """Create a new token (with index `idx`) for the specified `pair` and replace
+        all occurrences of it in `ids`. This increases the vocabulary size by 1.
         """
         new_ids = []
         i = 0  # Index for iterating through the original list of integers
@@ -58,9 +62,3 @@ class Tokenizer:
                 new_ids.append(ids[i])
                 i += 1
         return new_ids
-
-    def get_pair_counts(self, ids: list[int]) -> dict[tuple[int, int], int]:
-        pair_to_count = {}
-        for pair in zip(ids, ids[1:]):  # Iterate consecutive elements
-            pair_to_count[pair] = pair_to_count.get(pair, 0) + 1
-        return pair_to_count
