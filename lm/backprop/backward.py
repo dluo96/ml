@@ -1,13 +1,25 @@
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-
+from lm.model_config import Tensor
 from lm.datasets import MultiCharDataset
 
 
-def compare(name: str, dt: torch.Tensor, t: torch.Tensor):
+def compare(name: str, dt: Tensor, t: Tensor) -> bool:
+    """Compare the manually calculated gradient (of a tensor) with the gradient (of
+    the same tensor) as computed by PyTorch's backward().
+
+    Args:
+        name: label for the gradient tensor.
+        dt: manually computed gradient tensor
+        t: tensor whose gradient is computed by PyTorch's backward().
+
+    Returns:
+        Boolean indicating whether the manual computation of the tensor's gradient is
+            correct (exactly or approximately).
+    """
     exact = torch.all(dt == t.grad).item()
-    approx = torch.allclose(dt, t.grad, atol=1e-7)  # In case of floating point precision
+    approx = torch.allclose(dt, t.grad, atol=1e-7)  # Due to floating point precision
     max_diff = (dt - t.grad).abs().max().item()
     print(f"{name:15s}: Exact={str(exact):5s} | Approx={str(approx)} | Max diff={max_diff}")
     return exact or approx
@@ -15,23 +27,12 @@ def compare(name: str, dt: torch.Tensor, t: torch.Tensor):
 
 def test_manual_backward():
     # Prepare data
+    # fmt: off
     words = [
-        "emma",
-        "isabella",
-        "camila",
-        "sadie",
-        "faith",
-        "margaret",
-        "jasmine",
-        "kayla",
-        "morgan",
-        "parker",
-        "jacqueline",
-        "veronica",
-        "winter",
-        "alexia",
-        "itzel",
+        "emma", "isabella", "camila", "sadie", "faith", "margaret", "jasmine", "kayla",
+        "morgan", "parker", "jacqueline", "veronica", "winter", "alexia", "itzel",
     ]
+    # fmt: on
     dataset = MultiCharDataset(words, block_size=3)
     vocab_size = dataset.get_vocab_size()
     block_size = dataset.get_output_length()
@@ -92,9 +93,9 @@ def test_manual_backward():
     counts_sum_inv = counts_sum ** -1   # (B, 1)
     probs = counts * counts_sum_inv  # (B, vocab_size) * (B, 1) -> (B, vocab_size)
     logprobs = probs.log()  # (B, vocab_size)
-    loss = -logprobs[torch.arange(B), y_batch].mean()   # ()
+    loss = -logprobs[torch.arange(B), y_batch].mean()  # ()
 
-    # Perform backpropagation with PyTorch to get the true gradients
+    """Backpropagation with PyTorch to get the true gradients"""
     for p in parameters:
         p.grad = None
     # fmt: off
@@ -107,8 +108,10 @@ def test_manual_backward():
     # fmt: on
     loss.backward()
 
-    # Manual backwards pass
-    """
+    """Manual backward pass.
+    
+    We backpropagate through each step, starting from the end:
+    
     `loss = -logprobs[torch.arange(B), y_batch].mean()`
     
     Only the elements at positions (0, y_batch[0]), (1, y_batch[1]), ..., 
@@ -438,11 +441,15 @@ def test_manual_backward():
             dC[ix] += demb[k, j]  # Addition since a row could be used multiple times
     assert compare("dC", dC, C)
 
-    """Backpropagating `loss = F.cross_entropy(logits, y_batch)`
+    """Bonus: we backpropagate through a faster calculation of cross entropy:
+     
+     `loss = F.cross_entropy(logits, y_batch)`
     
     It can be shown that
         dloss/dl_i = p_i        if i≠y
         dloss/dl_i = p_i - 1    if i=y
+    
+    where `p_i` is a softmax probability. 
     """
     # First, verify that the loss is the same
     loss_fast = F.cross_entropy(logits, y_batch)
@@ -453,15 +460,15 @@ def test_manual_backward():
     dlogits /= B  # Need to divide since F.cross_entropy() computes the mean NLL
     assert compare("dlogits", dlogits, logits)
 
-    # Faster calculation of batch norm
+    """Bonus 2: we backpropagate through a faster calculation of batch norm. """
+    # First, verify that the result of the batch norm is the same
     hpreact_fast = bngain * (hprebn - hprebn.mean(dim=0, keepdim=True)) \
         / torch.sqrt(hprebn.var(dim=0, keepdim=True, unbiased=True) + 1e-5) \
         + bnbias
     assert torch.allclose(hpreact_fast, hpreact)
-    # Simpler calculation of gradient of batch norm
-    # dL/dhprebn = dL/dhpreact * dhpreact/dhprebn
-
-    dhprebn = bngain * bnvar_inv/B * \
-        (B * dhpreact - dhpreact.sum(dim=0) - B/(B-1) * bnraw * (dhpreact * bnraw).sum(dim=0))
-
+    # Secondly, implement and check the faster gradient computation of the batch norm
+    dhprebn = bngain * bnvar_inv/B * (
+                B * dhpreact - dhpreact.sum(dim=0) -
+                B/(B-1) * bnraw * (dhpreact * bnraw).sum(dim=0)
+            )
     assert compare("dhprebn", dhprebn, hprebn)
