@@ -14,6 +14,7 @@ def test_textual_data_in_python():
     assert ord("h") == 104
     assert ord("👋") == 128075
     assert ord("안") == 50504
+
     # fmt: off
     assert [ord(x) for x in "안녕하세요 👋 (hello in Korean!)"] == [
         50504, 45397, 54616, 49464, 50836, 32, 128075, 32, 40, 104, 101, 108, 108,
@@ -28,17 +29,18 @@ def test_textual_data_in_python():
     These encodings are the way by which we can take unicode text and translate it into
     binary data.
 
-    UTF-8 is the most common. It takes every code point and translates it to a
-    byte stream (a sequence of bytes). This byte stream is between 1 and 4 bytes (so it
-    is a variable length encoding). Out of the above, UTF-8 is the only encoding that
-    is backwards compatible to the much simpler ASCII encoding of text.
+    UTF-8 encoding is the most common. It takes every code point and translates it to a
+    byte stream (a sequence of bytes) between 1 and 4 bytes (so it is a variable length
+    encoding). Out of the three encodings above, UTF-8 is the only encoding that is
+    backwards compatible to the much simpler ASCII encoding of text.
     """
     # Encode sentence above in UTF-8
     utf8_encoding_raw_bytes = "안녕하세요 👋 (hello in Korean!)".encode("utf-8")
-    assert (
-        utf8_encoding_raw_bytes
-        == b"\xec\x95\x88\xeb\x85\x95\xed\x95\x98\xec\x84\xb8\xec\x9a\x94 \xf0\x9f\x91\x8b (hello in Korean!)"
-    )
+    # fmt: off
+    assert utf8_encoding_raw_bytes == (b"\xec\x95\x88\xeb\x85\x95\xed\x95\x98\xec\x84"
+                                       b"\xb8\xec\x9a\x94 \xf0\x9f\x91\x8b (hello in "
+                                       b"Korean!)")
+    # fmt: on
 
     # Wrap with list to convert raw bytes to integers
     utf8_encoding_integers = list(utf8_encoding_raw_bytes)
@@ -50,19 +52,26 @@ def test_textual_data_in_python():
     ]
     # fmt: on
 
-    # If we used UTF-8 naively, we would have a vocabulary size of 256 (2^8 because we have
-    # 1-4 bytes per character), but this is too small since it would lead to sentences
-    # to be extremely long once tokenized. Thus, we don't want to use the raw bytes of
-    # the UTF-8 encoding.
-    # We want to support a larger vocabulary size that we can tune as a hyperparameter.
-    # However, we want to stick with the UTF-8 encoding. How do we do this? We turn to
-    # the byte pair encoding algorithm. This allows us to compress the byte sequences
-    # to a variable length.
-
-    # Most English characters are converted to 1 byte, whereas special characters are
-    # converted into 2/3/4 bytes.
-    assert len("h".encode("utf-8")) == 1
+    # Common characters (e.g. English letters) are usually encoded to 1 byte whereas
+    # many special characters are converted into 2/3/4 bytes
+    assert len("h".encode("utf-8")) == 1, "h should be encoded to 1 byte"
+    assert list("h".encode("utf-8")) == [104]
+    assert len("👋".encode("utf-8")) == 4, "👋 should be encoded to 4 bytes"
+    assert list("👋".encode("utf-8")) == [240, 159, 145, 139]
     assert len("안".encode("utf-8")) == 3, "안 should be encoded to 3 bytes"
+    assert list("안".encode("utf-8")) == [236, 149, 136]
+
+    """If we used UTF-8 naively, we would have a vocabulary size of 2^8 = 256 because
+    each character (unicode code point) becomes 1-4 bytes, and each byte (8 bits) is in
+    the range 0, ..., 255 (= 2^8 - 1). This vocabulary size is too small since it would
+    lead to sentences being extremely long once tokenized. Thus, we don't want to use
+    the raw bytes of the UTF-8 encoding.
+
+    We want to support a larger vocabulary size that we can tune as a hyperparameter.
+    However, we still want touse the UTF-8 encoding. How do we do this? We turn to the
+    byte pair encoding algorithm. This will allow us to compress the byte sequences to
+    a variable length.
+    """
 
 
 class TestTokenizer(unittest.TestCase):
@@ -86,6 +95,7 @@ class TestTokenizer(unittest.TestCase):
         num_code_points = len(text)
         self.assertEqual(num_code_points, 533)
 
+        # Run encoding without any merges
         self.tokenizer = Tokenizer(final_vocab_size=256)
         vocab_size = len(self.tokenizer.encode(text))
         self.assertEqual(vocab_size, 616)
@@ -97,6 +107,7 @@ class TestTokenizer(unittest.TestCase):
             "should be greater than or equal to the number of characters!",
         )
 
+        # Run encoding with a single merge
         self.tokenizer = Tokenizer(final_vocab_size=257)
         self.assertEqual(len(self.tokenizer.encode(text)), 596)
 
@@ -109,3 +120,7 @@ class TestTokenizer(unittest.TestCase):
             self.tokenizer.merge([5, 6, 6, 7, 9, 1], pair=(6, 7), idx=99),
             [5, 6, 99, 9, 1],
         )
+
+
+if __name__ == "__main__":
+    unittest.main()
