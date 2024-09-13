@@ -53,7 +53,6 @@ class BytePairEncodingTokenizer:
             merges[top_pair] = idx
 
         self.merges = merges
-        return ids
 
     def decode(self, ids: list[int]) -> str:
         """Get the text corresponding to a sequence of integers each in the range

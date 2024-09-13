@@ -119,7 +119,6 @@ class TestTokenizer(unittest.TestCase):
             self.tokenizer.merges.values(),
             msg="Newly added token index should be present in merges!",
         )
-
         tokens = self.tokenizer.encode(self.text)
         self.assertEqual(len(tokens), 596)
         self.assertIn(final_vocab_size - 1, tokens, msg="Last token should be 256")
@@ -140,7 +139,6 @@ class TestTokenizer(unittest.TestCase):
             "that a newly created token (257 in this case) is also eligible for "
             "merging later on!",
         )
-
         tokens = self.tokenizer.encode(self.text)
         self.assertIn(final_vocab_size - 1, tokens, msg="Last token should be 265")
 
