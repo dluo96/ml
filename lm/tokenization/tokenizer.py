@@ -21,9 +21,13 @@ class BytePairEncodingTokenizer:
     def __init__(self, final_vocab_size: int):
         self.num_merges = final_vocab_size - 256
 
-    def encode(self, text: str) -> tuple[list[int], dict[tuple[int, int], int]]:
-        tokens = text.encode("utf-8")  # Raw bytes
-        tokens = list(map(int, tokens))  # Convert to list of integers in 0, ..., 255
+    def train(self, text: str) -> tuple[list[int], dict[tuple[int, int], int]]:
+        # Raw bytes
+        tokens = text.encode("utf-8")
+
+        # Convert raw bytes to list of bytes in integer representation. Each byte is
+        # represented by an integer in the range 0-255.
+        tokens = list(map(int, tokens))
 
         # The more steps we do, the shorter our sequence, but the larger our vocabulary
         # In practice, there is a sweet spot that works best. We make the number of
@@ -71,6 +75,27 @@ class BytePairEncodingTokenizer:
         text = tokens.decode("utf-8", errors="replace")
 
         return text
+
+    def encode(self, text: str, merges: dict[tuple[int, int], int]) -> list[int]:
+        tokens = list(text.encode("utf-8"))
+
+        while len(tokens) >= 2:  # Need at least two tokens, otherwise `min` will fail
+            pair_counts = self.get_pair_counts(tokens)
+
+            # Identify pair to merge: we want the pair with the lowest index in `merges`
+            # Ranks by value (token index) and returns the associated key (pair)
+            # The inf is a fallback for pairs that are not in `merges` - they are not
+            # eligible for merging and the inf guarantees they are not selected
+            pair = min(pair_counts, key=lambda p: merges.get(p, float("inf")))
+
+            # Edge case: none of the pairs were in `merges` and there is nothing to merge
+            if pair not in merges:
+                break
+
+            idx = merges[pair]
+            tokens = self.merge(tokens, pair, idx)
+
+        return tokens
 
     def get_pair_counts(self, ids: list[int]) -> dict[tuple[int, int], int]:
         pair_counts = {}

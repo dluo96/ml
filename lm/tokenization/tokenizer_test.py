@@ -82,7 +82,7 @@ class TestTokenizer(unittest.TestCase):
     def test_init(self):
         self.assertEqual(self.tokenizer.num_merges, self.final_vocab_size - 256)
 
-    def test_encode(self):
+    def test_train(self):
         text = (
             "Ｕｎｉｃｏｄｅ! 🅤🅝🅘🅒🅞🅓🅔‽ 🇺‌🇳‌🇮‌🇨‌🇴‌🇩‌🇪! 😄 The very name strikes fear and awe "
             "into the hearts of programmers worldwide. We all know we ought to “support Unicode” "
@@ -97,7 +97,7 @@ class TestTokenizer(unittest.TestCase):
 
         # Run encoding without any merges
         self.tokenizer = BytePairEncodingTokenizer(final_vocab_size=256)
-        tokens, _ = self.tokenizer.encode(text)
+        tokens, _ = self.tokenizer.train(text)
         num_tokens = len(tokens)
         self.assertEqual(num_tokens, 616)
         self.assertGreaterEqual(
@@ -111,14 +111,14 @@ class TestTokenizer(unittest.TestCase):
         # Run encoding with a single merge
         final_vocab_size = 257
         self.tokenizer = BytePairEncodingTokenizer(final_vocab_size)
-        tokens, _ = self.tokenizer.encode(text)
+        tokens, _ = self.tokenizer.train(text)
         self.assertEqual(len(tokens), 596)
         self.assertIn(final_vocab_size - 1, tokens, msg="Last token should be 256")
 
         # Run encoding with 10 merges
         final_vocab_size = 266
         self.tokenizer = BytePairEncodingTokenizer(final_vocab_size)
-        tokens, merges = self.tokenizer.encode(text)
+        tokens, merges = self.tokenizer.train(text)
         self.assertIn(final_vocab_size - 1, tokens, msg="Last token should be 265")
         self.assertIn(
             (257, 133),
@@ -195,7 +195,7 @@ class TestTokenizer(unittest.TestCase):
         self.tokenizer = BytePairEncodingTokenizer(final_vocab_size)
 
         # Encode the text
-        tokens, merges = self.tokenizer.encode(text)
+        tokens, merges = self.tokenizer.train(text)
 
         # Decode and recover the original text
         decoded_text = self.tokenizer.decode(tokens, merges)
@@ -206,9 +206,38 @@ class TestTokenizer(unittest.TestCase):
         # does not conform to the UTF-8 encoding rules.
         self.assertRaises(UnicodeDecodeError, lambda: bytes([128]).decode("utf-8"))
 
-        # This is handled by setting the `errors="replace"` argument in decode, which
-        # will replace invalid bytes with the Unicode replacement character, �.
+        # To handle invalid start bytes, we set the `errors="replace"` argument in
+        # decode, which replaces invalid bytes with the Unicode replacement character �.
         self.assertEqual(self.tokenizer.decode([128], merges), "�")
+
+    def test_encode(self):
+        text = (
+            "Ｕｎｉｃｏｄｅ! 🅤🅝🅘🅒🅞🅓🅔‽ 🇺‌🇳‌🇮‌🇨‌🇴‌🇩‌🇪! 😄 The very name strikes fear and awe "
+            "into the hearts of programmers worldwide. We all know we ought to “support Unicode” "
+            "in our software (whatever that means—like using wchar_t for all the strings, right?)."
+            " But Unicode can be abstruse, and diving into the thousand-page Unicode Standard plus "
+            "its dozens of supplementary annexes, reports, and notes can be more than a little "
+            "intimidating. I don’t blame programmers for still finding the whole thing mysterious, "
+            "even 30 years after Unicode’s inception."
+        )
+        final_vocab_size = 276
+        self.tokenizer = BytePairEncodingTokenizer(final_vocab_size)
+        tokens, merges = self.tokenizer.train(text)
+
+        # Test encoding
+        self.assertEqual(
+            self.tokenizer.encode("hello world!", merges),
+            [104, 101, 108, 108, 111, 32, 119, 270, 108, 100, 33],
+        )
+
+        # Test that decoding the encoded text recovers the original text
+        self.assertEqual(
+            self.tokenizer.decode(
+                self.tokenizer.encode("hello world!", merges), merges
+            ),
+            "hello world!",
+            msg="Decoding the encoded text should recover the original text!",
+        )
 
 
 if __name__ == "__main__":
