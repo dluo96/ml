@@ -18,11 +18,10 @@ class BytePairEncodingTokenizer:
     tokenizer can be thought of as a translation layer.
     """
 
-    def __init__(self, final_vocab_size: int):
-        self.num_merges = final_vocab_size - 256
+    def __init__(self):
         self.merges: dict[tuple[int, int], int] = {}
 
-    def train(self, text: str) -> None:
+    def train(self, text: str, final_vocab_size: int) -> None:
         # Raw bytes
         tokens = text.encode("utf-8")
 
@@ -34,8 +33,9 @@ class BytePairEncodingTokenizer:
         # In practice, there is a sweet spot that works best. We make the number of
         # steps a configurable hyperparameter.
         ids = list(tokens)  # Create copy
+        num_merges = final_vocab_size - 256
         merges = {}  # Start with leaves of tree
-        for i in range(self.num_merges):
+        for i in range(num_merges):
             # Iterate over the tokens to determine how often each byte pair occurs
             pair_counts = self.get_pair_counts(ids)
 

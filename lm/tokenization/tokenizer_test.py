@@ -78,11 +78,9 @@ def test_textual_data_in_python():
 
 class TestTokenizer(unittest.TestCase):
     def setUp(self):
-        self.final_vocab_size = 257
-        self.tokenizer = BytePairEncodingTokenizer(self.final_vocab_size)
+        self.tokenizer = BytePairEncodingTokenizer()
 
     def test_init(self):
-        self.assertEqual(self.tokenizer.num_merges, self.final_vocab_size - 256)
         self.assertEqual(self.tokenizer.merges, {})
 
     def test_train(self):
@@ -98,9 +96,10 @@ class TestTokenizer(unittest.TestCase):
         num_code_points = len(text)
         self.assertEqual(num_code_points, 533)
 
-        # Run encoding without any merges
-        self.tokenizer = BytePairEncodingTokenizer(final_vocab_size=256)
-        tokens = self.tokenizer.train(text)
+        # Train w/o any merges
+        self.tokenizer = BytePairEncodingTokenizer()
+        self.tokenizer.train(text, final_vocab_size=256)
+        tokens = self.tokenizer.encode(text)
         num_tokens = len(tokens)
         self.assertEqual(num_tokens, 616)
         self.assertGreaterEqual(
@@ -113,15 +112,17 @@ class TestTokenizer(unittest.TestCase):
 
         # Run encoding with a single merge
         final_vocab_size = 257
-        self.tokenizer = BytePairEncodingTokenizer(final_vocab_size)
-        tokens = self.tokenizer.train(text)
+        self.tokenizer = BytePairEncodingTokenizer()
+        self.tokenizer.train(text, final_vocab_size)
+        tokens = self.tokenizer.encode(text)
         self.assertEqual(len(tokens), 596)
         self.assertIn(final_vocab_size - 1, tokens, msg="Last token should be 256")
 
         # Run encoding with 10 merges
         final_vocab_size = 266
-        self.tokenizer = BytePairEncodingTokenizer(final_vocab_size)
-        tokens = self.tokenizer.train(text)
+        self.tokenizer = BytePairEncodingTokenizer()
+        self.tokenizer.train(text, final_vocab_size)
+        tokens = self.tokenizer.encode(text)
         self.assertIn(final_vocab_size - 1, tokens, msg="Last token should be 265")
         self.assertIn(
             (257, 133),
@@ -195,7 +196,7 @@ class TestTokenizer(unittest.TestCase):
             "even 30 years after Unicode’s inception."
         )
         final_vocab_size = 276
-        self.tokenizer = BytePairEncodingTokenizer(final_vocab_size)
+        self.tokenizer = BytePairEncodingTokenizer()
 
         # Encode the text
         tokens = self.tokenizer.encode(text)
@@ -224,8 +225,8 @@ class TestTokenizer(unittest.TestCase):
             "even 30 years after Unicode’s inception."
         )
         final_vocab_size = 276
-        self.tokenizer = BytePairEncodingTokenizer(final_vocab_size)
-        self.tokenizer.train(text)
+        self.tokenizer = BytePairEncodingTokenizer()
+        self.tokenizer.train(text, final_vocab_size)
 
         # Test encoding
         self.assertEqual(
