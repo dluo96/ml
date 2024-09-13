@@ -1,5 +1,6 @@
-class Tokenizer:
-    """Implementation of GPT-2 tokenizer, which uses the byte pair encoding algorithm.
+class BytePairEncodingTokenizer:
+    """Implementation of GPT-2 tokenizer, which uses the byte pair encoding (BPE)
+    algorithm.
 
     Suppose we have a byte sequence (vocabulary size of 256). We will go through it and
     find the byte pairs that occur the most. We will iteratively define new tokens,

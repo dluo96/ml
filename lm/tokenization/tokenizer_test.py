@@ -1,6 +1,6 @@
 import unittest
 
-from lm.tokenizer.gpt2_tokenizer import Tokenizer
+from lm.tokenization.tokenizer import BytePairEncodingTokenizer
 
 
 def test_textual_data_in_python():
@@ -77,7 +77,7 @@ def test_textual_data_in_python():
 class TestTokenizer(unittest.TestCase):
     def setUp(self):
         self.final_vocab_size = 257
-        self.tokenizer = Tokenizer(self.final_vocab_size)
+        self.tokenizer = BytePairEncodingTokenizer(self.final_vocab_size)
 
     def test_init(self):
         self.assertEqual(self.tokenizer.num_merges, self.final_vocab_size - 256)
@@ -96,7 +96,7 @@ class TestTokenizer(unittest.TestCase):
         self.assertEqual(num_code_points, 533)
 
         # Run encoding without any merges
-        self.tokenizer = Tokenizer(final_vocab_size=256)
+        self.tokenizer = BytePairEncodingTokenizer(final_vocab_size=256)
         tokens, _ = self.tokenizer.encode(text)
         num_tokens = len(tokens)
         self.assertEqual(num_tokens, 616)
@@ -110,14 +110,14 @@ class TestTokenizer(unittest.TestCase):
 
         # Run encoding with a single merge
         final_vocab_size = 257
-        self.tokenizer = Tokenizer(final_vocab_size)
+        self.tokenizer = BytePairEncodingTokenizer(final_vocab_size)
         tokens, _ = self.tokenizer.encode(text)
         self.assertEqual(len(tokens), 596)
         self.assertIn(final_vocab_size - 1, tokens, msg="Last token should be 256")
 
         # Run encoding with 10 merges
         final_vocab_size = 266
-        self.tokenizer = Tokenizer(final_vocab_size)
+        self.tokenizer = BytePairEncodingTokenizer(final_vocab_size)
         tokens, merges = self.tokenizer.encode(text)
         self.assertIn(final_vocab_size - 1, tokens, msg="Last token should be 265")
         self.assertIn(
