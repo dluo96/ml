@@ -8,6 +8,12 @@ class Tokenizer:
 
     We end up with an algo for taking an arbitrary sequence and encoding, as well as
     decoding it back to strings.
+
+    Note: the tokenizer is a completely separate, independent module from the LLM. It
+    has its own training dataset of text (which could be different from that of the
+    LLM), on which you train the vocabulary using the Byte Pair Encoding (BPE) algorithm.
+    It then translates back and forth between raw text and sequences of tokens. The LLM
+    only ever sees the tokens and never directly deals with any text.
     """
 
     def __init__(self, final_vocab_size: int):
