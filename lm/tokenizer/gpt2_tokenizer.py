@@ -13,7 +13,7 @@ class Tokenizer:
     def __init__(self, final_vocab_size: int):
         self.num_merges = final_vocab_size - 256
 
-    def encode(self, text: str) -> list[int]:
+    def encode(self, text: str) -> tuple[list[int], dict[tuple[int, int], int]]:
         tokens = text.encode("utf-8")  # Raw bytes
         tokens = list(map(int, tokens))  # Convert to list of integers in 0, ..., 255
 
@@ -39,7 +39,7 @@ class Tokenizer:
 
             merges[top_pair] = idx
 
-        return ids
+        return ids, merges
 
     def get_pair_counts(self, ids: list[int]) -> dict[tuple[int, int], int]:
         pair_counts = {}

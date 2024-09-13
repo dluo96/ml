@@ -97,7 +97,8 @@ class TestTokenizer(unittest.TestCase):
 
         # Run encoding without any merges
         self.tokenizer = Tokenizer(final_vocab_size=256)
-        num_tokens = len(self.tokenizer.encode(text))
+        tokens, _ = self.tokenizer.encode(text)
+        num_tokens = len(tokens)
         self.assertEqual(num_tokens, 616)
         self.assertGreaterEqual(
             num_tokens,
@@ -110,15 +111,22 @@ class TestTokenizer(unittest.TestCase):
         # Run encoding with a single merge
         final_vocab_size = 257
         self.tokenizer = Tokenizer(final_vocab_size)
-        tokens = self.tokenizer.encode(text)
+        tokens, _ = self.tokenizer.encode(text)
         self.assertEqual(len(tokens), 596)
         self.assertIn(final_vocab_size - 1, tokens, msg="Last token should be 256")
 
         # Run encoding with 10 merges
         final_vocab_size = 266
         self.tokenizer = Tokenizer(final_vocab_size)
-        tokens = self.tokenizer.encode(text)
+        tokens, merges = self.tokenizer.encode(text)
         self.assertIn(final_vocab_size - 1, tokens, msg="Last token should be 265")
+        self.assertIn(
+            (257, 133),
+            merges,
+            msg="The pair (257, 133) should be present in merges, which demonstrates "
+            "that a newly created token (257 in this case) is also eligible for "
+            "merging later on!",
+        )
 
     def test_get_pair_counts(self):
         # Test case 1: Normal list of integers
