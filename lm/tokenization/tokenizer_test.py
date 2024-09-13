@@ -79,12 +79,7 @@ def test_textual_data_in_python():
 class TestTokenizer(unittest.TestCase):
     def setUp(self):
         self.tokenizer = BytePairEncodingTokenizer()
-
-    def test_init(self):
-        self.assertEqual(self.tokenizer.merges, {})
-
-    def test_train(self):
-        text = (
+        self.text = (
             "Ｕｎｉｃｏｄｅ! 🅤🅝🅘🅒🅞🅓🅔‽ 🇺‌🇳‌🇮‌🇨‌🇴‌🇩‌🇪! 😄 The very name strikes fear and awe "
             "into the hearts of programmers worldwide. We all know we ought to “support Unicode” "
             "in our software (whatever that means—like using wchar_t for all the strings, right?)."
@@ -93,13 +88,18 @@ class TestTokenizer(unittest.TestCase):
             "intimidating. I don’t blame programmers for still finding the whole thing mysterious, "
             "even 30 years after Unicode’s inception."
         )
-        num_code_points = len(text)
+
+    def test_init(self):
+        self.assertEqual(self.tokenizer.merges, {})
+
+    def test_train(self):
+        num_code_points = len(self.text)
         self.assertEqual(num_code_points, 533)
 
         # Train w/o any merges
         self.tokenizer = BytePairEncodingTokenizer()
-        self.tokenizer.train(text, final_vocab_size=256)
-        tokens = self.tokenizer.encode(text)
+        self.tokenizer.train(self.text, final_vocab_size=256)
+        tokens = self.tokenizer.encode(self.text)
         num_tokens = len(tokens)
         self.assertEqual(num_tokens, 616)
         self.assertGreaterEqual(
@@ -110,20 +110,29 @@ class TestTokenizer(unittest.TestCase):
             "of tokens must be greater than or equal to the number of characters!",
         )
 
-        # Run encoding with a single merge
+        # Run encoding with 1 merge
         final_vocab_size = 257
         self.tokenizer = BytePairEncodingTokenizer()
-        self.tokenizer.train(text, final_vocab_size)
-        tokens = self.tokenizer.encode(text)
+        self.tokenizer.train(self.text, final_vocab_size)
+        self.assertIn(
+            final_vocab_size - 1,
+            self.tokenizer.merges.values(),
+            msg="Newly added token index should be present in merges!",
+        )
+
+        tokens = self.tokenizer.encode(self.text)
         self.assertEqual(len(tokens), 596)
         self.assertIn(final_vocab_size - 1, tokens, msg="Last token should be 256")
 
         # Run encoding with 10 merges
         final_vocab_size = 266
         self.tokenizer = BytePairEncodingTokenizer()
-        self.tokenizer.train(text, final_vocab_size)
-        tokens = self.tokenizer.encode(text)
-        self.assertIn(final_vocab_size - 1, tokens, msg="Last token should be 265")
+        self.tokenizer.train(self.text, final_vocab_size)
+        self.assertIn(
+            final_vocab_size - 1,
+            self.tokenizer.merges.values(),
+            msg="Newly added token index should be present in merges!",
+        )
         self.assertIn(
             (257, 133),
             self.tokenizer.merges,
@@ -131,6 +140,9 @@ class TestTokenizer(unittest.TestCase):
             "that a newly created token (257 in this case) is also eligible for "
             "merging later on!",
         )
+
+        tokens = self.tokenizer.encode(self.text)
+        self.assertIn(final_vocab_size - 1, tokens, msg="Last token should be 265")
 
     def test_get_pair_counts(self):
         # Test case 1: Normal list of integers
@@ -186,24 +198,15 @@ class TestTokenizer(unittest.TestCase):
         )
 
     def test_decode(self):
-        text = (
-            "Ｕｎｉｃｏｄｅ! 🅤🅝🅘🅒🅞🅓🅔‽ 🇺‌🇳‌🇮‌🇨‌🇴‌🇩‌🇪! 😄 The very name strikes fear and awe "
-            "into the hearts of programmers worldwide. We all know we ought to “support Unicode” "
-            "in our software (whatever that means—like using wchar_t for all the strings, right?)."
-            " But Unicode can be abstruse, and diving into the thousand-page Unicode Standard plus "
-            "its dozens of supplementary annexes, reports, and notes can be more than a little "
-            "intimidating. I don’t blame programmers for still finding the whole thing mysterious, "
-            "even 30 years after Unicode’s inception."
-        )
         final_vocab_size = 276
         self.tokenizer = BytePairEncodingTokenizer()
 
         # Encode the text
-        tokens = self.tokenizer.encode(text)
+        tokens = self.tokenizer.encode(self.text)
 
         # Decode and recover the original text
         decoded_text = self.tokenizer.decode(tokens)
-        self.assertEqual(text, decoded_text)
+        self.assertEqual(self.text, decoded_text)
 
         # Verify that there are invalid start bytes: for example, 128 is an invalid
         # start byte in UTF-8 encoding: in binary, 128 is a 1 followed by 0s, which
@@ -215,18 +218,9 @@ class TestTokenizer(unittest.TestCase):
         self.assertEqual(self.tokenizer.decode([128]), "�")
 
     def test_encode(self):
-        text = (
-            "Ｕｎｉｃｏｄｅ! 🅤🅝🅘🅒🅞🅓🅔‽ 🇺‌🇳‌🇮‌🇨‌🇴‌🇩‌🇪! 😄 The very name strikes fear and awe "
-            "into the hearts of programmers worldwide. We all know we ought to “support Unicode” "
-            "in our software (whatever that means—like using wchar_t for all the strings, right?)."
-            " But Unicode can be abstruse, and diving into the thousand-page Unicode Standard plus "
-            "its dozens of supplementary annexes, reports, and notes can be more than a little "
-            "intimidating. I don’t blame programmers for still finding the whole thing mysterious, "
-            "even 30 years after Unicode’s inception."
-        )
         final_vocab_size = 276
         self.tokenizer = BytePairEncodingTokenizer()
-        self.tokenizer.train(text, final_vocab_size)
+        self.tokenizer.train(self.text, final_vocab_size)
 
         # Test encoding
         self.assertEqual(
