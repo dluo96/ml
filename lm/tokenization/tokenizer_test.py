@@ -181,6 +181,35 @@ class TestTokenizer(unittest.TestCase):
             [3, 3, 3],
         )
 
+    def test_decode(self):
+        text = (
+            "Ｕｎｉｃｏｄｅ! 🅤🅝🅘🅒🅞🅓🅔‽ 🇺‌🇳‌🇮‌🇨‌🇴‌🇩‌🇪! 😄 The very name strikes fear and awe "
+            "into the hearts of programmers worldwide. We all know we ought to “support Unicode” "
+            "in our software (whatever that means—like using wchar_t for all the strings, right?)."
+            " But Unicode can be abstruse, and diving into the thousand-page Unicode Standard plus "
+            "its dozens of supplementary annexes, reports, and notes can be more than a little "
+            "intimidating. I don’t blame programmers for still finding the whole thing mysterious, "
+            "even 30 years after Unicode’s inception."
+        )
+        final_vocab_size = 276
+        self.tokenizer = BytePairEncodingTokenizer(final_vocab_size)
+
+        # Encode the text
+        tokens, merges = self.tokenizer.encode(text)
+
+        # Decode and recover the original text
+        decoded_text = self.tokenizer.decode(tokens, merges)
+        self.assertEqual(text, decoded_text)
+
+        # Verify that there are invalid start bytes: for example, 128 is an invalid
+        # start byte in UTF-8 encoding: in binary, 128 is a 1 followed by 0s, which
+        # does not conform to the UTF-8 encoding rules.
+        self.assertRaises(UnicodeDecodeError, lambda: bytes([128]).decode("utf-8"))
+
+        # This is handled by setting the `errors="replace"` argument in decode, which
+        # will replace invalid bytes with the Unicode replacement character, �.
+        self.assertEqual(self.tokenizer.decode([128], merges), "�")
+
 
 if __name__ == "__main__":
     unittest.main()

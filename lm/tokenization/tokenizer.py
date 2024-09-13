@@ -14,7 +14,8 @@ class BytePairEncodingTokenizer:
     has its own training dataset of text (which could be different from that of the
     LLM), on which you train the vocabulary using the Byte Pair Encoding (BPE) algorithm.
     It then translates back and forth between raw text and sequences of tokens. The LLM
-    only ever sees the tokens and never directly deals with any text.
+    only ever sees the tokens and never directly deals with any text. Therefore, the
+    tokenizer can be thought of as a translation layer.
     """
 
     def __init__(self, final_vocab_size: int):
@@ -41,12 +42,35 @@ class BytePairEncodingTokenizer:
             idx = 256 + i
 
             # Merge the new token and get the updated list of integers
-            print(f"Merging pair {top_pair} into a new token with {idx=}")
+            print(f"Merging {top_pair=} into a new token with {idx=}")
             ids = self.merge(ids, top_pair, idx)
 
             merges[top_pair] = idx
 
         return ids, merges
+
+    def decode(self, ids: list[int], merges: dict[tuple[int, int], int]) -> str:
+        """Get the text corresponding to a sequence of integers each in the range
+        0, ..., vocab_size - 1.
+        """
+        # Create a mapping from token id to byte object
+        vocab = {idx: bytes([idx]) for idx in range(256)}
+
+        # It is important that this runs in the order in which we inserted items
+        # into `merges`. This is the default case for `.items()` in Python >=3.7
+        for (p0, p1), idx in merges.items():
+            vocab[idx] = vocab[p0] + vocab[p1]  # Addition of two bytes objects
+
+        # Get raw bytes
+        tokens = b"".join(vocab[idx] for idx in ids)
+
+        # Decode with UTF-8. Importantly, not every byte sequence is valid UTF-8.
+        # If the language model predicts tokens in a bad manner, then they might not
+        # be valid UTF-8, and so we won't be able to decode them. The standard practice
+        # is to replace them with the Unicode replacement character.
+        text = tokens.decode("utf-8", errors="replace")
+
+        return text
 
     def get_pair_counts(self, ids: list[int]) -> dict[tuple[int, int], int]:
         pair_counts = {}
