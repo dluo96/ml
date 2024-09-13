@@ -11,6 +11,12 @@ name = "lm"
 readme = "README.md"
 requires-python = ">=3.11.0"
 version = "0.0.1"
+dependencies = ["torch>=2.0.0"]
+
+[project.optional-dependencies]
+dev = ["pre-commit", "pytest"]
+tokenization = ["regex", "tiktoken"]
+
 
 [tool.isort]
 include_trailing_comma = true
