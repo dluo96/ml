@@ -32,19 +32,19 @@ class BytePairEncodingTokenizer:
                 the shorter encoded sequences will be. In practice, there is a sweet
                 spot that works best, hence why this is a configurable parameter.
         """
-        # Raw bytes
+        num_merges = final_vocab_size - 256
+
+        # Convert text to raw bytes
         tokens = text.encode("utf-8")
 
         # Convert raw bytes to list of bytes in integer representation. Each byte is
         # represented by an integer in the range 0-255.
         tokens = list(map(int, tokens))
 
-        ids = list(tokens)  # Create copy
-        num_merges = final_vocab_size - 256
         merges = {}  # Start with leaves of tree
         for i in range(num_merges):
             # Iterate over the tokens to determine how often each byte pair occurs
-            pair_counts = self.get_pair_counts(ids)
+            pair_counts = self.get_pair_counts(tokens)
 
             # Get the most frequent pair: `max` ranks by value (.get) and returns the
             # associated key
@@ -55,7 +55,7 @@ class BytePairEncodingTokenizer:
 
             # Merge the new token and get the updated list of integers
             print(f"Merging {top_pair=} into a new token with {idx=}")
-            ids = self.merge(ids, top_pair, idx)
+            tokens = self.merge(tokens, top_pair, idx)
 
             merges[top_pair] = idx
 
