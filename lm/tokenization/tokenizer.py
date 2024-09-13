@@ -22,6 +22,16 @@ class BytePairEncodingTokenizer:
         self.merges: dict[tuple[int, int], int] = {}
 
     def train(self, text: str, final_vocab_size: int) -> None:
+        """Train the tokenizer on the specified text and create a dictionary that maps
+        the byte pair for each new token to its token index.
+
+        Args:
+            text: the sequence of unicode code points on which to train the tokenizer.
+            final_vocab_size: the desired final size of the vocabulary. The larger it
+                is, the more new tokens we create (i.e. merges we do), and in turn,
+                the shorter encoded sequences will be. In practice, there is a sweet
+                spot that works best, hence why this is a configurable parameter.
+        """
         # Raw bytes
         tokens = text.encode("utf-8")
 
@@ -29,9 +39,6 @@ class BytePairEncodingTokenizer:
         # represented by an integer in the range 0-255.
         tokens = list(map(int, tokens))
 
-        # The more steps we do, the shorter our sequence, but the larger our vocabulary
-        # In practice, there is a sweet spot that works best. We make the number of
-        # steps a configurable hyperparameter.
         ids = list(tokens)  # Create copy
         num_merges = final_vocab_size - 256
         merges = {}  # Start with leaves of tree
