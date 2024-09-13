@@ -20,8 +20,9 @@ class BytePairEncodingTokenizer:
 
     def __init__(self, final_vocab_size: int):
         self.num_merges = final_vocab_size - 256
+        self.merges: dict[tuple[int, int], int] = {}
 
-    def train(self, text: str) -> tuple[list[int], dict[tuple[int, int], int]]:
+    def train(self, text: str) -> None:
         # Raw bytes
         tokens = text.encode("utf-8")
 
@@ -51,9 +52,10 @@ class BytePairEncodingTokenizer:
 
             merges[top_pair] = idx
 
-        return ids, merges
+        self.merges = merges
+        return ids
 
-    def decode(self, ids: list[int], merges: dict[tuple[int, int], int]) -> str:
+    def decode(self, ids: list[int]) -> str:
         """Get the text corresponding to a sequence of integers each in the range
         0, ..., vocab_size - 1.
         """
@@ -62,7 +64,7 @@ class BytePairEncodingTokenizer:
 
         # It is important that this runs in the order in which we inserted items
         # into `merges`. This is the default case for `.items()` in Python >=3.7
-        for (p0, p1), idx in merges.items():
+        for (p0, p1), idx in self.merges.items():
             vocab[idx] = vocab[p0] + vocab[p1]  # Addition of two bytes objects
 
         # Get raw bytes
@@ -76,7 +78,7 @@ class BytePairEncodingTokenizer:
 
         return text
 
-    def encode(self, text: str, merges: dict[tuple[int, int], int]) -> list[int]:
+    def encode(self, text: str) -> list[int]:
         tokens = list(text.encode("utf-8"))
 
         while len(tokens) >= 2:  # Need at least two tokens, otherwise `min` will fail
@@ -86,13 +88,13 @@ class BytePairEncodingTokenizer:
             # Ranks by value (token index) and returns the associated key (pair)
             # The inf is a fallback for pairs that are not in `merges` - they are not
             # eligible for merging and the inf guarantees they are not selected
-            pair = min(pair_counts, key=lambda p: merges.get(p, float("inf")))
+            pair = min(pair_counts, key=lambda p: self.merges.get(p, float("inf")))
 
             # Edge case: none of the pairs were in `merges` and there is nothing to merge
-            if pair not in merges:
+            if pair not in self.merges:
                 break
 
-            idx = merges[pair]
+            idx = self.merges[pair]
             tokens = self.merge(tokens, pair, idx)
 
         return tokens
