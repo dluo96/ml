@@ -1,6 +1,6 @@
 import unittest
 
-from lm.tokenization.tokenizer import BasicTokenizer
+from lm.tokenization.basic_tokenizer import BasicTokenizer
 
 
 def test_textual_data_in_python():
