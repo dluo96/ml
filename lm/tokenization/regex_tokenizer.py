@@ -65,7 +65,7 @@ class RegexTokenizer:
         # Split the text into chunks each of which matches the regex pattern
         text_chunks = re.findall(self.compiled_pattern, text)
 
-        # All chunks of the text are encoded separately, then results are joined
+        # Encode each chunk separately and join the results
         ids = []
         for chunk in text_chunks:
             chunk_bytes = chunk.encode("utf-8")  # Raw bytes
