@@ -2,6 +2,8 @@ import unittest
 
 import regex as re
 
+from lm.tokenization.regex_tokenizer import RegexTokenizer
+
 
 def test_regex():
     # Define the regex pattern. Note that | means "or"
@@ -85,6 +87,18 @@ def test_regex():
             dataset. This signals to the LLM that it has reached the end of a document.
             We expect the language model to learn the meaning of this token.
     """
+
+
+class TestRegexTokenizer(unittest.TestCase):
+    def setUp(self):
+        self.tokenizer = RegexTokenizer()
+
+    def test_train(self):
+        text = "Hello how're you?"
+        final_vocab_size = 257
+        self.tokenizer.train(text, final_vocab_size)
+        self.assertEqual(len(self.tokenizer.vocab), final_vocab_size)
+        self.assertIn(final_vocab_size - 1, self.tokenizer.vocab)
 
 
 if __name__ == "__main__":

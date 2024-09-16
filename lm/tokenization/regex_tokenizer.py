@@ -1,11 +1,9 @@
 import regex as re
 
-from lm.tokenization.tokenizer import BytePairEncodingTokenizer
-
 GPT4_SPLIT_PATTERN = r"""'(?i:[sdmt]|ll|ve|re)|[^\r\n\p{L}\p{N}]?+\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]++[\r\n]*|\s*[\r\n]|\s+(?!\S)|\s+"""  # fmt: skip
 
 
-class RegexTokenizer(BytePairEncodingTokenizer):
+class RegexTokenizer:
     def __init__(self):
         super().__init__()
         self.compiled_pattern = re.compile(GPT4_SPLIT_PATTERN)
@@ -22,9 +20,9 @@ class RegexTokenizer(BytePairEncodingTokenizer):
         vocab = {idx: bytes([idx]) for idx in range(256)}
         for i in range(num_merges):
             pair_counts = {}
-            for subtext in subtexts:
+            for chunk_tokens in tokens:
                 # Passing in `pair_counts` will update it in place, adding up counts
-                pair_counts = self._get_pair_counts(subtext)
+                pair_counts = self._get_pair_counts(chunk_tokens)
 
             # Get the most frequent pair
             top_pair = max(pair_counts, key=pair_counts.get)
