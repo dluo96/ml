@@ -172,12 +172,14 @@ class TestTokenizer(unittest.TestCase):
         self.tokenizer = BytePairEncodingTokenizer()
         self.tokenizer.train(self.text, final_vocab_size)
 
-        # Encode the text
-        tokens = self.tokenizer.encode(self.text)
-
-        # Decode and recover the original text
-        decoded_text = self.tokenizer.decode(tokens)
-        self.assertEqual(self.text, decoded_text)
+        # Test that decoding the encoded text recovers the original text
+        self.assertEqual(
+            self.tokenizer.decode(self.tokenizer.encode(self.text)),
+            self.text,
+            msg="Decoding the encoded text should recover the original text!",
+        )
+        text = "안녕하세요 👋 (hello in Korean!)"
+        self.assertEqual(self.tokenizer.decode(self.tokenizer.encode(text)), text)
 
         # Verify that there are invalid start bytes: for example, 128 is an invalid
         # start byte in UTF-8 encoding: in binary, 128 is a 1 followed by 0s, which
@@ -240,6 +242,20 @@ class TestTokenizer(unittest.TestCase):
             self.tokenizer._merge([1, 2, 1, 2, 1, 2], pair=(1, 2), idx=3),
             [3, 3, 3],
         )
+
+    def test_bytes(self):
+        # Check a few examples
+        self.assertEqual(bytes([0]), b"\x00")
+        self.assertEqual(bytes([127]), b"\x7f")
+        self.assertEqual(bytes([255]), b"\xff")
+
+        # Check addition of examples
+        self.assertEqual(bytes([0]) + bytes([127]) + bytes([255]), b"\x00\x7f\xff")
+
+        # Verify that each byte must be in the range 0, ..., 255
+        self.assertRaises(ValueError, bytes, [256])
+        self.assertRaises(ValueError, bytes, [1000])
+        self.assertRaises(ValueError, bytes, [-1])
 
 
 def test_regex():
