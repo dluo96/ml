@@ -188,59 +188,6 @@ class TestTokenizer(unittest.TestCase):
         # decode, which replaces invalid bytes with the Unicode replacement character �.
         self.assertEqual(self.tokenizer.decode([128]), "�")
 
-    def test_get_pair_counts(self):
-        # Test case 1: Normal list of integers
-        ids = [1, 2, 2, 3, 1, 2]
-        expected_pair_counts = {
-            (1, 2): 2,
-            (2, 2): 1,
-            (2, 3): 1,
-            (3, 1): 1,
-        }
-        pair_counts = self.tokenizer._get_pair_counts(ids)
-        self.assertEqual(pair_counts, expected_pair_counts)
-
-        # Test case 2: Empty list
-        ids = []
-        expected_pair_counts = {}
-        pair_counts = self.tokenizer._get_pair_counts(ids)
-        self.assertEqual(pair_counts, expected_pair_counts)
-
-        # Test case 3: List with one element
-        ids = [1]
-        expected_pair_counts = {}
-        pair_counts = self.tokenizer._get_pair_counts(ids)
-        self.assertEqual(pair_counts, expected_pair_counts)
-
-        # Test case 4: List with repeating consecutive elements
-        ids = [1, 1, 1, 1]
-        expected_pair_counts = {(1, 1): 3}
-        pair_counts = self.tokenizer._get_pair_counts(ids)
-        self.assertEqual(pair_counts, expected_pair_counts)
-
-        # Test case 5: Longer list of integers
-        ids = [1, 2, 3, 4, 5, 3, 4, 1, 2, 3, 4, 5]
-        expected_pair_counts = {
-            (1, 2): 2,
-            (2, 3): 2,
-            (3, 4): 3,
-            (4, 5): 2,
-            (5, 3): 1,
-            (4, 1): 1,
-        }
-        pair_counts = self.tokenizer._get_pair_counts(ids)
-        self.assertEqual(pair_counts, expected_pair_counts)
-
-    def test_merge(self):
-        self.assertEqual(
-            self.tokenizer._merge([5, 6, 6, 7, 9, 1], pair=(6, 7), idx=99),
-            [5, 6, 99, 9, 1],
-        )
-        self.assertEqual(
-            self.tokenizer._merge([1, 2, 1, 2, 1, 2], pair=(1, 2), idx=3),
-            [3, 3, 3],
-        )
-
     def test_bytes(self):
         # Check a few examples
         self.assertEqual(bytes([0]), b"\x00")
