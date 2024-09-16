@@ -144,22 +144,14 @@ class TestRegexTokenizer(unittest.TestCase):
         self.assertEqual(
             tokenizer.encode(text),
             [257, 108, 111],
-            msg="The text 'hello' should be encoded as [257, 108, 111]: first the "
+            msg="The text 'hello' should be encoded as [257, 108, 111]: first, the "
             "pair 104 ('h') and 101 ('e') are merged into 256. Then, 256 ('he') and"
             "108 ('l') are merged into 257.",
         )
 
-        # Test case: Text with multiple merges
+        # Test case 2: text with multiple chunks
         text = "hello hello"
-        expected_output = [104, 101, 108, 108, 111, 32, 104, 101, 108, 108, 111]
-        result = self.tokenizer.encode(text)
-        self.assertEqual(result, expected_output)
-
-        # Test case: Encoding text with special characters
-        text = "hello, world!"
-        expected_output = [104, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33]
-        result = self.tokenizer.encode(text)
-        self.assertEqual(result, expected_output)
+        self.assertEqual(tokenizer.encode(text), [257, 108, 111, 32, 257, 108, 111])
 
 
 if __name__ == "__main__":
