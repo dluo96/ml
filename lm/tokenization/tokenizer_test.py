@@ -1,6 +1,6 @@
 import unittest
 
-from lm.tokenization.tokenizer import BytePairEncodingTokenizer
+from lm.tokenization.tokenizer import BasicTokenizer
 
 
 def test_textual_data_in_python():
@@ -76,7 +76,7 @@ def test_textual_data_in_python():
 
 class TestTokenizer(unittest.TestCase):
     def setUp(self):
-        self.tokenizer = BytePairEncodingTokenizer()
+        self.tokenizer = BasicTokenizer()
         self.text = (
             "Ｕｎｉｃｏｄｅ! 🅤🅝🅘🅒🅞🅓🅔‽ 🇺‌🇳‌🇮‌🇨‌🇴‌🇩‌🇪! 😄 The very name strikes fear and awe "
             "into the hearts of programmers worldwide. We all know we ought to “support Unicode” "
@@ -93,7 +93,7 @@ class TestTokenizer(unittest.TestCase):
     def test_train(self):
         # Train tokenizer with 1 merge
         final_vocab_size = 257
-        self.tokenizer = BytePairEncodingTokenizer()
+        self.tokenizer = BasicTokenizer()
         self.tokenizer.train(self.text, final_vocab_size)
         self.assertEqual(len(self.tokenizer.merges), final_vocab_size - 256)
         self.assertIn(
@@ -107,7 +107,7 @@ class TestTokenizer(unittest.TestCase):
 
         # Train tokenizer with 10 merges
         final_vocab_size = 266
-        self.tokenizer = BytePairEncodingTokenizer()
+        self.tokenizer = BasicTokenizer()
         self.tokenizer.train(self.text, final_vocab_size)
         self.assertEqual(len(self.tokenizer.merges), final_vocab_size - 256)
         self.assertIn(
@@ -127,7 +127,7 @@ class TestTokenizer(unittest.TestCase):
 
     def test_encode(self):
         final_vocab_size = 276
-        self.tokenizer = BytePairEncodingTokenizer()
+        self.tokenizer = BasicTokenizer()
         self.tokenizer.train(self.text, final_vocab_size)
 
         # Test encoding
@@ -148,7 +148,7 @@ class TestTokenizer(unittest.TestCase):
 
         # Train w/o any merges
         final_vocab_size = 256
-        self.tokenizer = BytePairEncodingTokenizer()
+        self.tokenizer = BasicTokenizer()
         self.tokenizer.train(self.text, final_vocab_size)
 
         self.assertEqual(self.tokenizer.merges, {}, msg="No merges were done!")
@@ -167,7 +167,7 @@ class TestTokenizer(unittest.TestCase):
     def test_decode(self):
         # First create and train the tokenizer
         final_vocab_size = 276
-        self.tokenizer = BytePairEncodingTokenizer()
+        self.tokenizer = BasicTokenizer()
         self.tokenizer.train(self.text, final_vocab_size)
 
         # Test that decoding the encoded text recovers the original text

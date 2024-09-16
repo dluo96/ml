@@ -1,4 +1,4 @@
-class BytePairEncodingTokenizer:
+class BasicTokenizer:
     """Implementation of GPT-2 tokenizer, which uses the byte pair encoding (BPE)
     algorithm.
 
