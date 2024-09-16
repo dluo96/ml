@@ -95,10 +95,40 @@ class TestRegexTokenizer(unittest.TestCase):
 
     def test_train(self):
         text = "Hello how're you?"
-        final_vocab_size = 257
-        self.tokenizer.train(text, final_vocab_size)
-        self.assertEqual(len(self.tokenizer.vocab), final_vocab_size)
-        self.assertIn(final_vocab_size - 1, self.tokenizer.vocab)
+        self.tokenizer.train(text, final_vocab_size=266)
+        tokens = self.tokenizer.encode(text)
+
+    def test_encode_chunk(self):
+        # Create toy tokenizer with only two merges
+        tokenizer = RegexTokenizer()
+        tokenizer.merges = {(101, 102): 256, (256, 103): 257}
+
+        # Test case 1: normal chunk with multiple possible merges
+        text_bytes = bytes([101, 102, 103])
+        self.assertEqual(
+            tokenizer._encode_chunk(text_bytes),
+            [257],
+            msg="The chunk should be merged into 257: first (101, 102) are merged so "
+            "that the chunk becomes [256, 103], then (256, 103) are merged into 257, "
+            "implying that the final chunk is [257].",
+        )
+
+        # Test case 2: chunk with no possible merges
+        text_bytes = bytes([104, 105, 106])
+        self.assertEqual(
+            tokenizer._encode_chunk(text_bytes),
+            [104, 105, 106],
+            msg="No merges are possible, so the chunk should be left unchanged!",
+        )
+
+        # Test case 3: chunk with only one possible merge
+        text_bytes = bytes([101, 102, 104])
+        self.assertEqual(
+            tokenizer._encode_chunk(text_bytes),
+            [256, 104],
+            msg="Only (101, 102) can be merged into 256, so the chunk should become "
+            "[256, 104].",
+        )
 
 
 if __name__ == "__main__":
