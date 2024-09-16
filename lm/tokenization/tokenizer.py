@@ -45,6 +45,9 @@ class BytePairEncodingTokenizer:
         # represented by an integer in the range 0-255.
         tokens = list(map(int, tokens))
 
+        # Initialise merges to empty since no new tokens have been created yet.
+        # Populate vocabulary with all possible values of 1 byte (8 bits):
+        # 0, ..., 255. Thus, the initial vocabulary size is 256.
         merges = {}  # Start with leaves of tree
         vocab = {idx: bytes([idx]) for idx in range(256)}
         for i in range(num_merges):
@@ -69,21 +72,6 @@ class BytePairEncodingTokenizer:
         self.merges = merges  # Needed for encoding
         self.vocab = vocab  # Needed for decoding
 
-    def decode(self, ids: list[int]) -> str:
-        """Get the text corresponding to a sequence of integers each in the range
-        0, ..., vocab_size - 1.
-        """
-        # Get raw bytes
-        tokens = b"".join(self.vocab[idx] for idx in ids)
-
-        # Decode with UTF-8. Importantly, not every byte sequence is valid UTF-8.
-        # If the language model predicts tokens in a bad manner, then they might not
-        # be valid UTF-8, and so we won't be able to decode them. The standard practice
-        # is to replace them with the Unicode replacement character.
-        text = tokens.decode("utf-8", errors="replace")
-
-        return text
-
     def encode(self, text: str) -> list[int]:
         tokens = list(text.encode("utf-8"))
 
@@ -104,6 +92,21 @@ class BytePairEncodingTokenizer:
             tokens = self.merge(tokens, pair, idx)
 
         return tokens
+
+    def decode(self, ids: list[int]) -> str:
+        """Get the text corresponding to a sequence of integers each in the range
+        0, ..., vocab_size - 1.
+        """
+        # Get raw bytes
+        tokens = b"".join(self.vocab[idx] for idx in ids)
+
+        # Decode with UTF-8. Importantly, not every byte sequence is valid UTF-8.
+        # If the language model predicts tokens in a bad manner, then they might not
+        # be valid UTF-8, and so we won't be able to decode them. The standard practice
+        # is to replace them with the Unicode replacement character.
+        text = tokens.decode("utf-8", errors="replace")
+
+        return text
 
     def get_pair_counts(self, ids: list[int]) -> dict[tuple[int, int], int]:
         pair_counts = {}
