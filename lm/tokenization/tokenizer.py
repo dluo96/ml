@@ -100,8 +100,8 @@ class BytePairEncodingTokenizer:
         return tokens
 
     def decode(self, ids: list[int]) -> str:
-        """Get the text corresponding to a sequence of integers each in the range
-        0, ..., vocab_size - 1.
+        """Convert a sequence of integers (token indices), each in the range
+        0, ..., vocab_size - 1, to a string.
         """
         # Get raw bytes
         tokens = b"".join(self.vocab[idx] for idx in ids)
