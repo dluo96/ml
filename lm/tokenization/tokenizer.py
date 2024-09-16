@@ -86,10 +86,10 @@ class BytePairEncodingTokenizer:
             # eligible for merging and the inf guarantees they are not selected.
             pair = min(pair_counts, key=lambda p: self.merges.get(p, float("inf")))
 
-            # When none of the pairs are in `merges`, there are no more merges available.
-            # In this case, the `key` argument in `min` result in an inf for every pair
-            # and the min will be just the first pair in the list, arbitrarily. We can
-            # detect this terminating case via a membership check.
+            # When none of the pairs are present in `merges`, there are no more merges
+            # available. In this case, the `key` argument in `min` result in an inf
+            # for every pair and `min` will (arbitrarily) return the first pair in the
+            # list. We can detect this terminating case via a membership check.
             if pair not in self.merges:
                 break
 
