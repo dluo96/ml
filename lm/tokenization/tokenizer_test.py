@@ -196,8 +196,10 @@ class TestTokenizer(unittest.TestCase):
         )
 
     def test_decode(self):
+        # First create and train the tokenizer
         final_vocab_size = 276
         self.tokenizer = BytePairEncodingTokenizer()
+        self.tokenizer.train(self.text, final_vocab_size)
 
         # Encode the text
         tokens = self.tokenizer.encode(self.text)

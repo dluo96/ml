@@ -19,11 +19,15 @@ class BytePairEncodingTokenizer:
     """
 
     def __init__(self):
-        self.merges: dict[tuple[int, int], int] = {}
+        self.merges: dict[tuple[int, int], int] = {}  # Map new pair to token index
+        self.vocab: dict[int, bytes] = {}  # Map token index to byte object
 
     def train(self, text: str, final_vocab_size: int) -> None:
-        """Train the tokenizer on the specified text and create a dictionary that maps
-        the byte pair for each new token to its token index.
+        """Train the tokenizer on the specified text and create:
+            - A dictionary that maps the byte pair for each new token to its token
+                index. This is needed for encoding.
+            - A dictionary that maps from token id to byte object. This is needed for
+                decoding.
 
         Args:
             text: the sequence of unicode code points on which to train the tokenizer.
@@ -42,6 +46,7 @@ class BytePairEncodingTokenizer:
         tokens = list(map(int, tokens))
 
         merges = {}  # Start with leaves of tree
+        vocab = {idx: bytes([idx]) for idx in range(256)}
         for i in range(num_merges):
             # Iterate over the tokens to determine how often each byte pair occurs
             pair_counts = self.get_pair_counts(tokens)
@@ -57,24 +62,19 @@ class BytePairEncodingTokenizer:
             print(f"Merging {top_pair=} into a new token with {idx=}")
             tokens = self.merge(tokens, top_pair, idx)
 
+            # Update dictionaries
             merges[top_pair] = idx
+            vocab[idx] = vocab[top_pair[0]] + vocab[top_pair[1]]
 
-        self.merges = merges
+        self.merges = merges  # Needed for encoding
+        self.vocab = vocab  # Needed for decoding
 
     def decode(self, ids: list[int]) -> str:
         """Get the text corresponding to a sequence of integers each in the range
         0, ..., vocab_size - 1.
         """
-        # Create a mapping from token id to byte object
-        vocab = {idx: bytes([idx]) for idx in range(256)}
-
-        # It is important that this runs in the order in which we inserted items
-        # into `merges`. This is the default case for `.items()` in Python >=3.7
-        for (p0, p1), idx in self.merges.items():
-            vocab[idx] = vocab[p0] + vocab[p1]  # Addition of two bytes objects
-
         # Get raw bytes
-        tokens = b"".join(vocab[idx] for idx in ids)
+        tokens = b"".join(self.vocab[idx] for idx in ids)
 
         # Decode with UTF-8. Importantly, not every byte sequence is valid UTF-8.
         # If the language model predicts tokens in a bad manner, then they might not
