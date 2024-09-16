@@ -1,4 +1,4 @@
-from lm.tokenization.utils import get_pair_counts, merge
+from lm.tokenization.utils import get_pair_counts, merge_new_token
 
 
 class BasicTokenizer:
@@ -66,7 +66,7 @@ class BasicTokenizer:
 
             # Merge the new token and get the updated list of integers
             print(f"Merging {top_pair=} into a new token with {idx=}")
-            tokens = merge(tokens, top_pair, idx)
+            tokens = merge_new_token(tokens, top_pair, idx)
 
             # Update dictionaries
             merges[top_pair] = idx
@@ -98,7 +98,7 @@ class BasicTokenizer:
 
             # Merge the pair and update the tokens
             idx = self.merges[pair]
-            tokens = merge(tokens, pair, idx)
+            tokens = merge_new_token(tokens, pair, idx)
 
         return tokens
 

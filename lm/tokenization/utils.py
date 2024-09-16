@@ -19,7 +19,7 @@ def get_pair_counts(
     return pair_counts
 
 
-def merge(ids: list[int], pair: tuple[int, int], idx: int) -> list[int]:
+def merge_new_token(ids: list[int], pair: tuple[int, int], idx: int) -> list[int]:
     """Replace all occurrences of `pair` in `ids` with `idx`. This increases the
     vocabulary size by 1.
 

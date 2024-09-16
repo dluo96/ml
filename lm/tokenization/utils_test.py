@@ -1,6 +1,6 @@
 import unittest
 
-from lm.tokenization.utils import get_pair_counts, merge
+from lm.tokenization.utils import get_pair_counts, merge_new_token
 
 
 class TestTokenizerUtils(unittest.TestCase):
@@ -47,13 +47,13 @@ class TestTokenizerUtils(unittest.TestCase):
         pair_counts = get_pair_counts(ids)
         self.assertEqual(pair_counts, expected_pair_counts)
 
-    def test_merge(self):
+    def test_merge_new_token(self):
         # Test case 1: Merging a pair in a normal list
         ids = [1, 2, 2, 3, 1, 2]
         pair = (1, 2)
         idx = 99
         expected_output = [99, 2, 3, 99]
-        result = merge(ids, pair, idx)
+        result = merge_new_token(ids, pair, idx)
         self.assertEqual(result, expected_output)
 
         # Test case 2: Pair not present in the list
@@ -61,7 +61,7 @@ class TestTokenizerUtils(unittest.TestCase):
         pair = (2, 5)
         idx = 99
         expected_output = [1, 2, 3, 4]  # No merge occurs
-        result = merge(ids, pair, idx)
+        result = merge_new_token(ids, pair, idx)
         self.assertEqual(result, expected_output)
 
         # Test case 3: List with consecutive pairs
@@ -69,7 +69,7 @@ class TestTokenizerUtils(unittest.TestCase):
         pair = (2, 2)
         idx = 99
         expected_output = [1, 99, 2, 3, 1]
-        result = merge(ids, pair, idx)
+        result = merge_new_token(ids, pair, idx)
         self.assertEqual(result, expected_output)
 
         # Test case 4: Entire list replaced by merge
@@ -77,5 +77,5 @@ class TestTokenizerUtils(unittest.TestCase):
         pair = (1, 2)
         idx = 99
         expected_output = [99, 99]
-        result = merge(ids, pair, idx)
+        result = merge_new_token(ids, pair, idx)
         self.assertEqual(result, expected_output)
