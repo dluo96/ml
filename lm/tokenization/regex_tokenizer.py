@@ -6,6 +6,8 @@ GPT4_SPLIT_PATTERN = r"""'(?i:[sdmt]|ll|ve|re)|[^\r\n\p{L}\p{N}]?+\p{L}+|\p{N}{1
 
 
 class RegexTokenizer:
+    """Tokenizer that uses a regex pattern to split text into chunks."""
+
     def __init__(self):
         self.merges: dict[tuple[int, int], int] = {}  # Map new pair to token index
         self.vocab: dict[int, bytes] = {}  # Map token index to byte object
@@ -60,8 +62,7 @@ class RegexTokenizer:
         return ids
 
     def encode(self, text: str) -> list[int]:
-        """Encoding that ignores any special tokens."""
-        # Split the text into chunks of text by categories defined in regex pattern
+        # Split the text into chunks each of which matches the regex pattern
         text_chunks = re.findall(self.compiled_pattern, text)
 
         # All chunks of the text are encoded separately, then results are joined

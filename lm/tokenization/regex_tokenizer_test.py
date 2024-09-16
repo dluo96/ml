@@ -130,6 +130,37 @@ class TestRegexTokenizer(unittest.TestCase):
             "[256, 104].",
         )
 
+    def test_encode(self):
+        # Create toy tokenizer with only two merges
+        tokenizer = RegexTokenizer()
+        tokenizer.merges = {
+            (104, 101): 256,  # Example: merging byte pair ('h', 'e') into token 256
+            (256, 108): 257,  # Example: merging token 256 and 'l' into token 257
+        }
+
+        # Test case 1: normal text with multiple possible merges
+        text = "hello"
+        self.assertEqual(list(text.encode("utf-8")), [104, 101, 108, 108, 111])
+        self.assertEqual(
+            tokenizer.encode(text),
+            [257, 108, 111],
+            msg="The text 'hello' should be encoded as [257, 108, 111]: first the "
+            "pair 104 ('h') and 101 ('e') are merged into 256. Then, 256 ('he') and"
+            "108 ('l') are merged into 257.",
+        )
+
+        # Test case: Text with multiple merges
+        text = "hello hello"
+        expected_output = [104, 101, 108, 108, 111, 32, 104, 101, 108, 108, 111]
+        result = self.tokenizer.encode(text)
+        self.assertEqual(result, expected_output)
+
+        # Test case: Encoding text with special characters
+        text = "hello, world!"
+        expected_output = [104, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33]
+        result = self.tokenizer.encode(text)
+        self.assertEqual(result, expected_output)
+
 
 if __name__ == "__main__":
     unittest.main()
