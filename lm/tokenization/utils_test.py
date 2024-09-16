@@ -71,5 +71,6 @@ class TestTokenizerUtils(unittest.TestCase):
 
         # Test case 4: entire list is replaced by merge
         self.assertEqual(
-            merge_new_token(ids=[1, 2, 1, 2, 1, 2], pair=(1, 2), idx=99), [99, 99, 99]
+            merge_new_token(ids=[1, 2, 1, 2, 1, 2], pair=(1, 2), idx=99),
+            [99, 99, 99],
         )
