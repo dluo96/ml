@@ -24,10 +24,10 @@ class BytePairEncodingTokenizer:
 
     def train(self, text: str, final_vocab_size: int) -> None:
         """Train the tokenizer on the specified text and create:
-            - A dictionary that maps the byte pair for each new token to its token
-                index. This is needed for encoding.
-            - A dictionary that maps from token id to byte object. This is needed for
-                decoding.
+            - A dictionary that maps the byte pair (in integer representation) for
+                each new token to its token index. This is needed for encoding.
+            - A dictionary that maps from token index to raw byte object. This is
+                needed for decoding.
 
         Args:
             text: the sequence of unicode code points on which to train the tokenizer.
