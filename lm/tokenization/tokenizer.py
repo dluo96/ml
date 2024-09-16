@@ -52,7 +52,7 @@ class BytePairEncodingTokenizer:
         vocab = {idx: bytes([idx]) for idx in range(256)}
         for i in range(num_merges):
             # Iterate over the tokens to determine how often each byte pair occurs
-            pair_counts = self.get_pair_counts(tokens)
+            pair_counts = self._get_pair_counts(tokens)
 
             # Get the most frequent pair: `max` ranks by value (.get) and returns the
             # associated key
@@ -63,7 +63,7 @@ class BytePairEncodingTokenizer:
 
             # Merge the new token and get the updated list of integers
             print(f"Merging {top_pair=} into a new token with {idx=}")
-            tokens = self.merge(tokens, top_pair, idx)
+            tokens = self._merge(tokens, top_pair, idx)
 
             # Update dictionaries
             merges[top_pair] = idx
@@ -76,7 +76,7 @@ class BytePairEncodingTokenizer:
         tokens = list(text.encode("utf-8"))
 
         while len(tokens) >= 2:  # Need at least two tokens, otherwise `min` will fail
-            pair_counts = self.get_pair_counts(tokens)
+            pair_counts = self._get_pair_counts(tokens)
 
             # Identify pair to merge: we want the pair with the lowest index in `merges`
             # Ranks by value (token index) and returns the associated key (pair)
@@ -89,7 +89,7 @@ class BytePairEncodingTokenizer:
                 break
 
             idx = self.merges[pair]
-            tokens = self.merge(tokens, pair, idx)
+            tokens = self._merge(tokens, pair, idx)
 
         return tokens
 
@@ -108,13 +108,13 @@ class BytePairEncodingTokenizer:
 
         return text
 
-    def get_pair_counts(self, ids: list[int]) -> dict[tuple[int, int], int]:
+    def _get_pair_counts(self, ids: list[int]) -> dict[tuple[int, int], int]:
         pair_counts = {}
         for pair in zip(ids, ids[1:]):  # Iterate consecutive elements
             pair_counts[pair] = pair_counts.get(pair, 0) + 1
         return pair_counts
 
-    def merge(self, ids: list[int], pair: tuple[int, int], idx: int) -> list[int]:
+    def _merge(self, ids: list[int], pair: tuple[int, int], idx: int) -> list[int]:
         """Create a new token (with index `idx`) for the specified `pair` and replace
         all occurrences of it in `ids`. This increases the vocabulary size by 1.
         """
