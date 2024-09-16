@@ -73,6 +73,7 @@ class BytePairEncodingTokenizer:
         self.vocab = vocab  # Needed for decoding
 
     def encode(self, text: str) -> list[int]:
+        # Convert text to raw bytes and wrap in a list to get integer representation
         tokens = list(text.encode("utf-8"))
 
         while len(tokens) >= 2:  # Need at least two tokens, otherwise `min` will fail
