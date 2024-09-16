@@ -79,16 +79,21 @@ class BytePairEncodingTokenizer:
         while len(tokens) >= 2:  # Need at least two tokens, otherwise `min` will fail
             pair_counts = self._get_pair_counts(tokens)
 
-            # Identify pair to merge: we want the pair with the lowest index in `merges`
-            # Ranks by value (token index) and returns the associated key (pair)
+            # Identify pair to merge: we want the pair with the lowest token index in
+            # `merges` since this pair may have been part of a merge later on!
+            # `min` ranks by value (token index) and returns the associated key (pair).
             # The inf is a fallback for pairs that are not in `merges` - they are not
-            # eligible for merging and the inf guarantees they are not selected
+            # eligible for merging and the inf guarantees they are not selected.
             pair = min(pair_counts, key=lambda p: self.merges.get(p, float("inf")))
 
-            # Edge case: none of the pairs were in `merges` and there is nothing to merge
+            # When none of the pairs are in `merges`, there are no more merges available.
+            # In this case, the `key` argument in `min` result in an inf for every pair
+            # and the min will be just the first pair in the list, arbitrarily. We can
+            # detect this terminating case via a membership check.
             if pair not in self.merges:
                 break
 
+            # Merge the pair and update the tokens
             idx = self.merges[pair]
             tokens = self._merge(tokens, pair, idx)
 
