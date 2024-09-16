@@ -1,3 +1,6 @@
+from lm.tokenization.utils import get_pair_counts, merge
+
+
 class BasicTokenizer:
     """Implementation of GPT-2 tokenizer, which uses the byte pair encoding (BPE)
     algorithm.
@@ -52,7 +55,7 @@ class BasicTokenizer:
         vocab = {idx: bytes([idx]) for idx in range(256)}
         for i in range(num_merges):
             # Iterate over the tokens to determine how often each byte pair occurs
-            pair_counts = self._get_pair_counts(tokens)
+            pair_counts = get_pair_counts(tokens)
 
             # Get the most frequent pair: `max` ranks by value (.get) and returns the
             # associated key
@@ -63,7 +66,7 @@ class BasicTokenizer:
 
             # Merge the new token and get the updated list of integers
             print(f"Merging {top_pair=} into a new token with {idx=}")
-            tokens = self._merge(tokens, top_pair, idx)
+            tokens = merge(tokens, top_pair, idx)
 
             # Update dictionaries
             merges[top_pair] = idx
@@ -77,7 +80,7 @@ class BasicTokenizer:
         tokens = list(text.encode("utf-8"))
 
         while len(tokens) >= 2:  # Need at least two tokens, otherwise `min` will fail
-            pair_counts = self._get_pair_counts(tokens)
+            pair_counts = get_pair_counts(tokens)
 
             # Identify pair to merge: we want the pair with the lowest token index in
             # `merges` since this pair may have been part of a merge later on!
@@ -95,7 +98,7 @@ class BasicTokenizer:
 
             # Merge the pair and update the tokens
             idx = self.merges[pair]
-            tokens = self._merge(tokens, pair, idx)
+            tokens = merge(tokens, pair, idx)
 
         return tokens
 
