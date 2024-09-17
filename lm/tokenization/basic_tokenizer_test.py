@@ -3,7 +3,7 @@ import unittest
 from lm.tokenization.basic_tokenizer import BasicTokenizer
 
 
-class TestTokenizer(unittest.TestCase):
+class TestBasicTokenizer(unittest.TestCase):
     def setUp(self):
         self.tokenizer = BasicTokenizer()
         self.text = (
