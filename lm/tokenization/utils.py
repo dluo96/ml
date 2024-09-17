@@ -4,7 +4,7 @@
 def get_pair_counts(
     ids: list[int], pair_counts: dict[tuple[int, int], int] | None = None
 ) -> dict[tuple[int, int], int]:
-    """Count the occurrences of each pair of integers in the list.
+    """Count the occurrences of each consecutive pair of integers in the provided list.
 
     Args:
         ids: the list of integers in which to count pairs.
