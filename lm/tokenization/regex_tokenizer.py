@@ -58,16 +58,16 @@ class RegexTokenizer:
         self.vocab = vocab
 
     def _encode_chunk(self, text_bytes: bytes) -> list[int]:
-        ids = list(text_bytes)
-        while len(ids) >= 2:
-            pair_counts = get_pair_counts(ids)
+        token_ids = list(text_bytes)
+        while len(token_ids) >= 2:
+            pair_counts = get_pair_counts(token_ids)
             # Find pair with the lowest token index: this is the next pair to merge
             pair = min(pair_counts, key=lambda p: self.merges.get(p, float("inf")))
             if pair not in self.merges:
                 break
             idx = self.merges[pair]
-            ids = merge_new_token(ids, pair, idx)
-        return ids
+            token_ids = merge_new_token(token_ids, pair, idx)
+        return token_ids
 
     def encode(self, text: str) -> list[int]:
         # Split the text into chunks each of which matches the regex pattern
