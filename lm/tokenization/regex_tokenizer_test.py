@@ -84,6 +84,31 @@ class TestRegexTokenizer(unittest.TestCase):
         text = "hello hello"
         self.assertEqual(tokenizer.encode(text), [257, 108, 111, 32, 257, 108, 111])
 
+    def test_encode_decode_wikipedia_example(self):
+        tokenizer = RegexTokenizer()
+        text = "aaabdaaabac"  # From https://en.wikipedia.org/wiki/Byte_pair_encoding
+        tokenizer.train(text, 256 + 3)  # Train with 3 merges (256 is for byte tokens)
+
+        # Check encoding
+        self.assertEqual(
+            tokenizer.encode(text),
+            [258, 100, 258, 97, 99],
+            msg="Running BPE on 'aaabdaaabac' for 3 merges results in 'XdXac' where "
+            "X=ZY, Y=ab, and Z=aa. Note that our tokenizer always allocates the 256 "
+            "individual bytes as tokens, and then merges bytes as needed from there. "
+            "Thus, a=97, b=98, c=99, and d=100 (their ASCII values). When (a,a) is "
+            "merged to Z, Z becomes 256. Similarly, Y becomes 257 and X becomes 258. "
+            "So we start with the 256 bytes, and do 3 merges to get to the result "
+            "above, with the expected output of [258, 100, 258, 97, 99].",
+        )
+
+        # Check decoding
+        self.assertEqual(
+            tokenizer.decode([258, 100, 258, 97, 99]),
+            "aaabdaaabac",
+            msg="Decoding the encoded text should recover the original text!",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
