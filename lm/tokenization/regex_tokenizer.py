@@ -5,7 +5,13 @@ from lm.tokenization.utils import get_pair_counts, merge_new_token
 
 
 class RegexTokenizer:
-    """Tokenizer that uses a regex pattern to split text into chunks.
+    """Tokenizer that, in addition to everything that `BasicTokenizer` does, uses a
+    regex pattern to split text into chunks, ultimately preventing undesirable merges.
+
+    It works as follows (whether training or encoding):
+        1. The text is split into chunks.
+        2. Each chunk is processed independently.
+        3. The results of the separate processes are concatenated.
 
     But why isn't `BasicTokenizer` enough? Why do we need to enforce regex?
     The folks making GPT-2 found that BPE would create separate tokens for multiple
@@ -14,6 +20,15 @@ class RegexTokenizer:
     slots and model capacity. To prevent this, they enforce a regex pattern that splits
     the text in such a way that some types of characters are never merged (into a new
     token) by BPE. It effectively adds merging rules on top of the BPE algorithm.
+
+    A few remarks about the GPT-4 tokenizer versus the GPT-2 tokenizer:
+        - The GPT-4 tokenizer merge multiple whitespaces, the GPT-2 tokenizer does not.
+        - GPT-2 has 50,257 tokens in its vocabulary. This consists of (a) 256 raw byte
+            tokens, (b) 50,000 additional tokens created by using the BPE algorithm
+            (50,000 merges), and (c) 1 special token '<|endoftext|>', used to delimit
+            documents in the training dataset. This signals to the language model that
+            it has reached the end of a document. We expect the language model to learn
+            the meaning of this token.
     """
 
     def __init__(self):
