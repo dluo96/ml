@@ -3,77 +3,6 @@ import unittest
 from lm.tokenization.basic_tokenizer import BasicTokenizer
 
 
-def test_textual_data_in_python():
-    """In Python, strings are immutable sequences of unicode code points. A unicode
-    code point is defined by The Unicode Standard. It is an integer that is defined
-    for each character. Version 15.1 defines ~150,000 characters.
-
-    In Python, the unicode code point of a character is given by ord().
-    Importantly, you cannot pass a string to ord().
-    """
-    assert ord("h") == 104
-    assert ord("👋") == 128075
-    assert ord("안") == 50504
-
-    # fmt: off
-    assert [ord(x) for x in "안녕하세요 👋 (hello in Korean!)"] == [
-        50504, 45397, 54616, 49464, 50836, 32, 128075, 32, 40, 104, 101, 108, 108,
-        111, 32, 105, 110, 32, 75, 111, 114, 101, 97, 110, 33, 41
-    ]
-    # fmt: on
-
-    """The Unicode Consortium defines three types of encodings:
-        - UTF-8 (most common),
-        - UTF-16,
-        - UTF-32.
-    These encodings are the way by which we can take unicode text and translate it into
-    binary data.
-
-    UTF-8 encoding is the most common. It takes every code point and translates it to a
-    byte stream (a sequence of bytes) between 1 and 4 bytes (so it is a variable length
-    encoding). Out of the three encodings above, UTF-8 is the only encoding that is
-    backwards compatible to the much simpler ASCII encoding of text.
-    """
-    # Encode sentence above in UTF-8
-    utf8_encoding_raw_bytes = "안녕하세요 👋 (hello in Korean!)".encode("utf-8")
-    # fmt: off
-    assert utf8_encoding_raw_bytes == (b"\xec\x95\x88\xeb\x85\x95\xed\x95\x98\xec\x84"
-                                       b"\xb8\xec\x9a\x94 \xf0\x9f\x91\x8b (hello in "
-                                       b"Korean!)")
-    # fmt: on
-
-    # Wrap with list to convert raw bytes to integers
-    utf8_encoding_integers = list(utf8_encoding_raw_bytes)
-    # fmt: off
-    assert utf8_encoding_integers == [
-        236, 149, 136, 235, 133, 149, 237, 149, 152, 236, 132, 184, 236, 154, 148, 32,
-        240, 159, 145, 139, 32, 40, 104, 101, 108, 108, 111, 32, 105, 110, 32, 75, 111,
-        114, 101, 97, 110, 33, 41
-    ]
-    # fmt: on
-
-    # Common characters (e.g. English letters) are usually encoded to 1 byte whereas
-    # many special characters are converted into 2/3/4 bytes
-    assert len("h".encode("utf-8")) == 1, "h should be encoded to 1 byte"
-    assert list("h".encode("utf-8")) == [104]
-    assert len("👋".encode("utf-8")) == 4, "👋 should be encoded to 4 bytes"
-    assert list("👋".encode("utf-8")) == [240, 159, 145, 139]
-    assert len("안".encode("utf-8")) == 3, "안 should be encoded to 3 bytes"
-    assert list("안".encode("utf-8")) == [236, 149, 136]
-
-    """If we used UTF-8 naively, we would have a vocabulary size of 2^8 = 256 because
-    each character (unicode code point) becomes 1-4 bytes, and each byte (8 bits) is in
-    the range 0, ..., 255 (= 2^8 - 1). This vocabulary size is too small since it would
-    lead to sentences being extremely long once tokenized. Thus, we don't want to use
-    the raw bytes of the UTF-8 encoding.
-
-    We want to support a larger vocabulary size that we can tune as a hyperparameter.
-    However, we still want touse the UTF-8 encoding. How do we do this? We turn to the
-    byte pair encoding algorithm. This will allow us to compress the byte sequences to
-    a variable length.
-    """
-
-
 class TestTokenizer(unittest.TestCase):
     def setUp(self):
         self.tokenizer = BasicTokenizer()
@@ -201,6 +130,77 @@ class TestTokenizer(unittest.TestCase):
         self.assertRaises(ValueError, bytes, [256])
         self.assertRaises(ValueError, bytes, [1000])
         self.assertRaises(ValueError, bytes, [-1])
+
+
+def test_textual_data_in_python():
+    """In Python, strings are immutable sequences of unicode code points. A unicode
+    code point is defined by The Unicode Standard. It is an integer that is defined
+    for each character. Version 15.1 defines ~150,000 characters.
+
+    In Python, the unicode code point of a character is given by ord().
+    Importantly, you cannot pass a string to ord().
+    """
+    assert ord("h") == 104
+    assert ord("👋") == 128075
+    assert ord("안") == 50504
+
+    # fmt: off
+    assert [ord(x) for x in "안녕하세요 👋 (hello in Korean!)"] == [
+        50504, 45397, 54616, 49464, 50836, 32, 128075, 32, 40, 104, 101, 108, 108,
+        111, 32, 105, 110, 32, 75, 111, 114, 101, 97, 110, 33, 41
+    ]
+    # fmt: on
+
+    """The Unicode Consortium defines three types of encodings:
+        - UTF-8 (most common),
+        - UTF-16,
+        - UTF-32.
+    These encodings are the way by which we can take unicode text and translate it into
+    binary data.
+
+    UTF-8 encoding is the most common. It takes every code point and translates it to a
+    byte stream (a sequence of bytes) between 1 and 4 bytes (so it is a variable length
+    encoding). Out of the three encodings above, UTF-8 is the only encoding that is
+    backwards compatible to the much simpler ASCII encoding of text.
+    """
+    # Encode sentence above in UTF-8
+    utf8_encoding_raw_bytes = "안녕하세요 👋 (hello in Korean!)".encode("utf-8")
+    # fmt: off
+    assert utf8_encoding_raw_bytes == (b"\xec\x95\x88\xeb\x85\x95\xed\x95\x98\xec\x84"
+                                       b"\xb8\xec\x9a\x94 \xf0\x9f\x91\x8b (hello in "
+                                       b"Korean!)")
+    # fmt: on
+
+    # Wrap with list to convert raw bytes to integers
+    utf8_encoding_integers = list(utf8_encoding_raw_bytes)
+    # fmt: off
+    assert utf8_encoding_integers == [
+        236, 149, 136, 235, 133, 149, 237, 149, 152, 236, 132, 184, 236, 154, 148, 32,
+        240, 159, 145, 139, 32, 40, 104, 101, 108, 108, 111, 32, 105, 110, 32, 75, 111,
+        114, 101, 97, 110, 33, 41
+    ]
+    # fmt: on
+
+    # Common characters (e.g. English letters) are usually encoded to 1 byte whereas
+    # many special characters are converted into 2/3/4 bytes
+    assert len("h".encode("utf-8")) == 1, "h should be encoded to 1 byte"
+    assert list("h".encode("utf-8")) == [104]
+    assert len("👋".encode("utf-8")) == 4, "👋 should be encoded to 4 bytes"
+    assert list("👋".encode("utf-8")) == [240, 159, 145, 139]
+    assert len("안".encode("utf-8")) == 3, "안 should be encoded to 3 bytes"
+    assert list("안".encode("utf-8")) == [236, 149, 136]
+
+    """If we used UTF-8 naively, we would have a vocabulary size of 2^8 = 256 because
+    each character (unicode code point) becomes 1-4 bytes, and each byte (8 bits) is in
+    the range 0, ..., 255 (= 2^8 - 1). This vocabulary size is too small since it would
+    lead to sentences being extremely long once tokenized. Thus, we don't want to use
+    the raw bytes of the UTF-8 encoding.
+
+    We want to support a larger vocabulary size that we can tune as a hyperparameter.
+    However, we still want touse the UTF-8 encoding. How do we do this? We turn to the
+    byte pair encoding algorithm. This will allow us to compress the byte sequences to
+    a variable length.
+    """
 
 
 if __name__ == "__main__":
