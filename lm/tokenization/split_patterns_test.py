@@ -82,4 +82,12 @@ class TestSplitPatterns(unittest.TestCase):
         """
 
     def test_gpt4_split_pattern(self):
-        ...
+        pattern = re.compile(GPT4_SPLIT_PATTERN)
+        self.assertEqual(
+            GPT4_SPLIT_PATTERN,
+            r"""'(?i:[sdmt]|ll|ve|re)|[^\r\n\p{L}\p{N}]?+\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]++[\r\n]*|\s*[\r\n]|\s+(?!\S)|\s+"""  # fmt: skip
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
