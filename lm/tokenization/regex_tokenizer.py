@@ -74,12 +74,13 @@ class RegexTokenizer:
         text_chunks = re.findall(self.compiled_pattern, text)
 
         # Encode each chunk separately and join the results
-        ids = []
+        token_ids = []
         for chunk in text_chunks:
             chunk_bytes = chunk.encode("utf-8")  # Raw bytes
-            chunk_ids = self._encode_chunk(chunk_bytes)
-            ids.extend(chunk_ids)
-        return ids
+            chunk_token_ids = self._encode_chunk(chunk_bytes)
+            token_ids.extend(chunk_token_ids)
+
+        return token_ids
 
     def decode(self, token_ids: list[int]) -> str:
         """Convert a sequence of integers (token indices) to a string. Importantly, we

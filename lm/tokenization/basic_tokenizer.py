@@ -78,10 +78,10 @@ class BasicTokenizer:
 
     def encode(self, text: str) -> list[int]:
         # Convert text to raw bytes and wrap in a list to get integer representation
-        tokens = list(text.encode("utf-8"))
+        token_ids = list(text.encode("utf-8"))
 
-        while len(tokens) >= 2:  # Need at least two tokens, otherwise `min` will fail
-            pair_counts = get_pair_counts(tokens)
+        while len(token_ids) >= 2:  # Need at least two tokens so `min` won't fail
+            pair_counts = get_pair_counts(token_ids)
 
             # Identify pair to merge: we want the pair with the lowest token index in
             # `merges` since this pair may have been part of a merge later on!
@@ -99,9 +99,9 @@ class BasicTokenizer:
 
             # Merge the pair and update the tokens
             idx = self.merges[pair]
-            tokens = merge_new_token(tokens, pair, idx)
+            token_ids = merge_new_token(token_ids, pair, idx)
 
-        return tokens
+        return token_ids
 
     def decode(self, token_ids: list[int]) -> str:
         """Convert a sequence of integers (token indices), each in the range
