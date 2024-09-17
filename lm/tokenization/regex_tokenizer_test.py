@@ -8,9 +8,24 @@ class TestRegexTokenizer(unittest.TestCase):
         self.tokenizer = RegexTokenizer()
 
     def test_train(self):
-        text = "Hello how're you?"
-        self.tokenizer.train(text, final_vocab_size=266)
-        tokens = self.tokenizer.encode(text)
+        # Train with 2 merges
+        text = "We'll chill until Will grills dill!"
+        self.tokenizer.train(text, final_vocab_size=258)
+        self.assertEqual(
+            self.tokenizer.merges,
+            {(108, 108): 256, (105, 256): 257},
+            msg="The first merge should be 'l' and 'l': (108, 108) -> 256. "
+            "The second merge should be 'e' and 'll': (105, 256) -> 257",
+        )
+        expected_vocab = {idx: bytes([idx]) for idx in range(256)}
+        expected_vocab[256] = b"ll"
+        expected_vocab[257] = b"ill"
+        self.assertEqual(
+            self.tokenizer.vocab,
+            expected_vocab,
+            msg="The vocabulary should contain all 256 ASCII characters, plus the "
+            "two newly created tokens 256 (representing b'll') and 257 (b'ill').",
+        )
 
     def test_encode_chunk(self):
         # Create toy tokenizer with only two merges
