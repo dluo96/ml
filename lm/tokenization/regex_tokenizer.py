@@ -6,7 +6,16 @@ GPT4_SPLIT_PATTERN = r"""'(?i:[sdmt]|ll|ve|re)|[^\r\n\p{L}\p{N}]?+\p{L}+|\p{N}{1
 
 
 class RegexTokenizer:
-    """Tokenizer that uses a regex pattern to split text into chunks."""
+    """Tokenizer that uses a regex pattern to split text into chunks.
+
+    But why isn't `BasicTokenizer` enough? Why do we need to enforce regex?
+    The folks making GPT-2 found that BPE would create separate tokens for multiple
+    versions of common words like 'dog' since they occurred in many variations such as
+    'dog.', 'dog!', 'dog?'. This led to a sub-optimal allocation of limited vocabulary
+    slots and model capacity. To prevent this, they enforce a regex pattern that splits
+    the text in such a way that some types of characters are never merged (into a new
+    token) by BPE. It effectively adds merging rules on top of the BPE algorithm.
+    """
 
     def __init__(self):
         self.merges: dict[tuple[int, int], int] = {}  # Map new pair to token index

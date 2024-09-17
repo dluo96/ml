@@ -3,7 +3,8 @@ from lm.tokenization.utils import get_pair_counts, merge_new_token
 
 class BasicTokenizer:
     """Implementation of GPT-2 tokenizer, which uses the byte pair encoding (BPE)
-    algorithm.
+    algorithm on the byte-level representation of UTF-8 encoding. This provides a
+    practical middle ground between character-level and word-level language modelling.
 
     Suppose we have a byte sequence (vocabulary size of 256). We will go through it and
     find the byte pairs that occur the most. We will iteratively define new tokens,
