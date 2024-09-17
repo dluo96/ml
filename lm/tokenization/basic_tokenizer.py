@@ -107,13 +107,14 @@ class BasicTokenizer:
         """Convert a sequence of integers (token indices), each in the range
         0, ..., vocab_size - 1, to a string.
         """
-        # Get raw bytes
-        tokens = b"".join(self.vocab[idx] for idx in ids)
+        # Get the byte object for each token (index) and join them into a single
+        # `bytes` object.
+        text_bytes = b"".join(self.vocab[idx] for idx in ids)
 
         # Decode with UTF-8. Importantly, not every byte sequence is valid UTF-8.
         # If the language model predicts tokens in a bad manner, then they might not
         # be valid UTF-8, and so we won't be able to decode them. The standard practice
         # is to replace them with the Unicode replacement character.
-        text = tokens.decode("utf-8", errors="replace")
+        text = text_bytes.decode("utf-8", errors="replace")
 
         return text
