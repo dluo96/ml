@@ -103,13 +103,13 @@ class BasicTokenizer:
 
         return tokens
 
-    def decode(self, ids: list[int]) -> str:
+    def decode(self, token_ids: list[int]) -> str:
         """Convert a sequence of integers (token indices), each in the range
         0, ..., vocab_size - 1, to a string.
         """
         # Get the byte object for each token (index) and join them into a single
         # `bytes` object.
-        text_bytes = b"".join(self.vocab[idx] for idx in ids)
+        text_bytes = b"".join(self.vocab[token_id] for token_id in token_ids)
 
         # Decode with UTF-8. Importantly, not every byte sequence is valid UTF-8.
         # If the language model predicts tokens in a bad manner, then they might not

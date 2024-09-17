@@ -81,7 +81,7 @@ class RegexTokenizer:
             ids.extend(chunk_ids)
         return ids
 
-    def decode(self, ids: list[int]) -> str:
+    def decode(self, token_ids: list[int]) -> str:
         """Convert a sequence of integers (token indices) to a string. Importantly, we
         do not need the regex pattern to decode the text.
         """
@@ -89,11 +89,11 @@ class RegexTokenizer:
         # it. Each element of the list is a `bytes` object consisting of one or more
         # bytes, e.g. [b'aaab', b'd', b'aaab', b'a', b'c']
         part_bytes = []
-        for idx in ids:
-            if idx in self.vocab:
-                part_bytes.append(self.vocab[idx])
+        for token_id in token_ids:
+            if token_id in self.vocab:
+                part_bytes.append(self.vocab[token_id])
             else:
-                raise ValueError(f"Invalid token id: {idx}")
+                raise ValueError(f"Invalid token id: {token_id}")
 
         # Join the `bytes` elements to get the full `bytes` object, e.g. b'aaabdaaabac'
         text_bytes = b"".join(part_bytes)
