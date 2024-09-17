@@ -86,7 +86,7 @@ class RegexTokenizer:
         """Convert a sequence of integers (token indices) to a string. Importantly, we
         do not need the regex pattern to decode the text.
         """
-        # Iterate over the tokens: map each token index to its byte object and store
+        # Iterate over the tokens: map each token index to its `bytes` object and store
         # it. Each element of the list is a `bytes` object consisting of one or more
         # bytes, e.g. [b'aaab', b'd', b'aaab', b'a', b'c']
         part_bytes = []

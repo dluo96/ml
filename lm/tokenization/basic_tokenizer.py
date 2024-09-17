@@ -107,7 +107,7 @@ class BasicTokenizer:
         """Convert a sequence of integers (token indices), each in the range
         0, ..., vocab_size - 1, to a string.
         """
-        # Get the byte object for each token (index) and join them into a single
+        # Map each token (index) to its `bytes` object and join these into a single
         # `bytes` object.
         text_bytes = b"".join(self.vocab[token_id] for token_id in token_ids)
 
