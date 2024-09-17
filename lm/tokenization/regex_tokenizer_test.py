@@ -9,8 +9,9 @@ class TestRegexTokenizer(unittest.TestCase):
 
     def test_train(self):
         # Train with 2 merges
+        final_vocab_size = 256 + 2
         text = "We'll chill until Will grills dill!"
-        self.tokenizer.train(text, final_vocab_size=258)
+        self.tokenizer.train(text, final_vocab_size)
         self.assertEqual(
             self.tokenizer.merges,
             {(108, 108): 256, (105, 256): 257},
