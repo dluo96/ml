@@ -15,8 +15,9 @@ class TestRegexTokenizer(unittest.TestCase):
         self.assertEqual(
             self.tokenizer.merges,
             {(108, 108): 256, (105, 256): 257},
-            msg="The first merge should be 'l' and 'l': (108, 108) -> 256. "
-            "The second merge should be 'e' and 'll': (105, 256) -> 257",
+            msg="The most frequent pair is 'l' and 'l', so the first merge should be "
+            "(108, 108) -> 256. Afterwards, the most frequent pair is 'i' and 'll', "
+            "so the second merge should be (105, 256) -> 257.",
         )
         expected_vocab = {idx: bytes([idx]) for idx in range(256)}
         expected_vocab[256] = b"ll"
