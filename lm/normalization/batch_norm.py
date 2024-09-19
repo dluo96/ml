@@ -26,7 +26,8 @@ class BatchNorm1D:
 
     The batch norm layer also keeps a running mean and a running variance, which are
     used during evaluation/inference. In particular, it allows us to forward individual
-    examples at inference time.
+    examples at inference time. These two buffers are not trained with backpropagation,
+    but rather with a running 'momentum update'.
     """
 
     def __init__(self, n_embd: int, eps: float = 1e-5, momentum: float = 0.1):
