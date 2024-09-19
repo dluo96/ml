@@ -53,3 +53,5 @@ python -m unittest discover --verbose --failfast --start-directory lm/ --pattern
   [nanoGPT](https://github.com/karpathy/nanoGPT), and
   [minbpe](https://github.com/karpathy/minbpe) by Andrej Karpathy. These are awesome and
   I highly recommend checking them out!
+- [A Programmer's Intro To Unicode](https://www.reedbeta.com/blog/programmers-intro-to-unicode/)
+-
