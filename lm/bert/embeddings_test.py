@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 from lm.bert.config import BertConfig
-from lm.bert.embeddings import Embeddings
+from lm.bert.embeddings import BertEmbeddings
 
 
 class TestEmbeddings(unittest.TestCase):
@@ -18,14 +18,14 @@ class TestEmbeddings(unittest.TestCase):
 
     def test_init(self):
         # Test initialization of the embedding layer with positional and segment embeddings
-        embeddings = Embeddings(self.config, use_pos_emb=True, use_seg_emb=True)
+        embeddings = BertEmbeddings(self.config, use_pos_emb=True, use_seg_emb=True)
         self.assertIsInstance(embeddings, nn.Module)
         self.assertIsNotNone(embeddings.lookup_tok_emb)
         self.assertIsNotNone(embeddings.lookup_pos_emb)
         self.assertIsNotNone(embeddings.lookup_seg_emb)
 
     def test_forward_without_position_and_segment_embeddings(self):
-        embeddings = Embeddings(self.config, use_pos_emb=False, use_seg_emb=False)
+        embeddings = BertEmbeddings(self.config, use_pos_emb=False, use_seg_emb=False)
         x = torch.randint(0, self.config.vocab_size, (self.B, self.T))
         segments = torch.zeros(self.B, self.T, dtype=torch.long)
 
@@ -34,7 +34,7 @@ class TestEmbeddings(unittest.TestCase):
         self.assertEqual(output.shape, (self.B, self.T, self.config.n_embd))
 
     def test_forward_with_position_embeddings(self):
-        embeddings = Embeddings(self.config, use_pos_emb=True, use_seg_emb=False)
+        embeddings = BertEmbeddings(self.config, use_pos_emb=True, use_seg_emb=False)
         x = torch.randint(0, self.config.vocab_size, (self.B, self.T))
         segment = torch.zeros(8, 32, dtype=torch.long)
 
@@ -42,7 +42,7 @@ class TestEmbeddings(unittest.TestCase):
         self.assertEqual(output.shape, (8, 32, self.config.n_embd))
 
     def test_forward_with_segment_embeddings(self):
-        embeddings = Embeddings(self.config, use_pos_emb=False, use_seg_emb=True)
+        embeddings = BertEmbeddings(self.config, use_pos_emb=False, use_seg_emb=True)
         x = torch.randint(0, self.config.vocab_size, (self.B, self.T))
         segment = torch.randint(0, self.config.n_segments, (self.B, self.T))
 
@@ -50,7 +50,7 @@ class TestEmbeddings(unittest.TestCase):
         self.assertEqual(output.shape, (self.B, self.T, self.config.n_embd))
 
     def test_forward_with_position_and_segment_embeddings(self):
-        embeddings = Embeddings(self.config, use_pos_emb=True, use_seg_emb=True)
+        embeddings = BertEmbeddings(self.config, use_pos_emb=True, use_seg_emb=True)
         x = torch.randint(0, self.config.vocab_size, (self.B, self.T))
         segment = torch.randint(0, self.config.n_segments, (self.B, self.T))
 

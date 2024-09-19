@@ -4,7 +4,7 @@ from torch import nn
 from lm.bert.config import BertConfig
 
 
-class Embeddings(nn.Module):
+class BertEmbeddings(nn.Module):
     """Embedding with optional position embeddings and optional segment embeddings.
 
     Importantly, all the embeddings are learnable parameters.
@@ -50,4 +50,7 @@ class Embeddings(nn.Module):
         if self.lookup_seg_emb is not None:
             emb += self.lookup_seg_emb(segments)  # (B, T) -> (B, T, n_embd)
 
-        return self.dropout(self.ln(emb))
+        # Layer normalization and dropout
+        emb = self.dropout(self.ln(emb))
+
+        return emb
