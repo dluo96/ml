@@ -6,8 +6,8 @@ class BatchNorm1D:
     neural network. It helps ensure that the pre-activation values are not too spread
     out or too close together. This can help with training stability because it can
     prevent the gradients from becoming too small or too large. It is common to put it
-    after layers with a multiplication, such as a linear layer or a convolutional
-    layer.
+    after layers with a multiplication (such as a linear layer or a convolutional
+    layer) and prior to activation functions.
 
     Consider the case where the activation function is tanh(x). If x is too spread out,
     tanh(x) will saturate at -1 or +1, causing the gradients to vanish (recall that
