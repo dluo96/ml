@@ -88,7 +88,7 @@ class CausalSelfAttention(nn.Module):
             )
         else:
             # Standard implementation of causal self attention
-            # (B, nh, T, hs) x (B, nh, hs, T) -> (B, nh, T, T)
+            # (B, nh, T, hs) @ (B, nh, hs, T) -> (B, nh, T, T)
             att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
 
             # Apply causal mask to prevent attending to future positions by setting those
@@ -113,7 +113,7 @@ class CausalSelfAttention(nn.Module):
 
 
 class Block(nn.Module):
-    """A transformer block."""
+    """A GPT-style transformer block."""
 
     def __init__(self, config: ModelConfig):
         super().__init__()
