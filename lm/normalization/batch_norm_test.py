@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from lm.normalization.batch_norm import BatchNorm1D
+from lm.normalization.batch_norm import BatchNorm
 
 
 class TestBatchNorm1D(unittest.TestCase):
@@ -11,7 +11,7 @@ class TestBatchNorm1D(unittest.TestCase):
         self.batch_size = 32
         self.eps = 1e-5
         self.momentum = 0.1
-        self.bn = BatchNorm1D(n_embd=self.n_embd, eps=self.eps, momentum=self.momentum)
+        self.bn = BatchNorm(n_embd=self.n_embd, eps=self.eps, momentum=self.momentum)
 
     def test_init(self):
         # Check initialization of parameters and buffers
@@ -119,7 +119,7 @@ class TestBatchNorm1D(unittest.TestCase):
 
         # Apply batch normalization and check that the output distribution is now
         # standard normal
-        bn = BatchNorm1D(n_embd=200)
+        bn = BatchNorm(n_embd=200)
         y_bn = bn(y)
         self.assertAlmostEqual(y_bn.mean().item(), 0, delta=0.01)
         self.assertAlmostEqual(y_bn.std().item(), 1, delta=0.01)
@@ -155,9 +155,9 @@ class TestBatchNorm1D(unittest.TestCase):
         w3 = torch.randn(n_embd, n_embd)
 
         # Define three batch normalization layers
-        bn1 = BatchNorm1D(n_embd)
-        bn2 = BatchNorm1D(n_embd)
-        bn3 = BatchNorm1D(n_embd)
+        bn1 = BatchNorm(n_embd)
+        bn2 = BatchNorm(n_embd)
+        bn3 = BatchNorm(n_embd)
 
         # Apply three linear layers each followed by batch normalization
         pre_activations = bn3(bn2((bn1(x @ w1) @ w2)) @ w3)

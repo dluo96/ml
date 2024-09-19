@@ -1,7 +1,7 @@
 import torch
 
 
-class BatchNorm1D:
+class BatchNorm:
     """Batch normalization is used to control the statistics of activations in a
     neural network. It helps ensure that the pre-activation values are not too spread
     out or too close together. This can help with training stability because it can
