@@ -47,10 +47,16 @@ class BatchNorm1D:
         return [self.gamma, self.beta]
 
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
-        # Forward pass
+        """Forward pass of the batch normalization layer.
+
+        Args:
+            x: the input tensor of shape (B, n_embd) where B is the batch size and
+                n_embd is the embedding dimensionality. Most often, `x` is the
+                pre-activations.
+        """
         if self.training:
-            xmean = x.mean(dim=0, keepdim=True)  # Batch mean
-            xvar = x.var(dim=0, keepdim=True, unbiased=True)  # Batch variance
+            xmean = x.mean(dim=0, keepdim=True)  # Batch mean: (1, n_embd)
+            xvar = x.var(dim=0, keepdim=True, unbiased=True)  # Batch var. (1, n_embd)
         else:
             # Eval or inference
             xmean = self.running_mean
