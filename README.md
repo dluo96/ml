@@ -54,4 +54,5 @@ python -m unittest discover --verbose --failfast --start-directory lm/ --pattern
   [minbpe](https://github.com/karpathy/minbpe) by Andrej Karpathy. These are awesome and
   I highly recommend checking them out!
 - [A Programmer's Intro To Unicode](https://www.reedbeta.com/blog/programmers-intro-to-unicode/)
--
+- [Integer Tokenization is Insane](https://www.beren.io/2023-02-04-Integer-tokenization-is-insane/)
+- [SolidGoldMagikarp (plus, prompt generation)](https://www.lesswrong.com/posts/aPeJE8bSo6rAFoLqg/solidgoldmagikarp-plus-prompt-generation)
