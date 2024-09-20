@@ -40,6 +40,9 @@ class TestMLMDataset(unittest.TestCase):
         self.assertEqual(self.dataset.ctoi["<SEP>"], 1)
         self.assertEqual(self.dataset.ctoi["<MASK>"], 2)
 
+        # Check the size of the dataset
+        self.assertEqual(len(self.dataset), 2)
+
     @patch("random.choice")
     @patch("random.shuffle")
     @patch("random.random")
@@ -102,10 +105,6 @@ class TestMLMDataset(unittest.TestCase):
         self.assertEqual(
             pred_labels, [6, 7], msg="Masked labels are 6 ('l') and 7 ('o')."
         )
-
-    def test_dataset_len(self):
-        # Test __len__ method (not yet implemented)
-        self.assertEqual(len(self.dataset), len(self.words))
 
     def test_dataset_getitem(self):
         dataset = MLMDataset(self.names)

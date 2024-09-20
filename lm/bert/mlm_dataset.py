@@ -7,6 +7,10 @@ from lm.model_config import Tensor
 
 
 class MLMDataset(Dataset):
+    """Basic character-level dataset for masked language model (MLM) pre-training of
+    BERT.
+    """
+
     def __init__(self, words: list[str]):
         self.words = words
         self.unique_chars = ["<CLS>", "<SEP>", "<MASK>"] + sorted(list(set("".join(words))))  # fmt: skip
@@ -14,7 +18,7 @@ class MLMDataset(Dataset):
         self.itoc = {i: c for i, c in enumerate(self.unique_chars)}
 
     def __len__(self):
-        pass
+        return len(self.words)
 
     def __getitem__(self, idx: int) -> tuple[Tensor, Tensor, Tensor]:
         """Retrieves the input and target tensors for a given index.
