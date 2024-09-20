@@ -36,12 +36,12 @@ class TestNewGELU(unittest.TestCase):
 
 class TestCausalSelfAttention(unittest.TestCase):
     def setUp(self):
-        self.config = ModelConfig(n_embd=64, n_head=4, block_size=8, dropout=0.2)
-        self.model = CausalSelfAttention(self.config)
+        self.cfg = ModelConfig(n_embd=64, n_head=4, block_size=8, dropout=0.2)
+        self.model = CausalSelfAttention(self.cfg)
 
     def test_init(self):
         # Ensure embedding dimension is divisible by number of heads
-        self.assertEqual(self.config.n_embd % self.config.n_head, 0)
+        self.assertEqual(self.cfg.n_embd % self.cfg.n_head, 0)
 
         # Ensure the attention and projection layers are initialized correctly
         self.assertIsInstance(self.model.c_attn, nn.Linear)
@@ -55,7 +55,7 @@ class TestCausalSelfAttention(unittest.TestCase):
         self.assertTrue(hasattr(self.model, "bias"))
         self.assertEqual(
             self.model.bias.shape,
-            (1, 1, self.config.block_size, self.config.block_size),
+            (1, 1, self.cfg.block_size, self.cfg.block_size),
         )
         expected_bias = torch.tensor(
             [
@@ -78,13 +78,13 @@ class TestCausalSelfAttention(unittest.TestCase):
         # Generate a random input tensor of shape (batch_size, sequence_length, embedding_dim)
         batch_size = 2
         sequence_length = 5  # Should match block_size
-        x = torch.randn(batch_size, sequence_length, self.config.n_embd)
+        x = torch.randn(batch_size, sequence_length, self.cfg.n_embd)
 
         # Forward pass
         y = self.model(x)
 
         # Check the shape of the output
-        self.assertEqual(y.shape, (batch_size, sequence_length, self.config.n_embd))
+        self.assertEqual(y.shape, (batch_size, sequence_length, self.cfg.n_embd))
 
         # Check that the final dropout is applied correctly in the forward pass
         num_zero = torch.sum(y == 0).item()
@@ -94,8 +94,8 @@ class TestCausalSelfAttention(unittest.TestCase):
         # Generate a random input tensor
         B = 2  # Batch size
         T = 8  # Sequence length
-        nh = self.config.n_head  # Number of heads
-        C = self.config.n_embd  # Embedding dimensionality
+        nh = self.cfg.n_head  # Number of heads
+        C = self.cfg.n_embd  # Embedding dimensionality
 
         x = torch.randn(B, T, C)
 
