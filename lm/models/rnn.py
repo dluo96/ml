@@ -11,26 +11,26 @@ class RNN(nn.Module):
     cell to predict the next character based on the hidden state at each step.
     """
 
-    def __init__(self, config: ModelConfig, cell_type: str):
+    def __init__(self, cfg: ModelConfig, cell_type: str):
         super().__init__()
-        self.block_size = config.block_size
-        self.vocab_size = config.vocab_size
+        self.block_size = cfg.block_size
+        self.vocab_size = cfg.vocab_size
 
         # Initialise the beginning hidden state h_{0}
         # The 1 means it is for a single sequence
-        self.start = nn.Parameter(torch.zeros(1, config.n_embd2))
+        self.start = nn.Parameter(torch.zeros(1, cfg.n_embd2))
 
         # Define model layers
-        self.lookup_table = nn.Embedding(config.vocab_size, config.n_embd)
+        self.lookup_table = nn.Embedding(cfg.vocab_size, cfg.n_embd)
 
         if cell_type == "rnn":
-            self.cell = RNNCell(config)
+            self.cell = RNNCell(cfg)
         elif cell_type == "gru":
-            self.cell = GRUCell(config)
+            self.cell = GRUCell(cfg)
         else:
             raise ValueError(f"Cell type {cell_type} is not recognised!")
 
-        self.lm_head = nn.Linear(config.n_embd2, self.vocab_size)
+        self.lm_head = nn.Linear(cfg.n_embd2, self.vocab_size)
 
     def get_block_size(self) -> int:
         return self.block_size

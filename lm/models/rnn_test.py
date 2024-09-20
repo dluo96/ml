@@ -9,23 +9,23 @@ from lm.models.rnn import RNN, GRUCell, RNNCell
 
 class TestRNN(unittest.TestCase):
     def setUp(self):
-        self.config = ModelConfig(vocab_size=27, block_size=3, n_embd=4, n_embd2=8)
+        self.cfg = ModelConfig(vocab_size=27, block_size=3, n_embd=4, n_embd2=8)
 
         # Overridden in subclasses
         self.cell_type = "rnn"
-        self.model = RNN(self.config, cell_type=self.cell_type)
+        self.model = RNN(self.cfg, cell_type=self.cell_type)
 
     def test_init(self):
         # Check that the model attributes are set correctly
-        self.assertEqual(self.model.vocab_size, self.config.vocab_size)
-        self.assertEqual(self.model.block_size, self.config.block_size)
+        self.assertEqual(self.model.vocab_size, self.cfg.vocab_size)
+        self.assertEqual(self.model.block_size, self.cfg.block_size)
 
         # Run a few checks on the lookup table
         self.assertIsInstance(self.model.lookup_table, nn.Embedding)
         self.assertIsInstance(self.model.lookup_table.weight, nn.Parameter)
         self.assertEqual(
             self.model.lookup_table.weight.shape,
-            (self.config.vocab_size, self.config.n_embd),
+            (self.cfg.vocab_size, self.cfg.n_embd),
             msg="Lookup table must have shape (vocab size, embedding dimensionality)!",
         )
         self.assertTrue(
@@ -41,7 +41,7 @@ class TestRNN(unittest.TestCase):
         self.assertIsInstance(self.model.start, nn.Parameter)
         self.assertEqual(
             self.model.start.shape,
-            (1, self.config.n_embd2),
+            (1, self.cfg.n_embd2),
             msg="Start parameter must have shape (1, hidden state embedding size)!",
         )
 
@@ -64,28 +64,24 @@ class TestRNN(unittest.TestCase):
 
     def test_lookup_table(self):
         batch_size = 5
-        idx = torch.randint(
-            0, self.config.vocab_size, (batch_size, self.config.block_size)
-        )
+        idx = torch.randint(0, self.cfg.vocab_size, (batch_size, self.cfg.block_size))
         emb = self.model.lookup_table(idx)
         self.assertEqual(
             emb.shape,
-            (batch_size, self.config.block_size, self.config.n_embd),
+            (batch_size, self.cfg.block_size, self.cfg.n_embd),
             msg="Embeddings must have shape (batch_size, block_size, embedding dim.)!",
         )
 
     def test_forward_without_targets(self):
         # Generate a batch of input sequences
         batch_size = 5
-        idx = torch.randint(
-            0, self.config.vocab_size, (batch_size, self.config.block_size)
-        )
+        idx = torch.randint(0, self.cfg.vocab_size, (batch_size, self.cfg.block_size))
 
         # Forward pass without targets
         logits, loss = self.model(idx)
         self.assertEqual(
             logits.shape,
-            (batch_size, self.config.block_size, self.config.vocab_size),
+            (batch_size, self.cfg.block_size, self.cfg.vocab_size),
             msg="Output logits must have shape (batch_size, block_size, vocab_size) "
             "because the RNN generates predictions at each step of the input sequence, "
             "effectively providing a prediction for every input position!",
@@ -112,7 +108,7 @@ class TestRNN(unittest.TestCase):
         logits, loss = self.model(idx=x, targets=y)
         self.assertEqual(
             logits.shape,
-            (batch_size, self.config.block_size, self.config.vocab_size),
+            (batch_size, self.cfg.block_size, self.cfg.vocab_size),
             msg="Logits must have shape (batch_size, block_size, vocab_size)!",
         )
         self.assertIsNotNone(
@@ -138,7 +134,7 @@ class TestGRU(TestRNN):
     def setUp(self):
         super().setUp()
         self.cell_type = "gru"
-        self.model = RNN(self.config, cell_type=self.cell_type)
+        self.model = RNN(self.cfg, cell_type=self.cell_type)
 
 
 if __name__ == "__main__":
