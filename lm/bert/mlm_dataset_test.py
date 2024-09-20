@@ -2,6 +2,8 @@ import random
 import unittest
 from unittest.mock import patch
 
+import torch
+
 from lm.bert.mlm_dataset import MLMDataset
 
 
@@ -10,6 +12,23 @@ class TestMLMDataset(unittest.TestCase):
         # Sample words list for testing
         self.words = ["hello", "world"]
         self.dataset = MLMDataset(self.words)
+        self.names = [
+            "emma",
+            "isabella",
+            "camila",
+            "sadie",
+            "faith",
+            "margaret",
+            "jasmine",
+            "kayla",
+            "morgan",
+            "parker",
+            "jacqueline",
+            "veronica",
+            "winter",
+            "alexia",
+            "itzel",
+        ]
 
     def test_init(self):
         # Test that unique characters include special tokens and the correct letters
@@ -89,10 +108,24 @@ class TestMLMDataset(unittest.TestCase):
         self.assertEqual(len(self.dataset), len(self.words))
 
     def test_dataset_getitem(self):
-        # Test __getitem__ method (not yet implemented)
-        idx = 0
-        with self.assertRaises(NotImplementedError):
-            self.dataset[idx]
+        dataset = MLMDataset(self.names)
+        token_ids, pred_positions, pred_labels = dataset[0]
+
+        # Check the examples produced by "emma" (first word in the dataset)
+        n_tokens = len("emma") + 2  # +2 because of <CLS> and <SEP> tokens
+        self.assertEqual(
+            token_ids.shape,
+            (n_tokens,),
+            msg="Combined with <CLS> and <SEP>, 'emma' has 6 tokens.",
+        )
+        num_tokens_to_predict = max(1, int(n_tokens * 0.15))
+        self.assertEqual(
+            pred_positions.shape,
+            (num_tokens_to_predict,),
+            msg="The number of to-be-predicted tokens is the maximum of 1 or 15% of "
+            "the total number of tokens!",
+        )
+        self.assertEqual(pred_labels.shape, (num_tokens_to_predict,))
 
 
 if __name__ == "__main__":
