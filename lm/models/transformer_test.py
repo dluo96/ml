@@ -9,6 +9,31 @@ from lm.model_config import ModelConfig
 from lm.models.transformer import Block, CausalSelfAttention, NewGELU, Transformer
 
 
+class TestNewGELU(unittest.TestCase):
+    def test_forward(self):
+        gelu = NewGELU()
+
+        # Check the shape
+        x = torch.randn(8, 32)
+        output = gelu(x)
+        self.assertEqual(output.shape, x.shape)
+
+        # Check that the GELU function approaches -1 for large negative values
+        x = torch.tensor([-10.0, -100.0, -1000.0])
+        output = gelu(x)
+        self.assertTrue(torch.allclose(output, torch.tensor([-0.0, -0.0, -0.0])))
+
+        # Check that GELU approaches y=x for large positive values
+        x = torch.tensor([10.0, 100.0, 1000.0])
+        output = gelu(x)
+        self.assertTrue(torch.allclose(output, x))
+
+        # Check that GELU equals zero at x=0
+        x = torch.tensor([0.0])
+        output = gelu(x)
+        self.assertTrue(torch.allclose(output, torch.tensor([0.0])))
+
+
 class TestCausalSelfAttention(unittest.TestCase):
     def setUp(self):
         self.config = ModelConfig(n_embd=64, n_head=4, block_size=8, dropout=0.2)

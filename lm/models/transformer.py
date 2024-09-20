@@ -10,8 +10,9 @@ from lm.model_config import ModelConfig, Tensor
 
 class NewGELU(nn.Module):
     """Implementation of the GELU activation function currently in the Google BERT repo
-    (identical to OpenAI GPT). Reference: Gaussian Error Linear Units (GELU) paper:
-    https://arxiv.org/abs/1606.08415
+    (identical to OpenAI GPT).
+
+    Reference: "Gaussian Error Linear Units (GELU)" (https://arxiv.org/abs/1606.08415).
     """
 
     def forward(self, x: Tensor) -> Tensor:
