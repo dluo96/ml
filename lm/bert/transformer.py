@@ -1,6 +1,5 @@
 import math
 
-import torch
 import torch.nn.functional as F
 from torch import nn
 
@@ -11,10 +10,13 @@ from lm.models.transformer import NewGELU
 
 
 class MultiHeadedSelfAttention(nn.Module):
-    """Multi-headed attention."""
+    """Multi-headed attention with an optional mask that can be used for MLM (Masked
+    Language Modelling), which is one of BERT's pre-training tasks.
+    """
 
     def __init__(self, cfg: BertConfig):
         super().__init__()
+        # Embedding dimensionality must be divisible by number of heads
         assert cfg.n_embd % cfg.n_heads == 0
 
         # Key, query, and value projections for all heads
