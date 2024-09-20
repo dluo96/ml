@@ -24,21 +24,21 @@ class CausalSelfAttention(nn.Module):
     Alternatively, it is possible to use `torch.nn.MultiheadAttention`.
     """
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, cfg: ModelConfig):
         super().__init__()
         # Embedding dimensionality must be divisible by number of heads
-        assert config.n_embd % config.n_head == 0
+        assert cfg.n_embd % cfg.n_head == 0
 
         # Key, query, and value projections for all heads, but in a batch.
         # The 3 is because of key, query, and value
-        self.c_attn = nn.Linear(config.n_embd, 3 * config.n_embd)
+        self.c_attn = nn.Linear(cfg.n_embd, 3 * cfg.n_embd)
 
         # Output projection
-        self.c_proj = nn.Linear(config.n_embd, config.n_embd)
+        self.c_proj = nn.Linear(cfg.n_embd, cfg.n_embd)
 
         # Regularization
-        self.attn_dropout = nn.Dropout(config.dropout)
-        self.resid_dropout = nn.Dropout(config.dropout)
+        self.attn_dropout = nn.Dropout(cfg.dropout)
+        self.resid_dropout = nn.Dropout(cfg.dropout)
 
         # Enable flash attention if it is supported (requires PyTorch 2.0 or later) and
         # if running on a CUDA GPU
@@ -53,13 +53,13 @@ class CausalSelfAttention(nn.Module):
             # input sequence
             self.register_buffer(
                 "bias",
-                torch.tril(torch.ones(config.block_size, config.block_size))
-                          .view(1, 1, config.block_size, config.block_size),  # fmt: skip
+                torch.tril(torch.ones(cfg.block_size, cfg.block_size))
+                          .view(1, 1, cfg.block_size, cfg.block_size),  # fmt: skip
             )
 
-        self.n_head = config.n_head
-        self.n_embd = config.n_embd
-        self.dropout = config.dropout
+        self.n_head = cfg.n_head
+        self.n_embd = cfg.n_embd
+        self.dropout = cfg.dropout
 
     def forward(self, x: Tensor) -> Tensor:
         B, T, C = x.size()  # Batch size, sequence length, embedding dim. (n_embd)
@@ -115,17 +115,17 @@ class CausalSelfAttention(nn.Module):
 class Block(nn.Module):
     """A GPT-style transformer block."""
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, cfg: ModelConfig):
         super().__init__()
-        self.ln_1 = nn.LayerNorm(config.n_embd)
-        self.attn = CausalSelfAttention(config)
-        self.ln_2 = nn.LayerNorm(config.n_embd)
+        self.ln_1 = nn.LayerNorm(cfg.n_embd)
+        self.attn = CausalSelfAttention(cfg)
+        self.ln_2 = nn.LayerNorm(cfg.n_embd)
         self.mlp = nn.ModuleDict(
             dict(
-                c_fc=nn.Linear(config.n_embd, 4 * config.n_embd),
+                c_fc=nn.Linear(cfg.n_embd, 4 * cfg.n_embd),
                 act=NewGELU(),
-                c_proj=nn.Linear(4 * config.n_embd, config.n_embd),
-                dropout=nn.Dropout(config.dropout),
+                c_proj=nn.Linear(4 * cfg.n_embd, cfg.n_embd),
+                dropout=nn.Dropout(cfg.dropout),
             )
         )
         m = self.mlp
@@ -147,21 +147,21 @@ class Transformer(nn.Module):
     text based on previous context.
     """
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, cfg: ModelConfig):
         super().__init__()
-        self.block_size = config.block_size  # Maximum context length for predictions
+        self.block_size = cfg.block_size  # Maximum context length for predictions
 
         # Define model layers. Importantly, the token embeddings and positional
         # embeddings are learnable parameters!
         self.transformer = nn.ModuleDict(
             dict(
-                lookup_tok_emb=nn.Embedding(config.vocab_size, config.n_embd),
-                lookup_pos_emb=nn.Embedding(config.block_size, config.n_embd),
-                h=nn.ModuleList([Block(config) for _ in range(config.n_layer)]),
-                ln_f=nn.LayerNorm(config.n_embd),
+                lookup_tok_emb=nn.Embedding(cfg.vocab_size, cfg.n_embd),
+                lookup_pos_emb=nn.Embedding(cfg.block_size, cfg.n_embd),
+                h=nn.ModuleList([Block(cfg) for _ in range(cfg.n_layer)]),
+                ln_f=nn.LayerNorm(cfg.n_embd),
             )
         )
-        self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
+        self.lm_head = nn.Linear(cfg.n_embd, cfg.vocab_size, bias=False)
 
         # Report number of parameters, excluding the decoder parameters in `lm_head`
         n_params = sum(p.numel() for p in self.transformer.parameters())
