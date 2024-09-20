@@ -52,9 +52,8 @@ class CausalSelfAttention(nn.Module):
             # input sequence
             self.register_buffer(
                 "bias",
-                torch.tril(torch.ones(config.block_size, config.block_size)).view(
-                    1, 1, config.block_size, config.block_size
-                ),
+                torch.tril(torch.ones(config.block_size, config.block_size))
+                          .view(1, 1, config.block_size, config.block_size),  # fmt: skip
             )
 
         self.n_head = config.n_head
