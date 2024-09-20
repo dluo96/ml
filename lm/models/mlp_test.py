@@ -10,19 +10,19 @@ from lm.models.mlp import MLP
 
 class TestMLP(unittest.TestCase):
     def setUp(self):
-        self.config = ModelConfig(vocab_size=27, block_size=3, n_embd=4, n_embd2=8)
-        self.model = MLP(self.config)
+        self.cfg = ModelConfig(vocab_size=27, block_size=3, n_embd=4, n_embd2=8)
+        self.model = MLP(self.cfg)
 
     def test_init(self):
-        self.assertEqual(self.model.vocab_size, self.config.vocab_size)
-        self.assertEqual(self.model.block_size, self.config.block_size)
+        self.assertEqual(self.model.vocab_size, self.cfg.vocab_size)
+        self.assertEqual(self.model.block_size, self.cfg.block_size)
 
         # Run a few checks on the lookup table
         self.assertIsInstance(self.model.lookup_table, nn.Embedding)
         self.assertIsInstance(self.model.lookup_table.weight, nn.Parameter)
         self.assertEqual(
             self.model.lookup_table.weight.shape,
-            (self.config.vocab_size, self.config.n_embd),
+            (self.cfg.vocab_size, self.cfg.n_embd),
             msg="Lookup table must have shape (vocab size, embedding dimensionality)!",
         )
         self.assertTrue(
@@ -36,26 +36,24 @@ class TestMLP(unittest.TestCase):
 
     def test_lookup_table(self):
         B = 5  # Batch size
-        idx = torch.randint(0, self.config.vocab_size, (B, self.config.block_size))
+        idx = torch.randint(0, self.cfg.vocab_size, (B, self.cfg.block_size))
         emb = self.model.lookup_table(idx)
         self.assertEqual(
             emb.shape,
-            (B, self.config.block_size, self.config.n_embd),
+            (B, self.cfg.block_size, self.cfg.n_embd),
             msg="Embeddings must have shape (batch_size, block_size, embedding dim.)!",
         )
 
     def test_forward_without_targets(self):
         # Generate a batch of 5 sequences each of length `block_size`
         batch_size = 5
-        idx = torch.randint(
-            0, self.config.vocab_size, (batch_size, self.config.block_size)
-        )
+        idx = torch.randint(0, self.cfg.vocab_size, (batch_size, self.cfg.block_size))
 
         # Forward pass
         logits, loss = self.model(idx)
         self.assertEqual(
             logits.shape,
-            (batch_size, self.config.vocab_size),
+            (batch_size, self.cfg.vocab_size),
             msg="Logits must have shape (batch_size, vocab_size)!",
         )
         self.assertIsNone(loss, msg="Loss should be None if targets are not provided!")
@@ -64,12 +62,12 @@ class TestMLP(unittest.TestCase):
         # Generate a batch of 5 input sequences each of length `block_size` as well as
         # a batch of 5 targets (labels) each of length 1 (we are only predicting the
         # next character)
-        idx = torch.randint(0, self.config.vocab_size, (5, self.config.block_size))
-        targets = torch.randint(0, self.config.vocab_size, (5,))
+        idx = torch.randint(0, self.cfg.vocab_size, (5, self.cfg.block_size))
+        targets = torch.randint(0, self.cfg.vocab_size, (5,))
 
         # Forward pass
         logits, loss = self.model(idx, targets)
-        self.assertEqual(logits.shape, (5, self.config.vocab_size))
+        self.assertEqual(logits.shape, (5, self.cfg.vocab_size))
         self.assertEqual(loss.shape, ())
         self.assertIsNotNone(
             loss, msg="Loss should not be None if targets are provided!"
@@ -80,8 +78,8 @@ class TestMLP(unittest.TestCase):
         )
 
     def test_forward_equivalence_loss(self):
-        idx = torch.randint(0, self.config.vocab_size, (5, self.config.block_size))
-        targets = torch.randint(0, self.config.vocab_size, (5,))
+        idx = torch.randint(0, self.cfg.vocab_size, (5, self.cfg.block_size))
+        targets = torch.randint(0, self.cfg.vocab_size, (5,))
 
         # Forward pass
         _, loss = self.model(idx, targets)

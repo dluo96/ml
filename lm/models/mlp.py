@@ -10,17 +10,17 @@ class MLP(nn.Module):
     with an MLP.
     """
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, cfg: ModelConfig):
         super().__init__()
-        self.vocab_size = config.vocab_size
-        self.block_size = config.block_size
+        self.vocab_size = cfg.vocab_size
+        self.block_size = cfg.block_size
 
         # Define model layers
-        self.lookup_table = nn.Embedding(self.vocab_size, config.n_embd)  # Removed +1
+        self.lookup_table = nn.Embedding(self.vocab_size, cfg.n_embd)  # Removed +1
         self.mlp = nn.Sequential(
-            nn.Linear(self.block_size * config.n_embd, config.n_embd2),
+            nn.Linear(self.block_size * cfg.n_embd, cfg.n_embd2),
             nn.Tanh(),
-            nn.Linear(config.n_embd2, self.vocab_size),
+            nn.Linear(cfg.n_embd2, self.vocab_size),
         )
 
     def get_block_size(self) -> int:
