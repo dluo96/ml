@@ -15,7 +15,23 @@ class MLMDataset(Dataset):
         pass
 
     def __getitem__(self, idx: int):
-        pass
+        """Retrieves the input and target tensors for a given index.
+
+        Note that the special tokens have the following token IDs:
+            - "<CLS>": 0
+            - "<SEP>": 1
+            - "<MASK>": 2
+
+        For example, suppose we have the idx representing the word "emma". Then, the
+        input might be something like:
+            - Input: [0, 7, 15, 2, 3, 1]
+            - Target positions: [3]
+            - Target labels: [15]
+
+        For the BERT model, this means that:
+            - When the to-be-predicted token in ["<CLS>", "e", "m", "m", "a", "<SEP>"]
+                is the second "m", which has position 3, the target label is 15.
+        """
 
     def _replace_mlm_tokens(
         self,
@@ -79,10 +95,12 @@ class MLMDataset(Dataset):
             num_mlm_preds,
         )
 
-        # Sort by position and separate
+        # Sort by position to undo the shuffling from earlier
         pred_positions_and_labels = sorted(
             pred_positions_and_labels, key=lambda x: x[0]
         )
+
+        # Separate the positions and labels for the to-be-predicted tokens
         pred_positions = [v[0] for v in pred_positions_and_labels]
         mlm_pred_labels = [v[1] for v in pred_positions_and_labels]
 
