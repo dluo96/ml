@@ -7,7 +7,8 @@ from lm.model_config import Tensor
 
 
 class MLMDataset(Dataset):
-    """Basic character-level dataset for Masked LM (MLM) pre-training of BERT.
+    """Basic character-level dataset for masked language model (MLM) pre-training of
+    BERT.
 
     In MLM, 15% of the token positions at random for prediction. If the i-th token is
     chosen, we do the following:
