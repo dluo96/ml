@@ -3,9 +3,9 @@ from dataclasses import dataclass
 
 @dataclass
 class BertConfig:
-    vocab_size: int = None  # Size of Vocabulary
+    vocab_size: int = None
     n_embd: int = 768  # Dimension of Hidden Layer in Transformer Encoder
-    n_layers: int = 12  # Number of Hidden Layers
+    n_layers: int = 12  # Number of transformer blocks
     n_heads: int = 12  # Number of Heads in Multi-Headed Attention Layers
     dim_ff: int = 768 * 4  # Dimension of Intermediate Layers in Position-wise FFN
     p_drop_hidden: float = 0.1  # Probability of Dropout of various Hidden Layers
