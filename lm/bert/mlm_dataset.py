@@ -1,7 +1,9 @@
 import random
 
-from datasets import load_dataset
+import torch
 from torch.utils.data import Dataset
+
+from lm.model_config import Tensor
 
 
 class MLMDataset(Dataset):
@@ -14,7 +16,7 @@ class MLMDataset(Dataset):
     def __len__(self):
         pass
 
-    def __getitem__(self, idx: int):
+    def __getitem__(self, idx: int) -> tuple[Tensor, Tensor, Tensor]:
         """Retrieves the input and target tensors for a given index.
 
         Note that the special tokens have the following token IDs:
@@ -32,6 +34,16 @@ class MLMDataset(Dataset):
             - When the to-be-predicted token in ["<CLS>", "e", "m", "m", "a", "<SEP>"]
                 is the second "m", which has position 3, the target label is 15.
         """
+        word = self.words[idx]
+        tokens = ["<CLS>"] + list(word) + ["<SEP>"]
+        token_ids, pred_positions, pred_labels = self._get_mlm_data_from_tokens(tokens)
+
+        # Convert to tensors
+        token_ids = torch.tensor(token_ids, dtype=torch.long)
+        pred_positions = torch.tensor(pred_positions, dtype=torch.long)
+        pred_labels = torch.tensor(pred_labels, dtype=torch.long)
+
+        return token_ids, pred_positions, pred_labels
 
     def _replace_mlm_tokens(
         self,
