@@ -7,6 +7,7 @@ from torch import nn
 from lm.bert.config import BertConfig
 from lm.bert.embeddings import BertEmbeddings
 from lm.model_config import Tensor
+from lm.models.transformer import NewGELU
 
 
 class MultiHeadedSelfAttention(nn.Module):
@@ -70,16 +71,6 @@ class MultiHeadedSelfAttention(nn.Module):
         y = y.transpose(1, 2).contiguous().view(B, T, C)
 
         return y
-
-
-class NewGELU(nn.Module):
-    """Implementation of the GELU activation function currently in the Google BERT repo
-    (identical to OpenAI GPT). Reference: Gaussian Error Linear Units (GELU) paper:
-    https://arxiv.org/abs/1606.08415
-    """
-
-    def forward(self, x: Tensor) -> Tensor:
-        return 0.5 * x * (1.0 + torch.tanh(math.sqrt(2.0 / math.pi) * (x + 0.044715 * torch.pow(x, 3.0))))  # fmt: skip
 
 
 class PositionWiseFeedForward(nn.Module):
