@@ -12,9 +12,9 @@ class Bigram(nn.Module):
     using gradient descent.
     """
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, cfg: ModelConfig):
         super().__init__()
-        N = config.vocab_size
+        N = cfg.vocab_size
         self.logits = nn.Parameter(torch.zeros(N, N))
 
     def get_block_size(self) -> int:
