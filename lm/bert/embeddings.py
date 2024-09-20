@@ -7,6 +7,9 @@ from lm.bert.config import BertConfig
 class BertEmbeddings(nn.Module):
     """Embedding with optional position embeddings and optional segment embeddings.
 
+    For a given token, its input representation is constructed by summing the
+    corresponding token, segment, and position embeddings.
+
     Importantly, all the embeddings are learnable parameters.
     TODO: but segment embeddings shouldn't be learnable? Since they are just used to
     identify each sentence when the input sequence is a sentence pair?

@@ -9,6 +9,15 @@ from lm.model_config import Tensor
 class MLMDataset(Dataset):
     """Basic character-level dataset for masked language model (MLM) pre-training of
     BERT.
+
+    In MLM, 15% of the token positions at random for prediction. If the i-th token is
+    chosen, we do the following:
+        - 80% of the time: replace the token with the <MASK> token.
+        - 10% of the time: replace the token with a random token.
+        - 10% of the time: keep the token unchanged.
+
+    The reason why we don't use <MASK> 100% of the time is to avoid a mismatch between
+    pre-training and fine-tuning: the <MASK> token does not appear during fine-tuning.
     """
 
     def __init__(self, words: list[str]):
