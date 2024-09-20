@@ -10,9 +10,9 @@ class BertEmbeddings(nn.Module):
     For a given token, its input representation is constructed by summing the
     corresponding token, segment, and position embeddings.
 
-    Importantly, all the embeddings are learnable parameters.
-    TODO: but segment embeddings shouldn't be learnable? Since they are just used to
-    identify each sentence when the input sequence is a sentence pair?
+    Importantly, all the embeddings are learnable parameters. For example, segment
+    embeddings in BERT are learnable parameters that help the model distinguish
+    between different segments (namely sentences in a pair) during training.
     """
 
     def __init__(
