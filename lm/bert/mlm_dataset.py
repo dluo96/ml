@@ -29,7 +29,7 @@ class MLMDataset(Dataset):
         # Store positions and labels of to-be-predicted tokens
         pred_positions_and_labels = []
 
-        # Shuffle to avoid selecting from the first few tokens every time
+        # Shuffle to avoid always selecting from the first few tokens
         random.shuffle(eligible_positions)
 
         # Iterate over eligible positions

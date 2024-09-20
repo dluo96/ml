@@ -51,11 +51,21 @@ class TestMLMDataset(unittest.TestCase):
         )
         self.assertEqual(pred_positions_and_labels, [(1, "h"), (2, "e"), (3, "l")])
 
+    @patch("random.shuffle")
     @patch("random.random")
-    def test_get_mlm_data_from_tokens(self, mock_random):
+    def test_get_mlm_data_from_tokens(self, mock_random, mock_shuffle):
         # Mock to return specific values for controlled testing
-        # Keep, keep, keep, mask, keep, keep, keep, keep, keep, keep, mask
-        mock_random.side_effect = [0.95, 0.95, 0.95, 0.1, 0.95, 0.95, 0.1]
+        mock_random.side_effect = [0.1, 0.1]  # Mask, mask
+
+        def shuffle_fn(x):
+            """Mock shuffle function which ensures that the 2 tokens (15% of the tokens
+            below) chosen for prediction are 4 and 7.
+            """
+            # Need to use x[:] to modify the list in-place. Just using x would assign a
+            # new reference to the variable, leaving the original list unchanged.
+            x[:] = [4, 7, 1, 2, 3, 5, 6, 8, 9, 10]
+
+        mock_shuffle.side_effect = lambda x: shuffle_fn(x)
 
         tokens = ["<CLS>", "h", "e", "l", "l", "o", "w", "o", "r", "l", "d", "<SEP>"]  # fmt: skip
         input_seq, pred_positions, pred_labels = self.dataset._get_mlm_data_from_tokens(
@@ -71,7 +81,7 @@ class TestMLMDataset(unittest.TestCase):
         )
         self.assertEqual(pred_positions, [4, 7], msg="Masked positions are 4 and 7.")
         self.assertEqual(
-            pred_labels, [6, 9], msg="Masked labels are 6 ('l') and 9 ('o')."
+            pred_labels, [6, 7], msg="Masked labels are 6 ('l') and 7 ('o')."
         )
 
     def test_dataset_len(self):
