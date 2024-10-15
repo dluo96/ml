@@ -65,6 +65,7 @@ class RoPE(nn.Module):
         D = x.shape[-1]
         assert D % 2 == 0, "RoPE operates on pairs of features, so D must be even."
 
+        # Denote the elements of `x` by [x1, x2, ..., x_D]
         # Take elements at even positions [x1, x3, x5, ...]
         x_at_even = x[..., 0::2]  # (..., D/2)
 
@@ -72,10 +73,14 @@ class RoPE(nn.Module):
         x_at_odd = x[..., 1::2]  # (..., D/2)
 
         # Negate elements at odd positions to get [-x2, -x4, ..., -x_D]
-        x_at_odd *= -1
+        # NB: cannot do it in-place since this will modify the original `x`
+        x_at_odd = -x_at_odd
 
-        # Interleave to get [-x2, x1, -x4, x3, ..., -x_D, x_{D-1}]
-        t = torch.stack((x_at_odd, x_at_even), dim=-1).view(-1, D)  # (..., D)
+        # Interleave to get [-x2, x1, -x4, x3, ..., -x_D, x_{D-1}] by
+        # (a) stacking the two tensors along a new dimension and then
+        # (b) flattening the last two dimensions.
+        t = torch.stack((x_at_odd, x_at_even), dim=-1)  # (..., D/2, 2)
+        t = t.flatten(-2)  # (..., D)
 
         return t
 
@@ -98,9 +103,14 @@ class RoPE(nn.Module):
         pos_ids = torch.arange(T, device=q.device).expand(B, T)
         cos, sin = self.get_cos_sin(pos_ids=pos_ids)  # (B, T, D) for both
 
-        # Implement equation (34) from the paper
-        # Broadcasting: (B, H, T, D) * (B, T, D) -> (B, H, T, D)
-        q_rope = (q * cos) + (self.swap_negate_pairwise(q) * sin)
-        k_rope = (k * cos) + (self.swap_negate_pairwise(k) * sin)
+        # Implement equation (34) from the paper: this is a computationally efficient
+        # implementation of applying a rotation matrix to each pair of features in the
+        # query and key tensors.
+        q_sw_neg = self.swap_negate_pairwise(q)
+        k_sw_neg = self.swap_negate_pairwise(k)
+
+        q_rope = (q * cos) + (q_sw_neg * sin)
+        k_rope = (k * cos) + (k_sw_neg * sin)
+        # Note: broadcasting occurred above: (B, H, T, D) * (B, T, D) -> (B, H, T, D)
 
         return q_rope, k_rope

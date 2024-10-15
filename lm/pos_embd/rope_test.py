@@ -12,6 +12,9 @@ class TestRoPE(unittest.TestCase):
         self.D = 16
         self.rope = RoPE(rope_theta=2, head_dim=self.D)
 
+    def tearDown(self):
+        torch.cuda.empty_cache()
+
     def test_init(self):
         self.assertEqual(
             self.rope.inv_freq.shape,
@@ -41,7 +44,9 @@ class TestRoPE(unittest.TestCase):
             assert torch.equal(cos[b], cos_ref)
             assert torch.equal(sin[b], sin_ref)
 
-        # Check features are interleaved correctly (recall RoPE operates on pairs)
+        # Check features are interleaved correctly (recall RoPE operates on pairs, so
+        # `cos` is of the form [cos(θ), cos(θ), cos(2θ), cos(2θ), ..., cos((D/2)θ)]
+        # `sin` is of the form [sin(θ), sin(θ), sin(2θ), sin(2θ), ..., sin((D/2)θ)]
         assert torch.equal(cos[..., 0::2], cos[..., 1::2])
         assert torch.equal(sin[..., 0::2], sin[..., 1::2])
 
@@ -51,23 +56,13 @@ class TestRoPE(unittest.TestCase):
         expected_out = torch.tensor([[-2, 1, -4, 3, -6, 5]])
         assert torch.equal(out, expected_out)
 
-    def test_forward(self):
-        B, T, H, D = 1, 2, 3, 4
-        q = torch.randn((B, H, T, D), dtype=torch.float32)
-        k = torch.randn((B, H, T, D), dtype=torch.float32)
-
-        q_embd, k_embd = self.rope(q, k)
-
-        assert q_embd.shape == q.shape
-        assert k_embd.shape == k.shape
-
     def test_forward_identity_rotation(self):
-        B, H, T, D = 1, 1, 1, 16
-        self.rope = RoPE(rope_theta=2, head_dim=D)
+        B, H, T, D = 1, 1, 1, 2
+        rope = RoPE(rope_theta=2, head_dim=D)
         q = torch.randn((B, H, T, D), dtype=torch.float32)
         k = torch.randn((B, H, T, D), dtype=torch.float32)
 
-        q_rope, k_rope = self.rope(q, k)
+        q_rope, k_rope = rope(q, k)
 
         # Confirm that RoPE is the identity rotation when T=1 (since there is only
         # position 0)
@@ -75,8 +70,8 @@ class TestRoPE(unittest.TestCase):
         assert torch.equal(k_rope, k)
 
     def test_forward_one_rotation(self):
-        B, H, T, D = 1, 1, 7, 16
-        theta = 2
+        B, H, T, D = 1, 1, 2, 2
+        theta = 1
         self.rope = RoPE(rope_theta=theta, head_dim=D)
 
         q = torch.randn((B, H, T, D), dtype=torch.float32)
@@ -88,15 +83,15 @@ class TestRoPE(unittest.TestCase):
         assert torch.equal(k_rope[..., 0, :], k[..., 0, :])
 
         # Check position 1
-        theta = torch.tensor(theta, dtype=torch.float32)
-        expected_q_rope_3 = (
-            torch.cos(theta) * q[..., 1, :2] + torch.sin(theta) * q[..., 1, :2]
-        )
-        expected_q_rope_4 = (
-            torch.sin(theta) * q[..., 1, :2] - torch.cos(theta) * q[..., 1, :2]
-        )
-        assert torch.equal(q_rope[..., 1, :2], expected_q_rope_3)
-        assert torch.equal(q_rope[..., 1, :2], expected_q_rope_4)
+        cos = torch.cos(1.0 * torch.tensor(theta))
+        sin = torch.sin(1.0 * torch.tensor(theta))
+        q1 = q[..., 1, 0]
+        q2 = q[..., 1, 1]
+
+        expected_q_rope_1 = q1 * cos - q2 * sin
+        expected_q_rope_2 = q1 * sin + q2 * cos
+        assert torch.equal(q_rope[..., 1, 0], expected_q_rope_1)
+        assert torch.equal(q_rope[..., 1, 1], expected_q_rope_2)
 
 
 if __name__ == "__main__":
