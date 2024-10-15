@@ -69,9 +69,9 @@ class TestRoPE(unittest.TestCase):
         assert torch.equal(q_rope, q)
         assert torch.equal(k_rope, k)
 
-    def test_forward_one_rotation(self):
+    def test_forward(self):
         B, H, T, D = 1, 1, 2, 2
-        theta = 1
+        theta = 1  # For simplicity of testing
         self.rope = RoPE(rope_theta=theta, head_dim=D)
 
         q = torch.randn((B, H, T, D), dtype=torch.float32)
@@ -87,11 +87,23 @@ class TestRoPE(unittest.TestCase):
         sin = torch.sin(1.0 * torch.tensor(theta))
         q1 = q[..., 1, 0]
         q2 = q[..., 1, 1]
+        k1 = k[..., 1, 0]
+        k2 = k[..., 1, 1]
 
         expected_q_rope_1 = q1 * cos - q2 * sin
         expected_q_rope_2 = q1 * sin + q2 * cos
         assert torch.equal(q_rope[..., 1, 0], expected_q_rope_1)
         assert torch.equal(q_rope[..., 1, 1], expected_q_rope_2)
+
+        expected_k_rope_1 = k1 * cos - k2 * sin
+        expected_k_rope_2 = k1 * sin + k2 * cos
+        assert torch.equal(k_rope[..., 1, 0], expected_k_rope_1)
+        assert torch.equal(k_rope[..., 1, 1], expected_k_rope_2)
+
+        # Confirm that RoPE preserves the relative positions
+        cos_sim_before = torch.cosine_similarity(q, k, dim=-1)
+        cos_sim_after = torch.cosine_similarity(q_rope, k_rope, dim=-1)
+        assert torch.allclose(cos_sim_before, cos_sim_after, atol=1e-5)
 
 
 if __name__ == "__main__":
