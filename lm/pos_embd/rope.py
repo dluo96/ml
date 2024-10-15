@@ -52,17 +52,23 @@ class RoPE(nn.Module):
 
         return cos, sin
 
-    def rotate_half(self, x: torch.Tensor) -> torch.Tensor:
-        """Rotate the input tensor:
-            - Split the input tensor in two halves along the last dimension (features),
-            - Concatenate the two halves with the negated second half coming first.
-        This simulates a 90-degree rotation in a 2D complex plane for each feature pair.
-        """
+    def swap_negate_pairwise(self, x: torch.Tensor) -> torch.Tensor:
         D = x.shape[-1]
-        first_half = x[..., : D // 2]  # (..., D/2)
-        second_half = x[..., D // 2 :]  # (..., D/2)
-        rotated = torch.cat((-second_half, first_half), dim=-1)  # (..., D)
-        return rotated
+        assert D % 2 == 0, "RoPE operates on pairs of features, so D must be even."
+
+        # Take elements at even positions [x1, x3, x5, ...]
+        x_at_even = x[..., 0::2]  # (..., D/2)
+
+        # Take elements at odd positions [x2, x4, x6, ...]
+        x_at_odd = x[..., 1::2]  # (..., D/2)
+
+        # Negate elements at odd positions to get [-x2, -x4, ..., -x_D]
+        x_at_odd *= -1
+
+        # Interleave to get [-x2, x1, -x4, x3, ..., -x_D, x_{D-1}]
+        t = torch.stack((x_at_odd, x_at_even), dim=-1).view(-1, D)  # (..., D)
+
+        return t
 
     def forward(
         self, q: torch.Tensor, k: torch.Tensor
@@ -83,8 +89,9 @@ class RoPE(nn.Module):
         pos_ids = torch.arange(T, device=q.device).expand(B, T)
         cos, sin = self.get_cos_sin(pos_ids=pos_ids)  # (B, T, D) for both
 
+        # Implement equation (34) from the paper
         # Broadcasting: (B, H, T, D) * (B, T, D) -> (B, H, T, D)
-        q_rope = (q * cos) + (self.rotate_half(q) * sin)
-        k_rope = (k * cos) + (self.rotate_half(k) * sin)
+        q_rope = (q * cos) + (self.swap_negate_pairwise(q) * sin)
+        k_rope = (k * cos) + (self.swap_negate_pairwise(k) * sin)
 
         return q_rope, k_rope
