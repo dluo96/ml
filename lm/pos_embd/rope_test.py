@@ -24,24 +24,26 @@ class TestRoPE(unittest.TestCase):
             assert self.rope.inv_freq[i] == 1.0 / (2 ** (2 * i / self.D))
 
     def test_get_cos_sin(self):
-        pos_ids = torch.arange(self.T).expand(self.B, self.T)
-        cos, sin = self.rope.get_cos_sin(pos_ids)
+        B, T, D = 3, 7, 16
+        rope = RoPE(rope_theta=2, head_dim=D)
+
+        pos_ids = torch.arange(T).expand(B, T)
+        cos, sin = rope.get_cos_sin(pos_ids)
 
         # Check shapes
-        for t in [cos, sin]:
-            self.assertEqual(t.shape, (self.B, self.T, self.D))
+        self.assertEqual(cos.shape, (B, T, D))
+        self.assertEqual(sin.shape, (B, T, D))
 
         # Check independence across batches
         cos_ref = cos[0]
         sin_ref = sin[0]
-        for b in range(1, self.B):
+        for b in range(1, B):
             assert torch.equal(cos[b], cos_ref)
             assert torch.equal(sin[b], sin_ref)
 
-        # Check that half of the features are duplicated (this is because the RoPE
-        # operates on pairs of features)
-        assert torch.equal(cos[..., : self.D // 2], cos[..., self.D // 2 :])
-        assert torch.equal(sin[..., : self.D // 2], sin[..., self.D // 2 :])
+        # Check features are interleaved correctly (recall RoPE operates on pairs)
+        assert torch.equal(cos[..., 0::2], cos[..., 1::2])
+        assert torch.equal(sin[..., 0::2], sin[..., 1::2])
 
     def test_swap_negate_pairwise(self):
         x = torch.tensor([[1, 2, 3, 4, 5, 6]])

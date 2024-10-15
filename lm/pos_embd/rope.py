@@ -35,7 +35,12 @@ class RoPE(nn.Module):
         self.register_buffer("inv_freq", inv_freq, persistent=False)
 
     def get_cos_sin(self, pos_ids: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """Create the vectors of cosines and sines for the different positions:
+        [cos(θ), cos(θ), cos(2θ), cos(2θ), ..., cos((D/2)θ), cos((D/2)θ)]
+        [sin(θ), sin(θ), sin(2θ), sin(2θ), ..., sin((D/2)θ), sin((D/2)θ)]
+        """
         B = pos_ids.shape[0]
+        D = self.inv_freq.shape[0] * 2
 
         # (D/2,) -> (1, D/2, 1) -> (B, D/2, 1)
         inv_freq = self.inv_freq[None, :, None].expand(B, -1, 1)
@@ -46,7 +51,11 @@ class RoPE(nn.Module):
         # (B, D/2, 1) @ (B, 1, T) -> (B, D/2, T) -> (B, T, D/2)
         freqs = (inv_freq @ pos_ids).transpose(1, 2)
 
-        emb = torch.cat((freqs, freqs), dim=-1)  # (B, T, D)
+        # Interleave by (a) stacking the two copies along a new dimension and then
+        # (b) flattening the last two dimensions.
+        emb = torch.stack((freqs, freqs), dim=-1)  # (B, T, D/2, 2)
+        emb = emb.flatten(-2)  # (B, T, D)
+
         cos = emb.cos()
         sin = emb.sin()
 
