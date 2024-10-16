@@ -42,8 +42,9 @@ class TestRoPE(unittest.TestCase):
             assert torch.equal(sin[b], sin_ref)
 
         # Check features are interleaved correctly: recall RoPE operates on pairs, so:
-        # `cos` is of the form [cos(θ), cos(θ), cos(2θ), cos(2θ), ..., cos((D/2)θ)]
-        # `sin` is of the form [sin(θ), sin(θ), sin(2θ), sin(2θ), ..., sin((D/2)θ)]
+        # `cos` and `sin` are of the form:
+        # [cos(θ_1), cos(θ_1), cos(2θ_2), cos(2θ_2), ..., cos((D/2)θ_{D/2})], and
+        # [sin(θ_1), sin(θ_1), sin(2θ_2), sin(2θ_2), ..., sin((D/2)θ_{D/2})], resp.
         assert torch.equal(cos[..., 0::2], cos[..., 1::2])
         assert torch.equal(sin[..., 0::2], sin[..., 1::2])
 
