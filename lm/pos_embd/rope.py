@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from lm.tensor import Tensor
+
 
 class RoPE(nn.Module):
     """Minimal implementation of rotary position embedding (RoPE) from Jianlin Su
@@ -47,7 +49,7 @@ class RoPE(nn.Module):
         inv_freq = 1.0 / (base ** (torch.arange(0, D, 2).float() / D))  # (D/2,)
         self.register_buffer("inv_freq", inv_freq, persistent=False)
 
-    def get_cos_sin(self, pos_ids: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def get_cos_sin(self, pos_ids: Tensor) -> tuple[Tensor, Tensor]:
         """Create the vectors of cosines and sines for the different positions:
         [cos(θ), cos(θ), cos(2θ), cos(2θ), ..., cos((D/2)θ), cos((D/2)θ)]
         [sin(θ), sin(θ), sin(2θ), sin(2θ), ..., sin((D/2)θ), sin((D/2)θ)]
@@ -75,7 +77,7 @@ class RoPE(nn.Module):
 
         return cos, sin
 
-    def swap_negate_pairwise(self, x: torch.Tensor) -> torch.Tensor:
+    def swap_negate_pairwise(self, x: Tensor) -> Tensor:
         D = x.shape[-1]
         assert D % 2 == 0, "RoPE operates on pairs of features, so D must be even."
 
@@ -98,9 +100,7 @@ class RoPE(nn.Module):
 
         return t
 
-    def forward(
-        self, q: torch.Tensor, k: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, q: Tensor, k: Tensor) -> tuple[Tensor, Tensor]:
         """Applies RoPE (Rotary Position Embedding) to the query and key tensors.
 
         This is done just before the self-attention is computed.
