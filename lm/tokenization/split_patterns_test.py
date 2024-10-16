@@ -58,34 +58,58 @@ class TestSplitPatterns(unittest.TestCase):
             ["Hello", " how", " are", " you", "    "],
         )
 
-        """Instead of encoding the text directly, we first split it up.
-        So,
-            1. First, the text is split into a list of subtexts.
-            2. Each subtext is processed independently by the tokenizer.
-            3. The results of the separate processes are concatenated.
-            4. We only ever find merges between the characters within a single subtext.
-                For example, the space in " you" would never be merged with the "e" in
-                " are" because they belong to separate subtexts.
-            5. Once we have done the merges for each subtext, the results are combined.
-            6. This approach prevents certain undesirable merges.
-
-        NOTE: the GPT-2 tokenizer does not merge multiple whitespaces. This is unlike the
-        GPT-4 tokenizer.
-        """
-
-        """GPT-2 has 50257 tokens in its vocabulary. This consists of
-            - 256 raw byte tokens
-            - 50,000 additional tokens from using the BPE algorithm (50,000 merges)
-            - 1 special token '<|endoftext|>', used to delimit documents in the training
-                dataset. This signals to the LLM that it has reached the end of a document.
-                We expect the language model to learn the meaning of this token.
-        """
-
     def test_gpt4_split_pattern(self):
         pattern = re.compile(GPT4_SPLIT_PATTERN)
         self.assertEqual(
             GPT4_SPLIT_PATTERN,
             r"""'(?i:[sdmt]|ll|ve|re)|[^\r\n\p{L}\p{N}]?+\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]++[\r\n]*|\s*[\r\n]|\s+(?!\S)|\s+"""  # fmt: skip
+        )
+
+        # (?i:[sdmt]|ll|ve|re) matches the strings 's, 'd, 'm, 't, 'll, 've, or 're,
+        # case-insensitively due to the (?i:) flag
+        self.assertEqual(
+            re.findall(pattern, "Hello how're you"), ["Hello", " how", "'re", " you"]
+        )
+        self.assertEqual(
+            re.findall(pattern, "Hello HOW'RE you"), ["Hello", " HOW", "'RE", " you"]
+        )
+
+        # [^\r\n\p{L}\p{N}]?+\p{L}+ matches an optional sequence of any character
+        # except line breaks (\r, \n), Unicode letters (\p{L}), and numbers (\p{N}),
+        # followed by one or more Unicode letters (\p{L}+), with the non-greedy +?
+        # preventing over-consumption of characters.
+        self.assertEqual(re.findall(pattern, "Hello\nWorld"), ["Hello", "\n", "World"])
+
+        # ` ?\p{N}+` represents an optional space followed by one or more numbers
+        # NOTE: letters and numbers are separated!
+        self.assertEqual(
+            re.findall(pattern, "Hello how123 are you"),
+            ["Hello", " how", "123", " are", " you"],
+        )
+
+        # ` ?[^\s\p{L}\p{N}]+` represents an optional space followed by one or more
+        # characters that are not letters or numbers. This capture punctuation.
+        self.assertEqual(
+            re.findall(pattern, "Hello how are you!!!?"),
+            ["Hello", " how", " are", " you", "!!!?"],
+        )
+
+        # `\s+(?!\S)` represents one or more spaces that are not followed by a non-space character
+        self.assertEqual(
+            re.findall(pattern, "Hello how are         you?"),
+            ["Hello", " how", " are", "        ", " you", "?"],
+        )
+
+        # Unlike the GPT-2 pattern, the GPT-4 pattern handles this case correctly
+        self.assertEqual(
+            re.findall(pattern, "Hello HOW'RE you"),
+            ["Hello", " HOW", "'RE", " you"],
+        )
+
+        # `\s+` will catch any trailing spaces
+        self.assertEqual(
+            re.findall(pattern, "Hello how are you    "),
+            ["Hello", " how", " are", " you", "    "],
         )
 
 
