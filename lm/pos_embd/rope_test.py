@@ -67,7 +67,7 @@ class TestRoPE(unittest.TestCase):
         assert torch.equal(k_rope, k)
 
     def test_forward(self):
-        B, H, T, D = 1, 1, 3, 16
+        B, H, T, D = 1, 1, 2, 2
         theta = 1  # For simplicity of testing
         self.rope = RoPE(rope_theta=theta, head_dim=D)
 
@@ -101,6 +101,11 @@ class TestRoPE(unittest.TestCase):
         cos_sim_before = torch.cosine_similarity(q, k, dim=-1)
         cos_sim_after = torch.cosine_similarity(q_rope, k_rope, dim=-1)
         assert torch.allclose(cos_sim_before, cos_sim_after, atol=1e-5)
+
+        # Verify that the query (and key) before and after RoPE are different
+        # (otherwise the above test is trivially satisfied)
+        assert not torch.equal(q, q_rope)
+        assert not torch.equal(k, k_rope)
 
 
 if __name__ == "__main__":
