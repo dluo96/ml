@@ -3,7 +3,7 @@ import random
 import torch
 from torch.utils.data import Dataset
 
-from lm.generative.model_config import Tensor
+from lm.tensor import Tensor
 
 
 class MLMDataset(Dataset):
