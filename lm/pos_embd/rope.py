@@ -6,24 +6,31 @@ class RoPE(nn.Module):
     """Minimal implementation of rotary position embedding (RoPE) from Jianlin Su
     et al., 2021 (https://arxiv.org/abs/2104.09864).
 
-    Rather than adding a position embedding to each token embedding, RoPE applies
-    rotations to each token embedding. Specifically, in each token embedding, every
-    pair of features is represented as a complex number. So if the query tensor has
-    features [q0, q1, q2, q3], it is represented by `q0 + iq1` and `q2 + iq3`. Each
-    complex number is rotated by an angle that depends on
+    Rather than adding a position embedding to each token embedding, RoPE introduces
+    positional information through computationally efficient pairwise rotations applied
+    to each token embedding.
+
+    Specifically, in each token embedding, every pair of features is represented as a
+    complex number. So if the query tensor has features [q0, q1, q2, q3], it is
+    represented by `q0 + iq1` and `q2 + iq3`. Each complex number is rotated by an
+    angle that depends on:
         - The position of the token in the input sequence,
         - The feature pair index (identifying the feature pair within the token
             embedding). In the example, this is 0 for [q0, q1] and 1 for [q2, q3].
 
     Benefits of RoPE include:
-        - Preservation of cosine similarity: when the post-RoPE key and query are
-            multiplied to compute self-attention, the cosine similarity between the
-            query and key is the same pre-RoPE and post-RoPE.
-        - Preservation of relative angle in different contexts: the angle between the
-            rotated embeddings for the tokens 'cat' and 'mat' is the same in 'The cat
-            sat on the mat' and 'In the evening, the cat sat on the mat'.
-        - The closer two tokens are, the smaller the angle between them and thus the
-            higher their cosine similarity.
+        - Preserves cosine similarity between query and key: it is the same pre-RoPE
+            and post-RoPE. This is important because it ensures that RoPE doesn't
+            distort the self-attention mechanism.
+        - Context-independent relative position: the angle between the RoPE-rotated
+            embeddings for the tokens 'cat' and 'mat' is the same in 'The cat sat on
+            the mat' (position 1 and 5, resp.) and 'In the evening, the cat sat on
+            the mat' (position 4 and 8, resp.). This is important because it allows
+            the model to maintain a consistent semantic relationship between tokens
+            with the same relative position in different contexts.
+        - Decaying inter-token dependency with increasing relative positions. This
+            makes sense intuitively: a pair of tokens that are far apart in the
+            sequence should have less connection.
         - Stability of vectors: adding tokens at the end of a sentence doesn't affect
             the embeddings for tokens at the beginning, facilitating efficient caching.
     """
