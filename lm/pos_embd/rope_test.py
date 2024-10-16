@@ -12,9 +12,6 @@ class TestRoPE(unittest.TestCase):
         self.D = 16
         self.rope = RoPE(rope_theta=2, head_dim=self.D)
 
-    def tearDown(self):
-        torch.cuda.empty_cache()
-
     def test_init(self):
         self.assertEqual(
             self.rope.inv_freq.shape,
@@ -70,7 +67,7 @@ class TestRoPE(unittest.TestCase):
         assert torch.equal(k_rope, k)
 
     def test_forward(self):
-        B, H, T, D = 1, 1, 2, 2
+        B, H, T, D = 1, 1, 3, 16
         theta = 1  # For simplicity of testing
         self.rope = RoPE(rope_theta=theta, head_dim=D)
 
