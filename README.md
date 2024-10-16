@@ -2,22 +2,30 @@
 
 This repo contains code related to language modelling.
 
-### Character-level language models and datasets
+### Character-level generative language models and datasets
 
-Table of language models and their associated dataset:
+| **Language Model**                                          | **Dataset**                                           |
+| ----------------------------------------------------------- | ----------------------------------------------------- |
+| [Bigram](lm/models/bigram.py)                               | [CharDataset](lm/datasets/char_dataset.py)            |
+| [MLP](lm/models/mlp.py)                                     | [MultiCharDataset](lm/datasets/multi_char_dataset.py) |
+| [RNN](lm/models/rnn.py)                                     | [SequenceDataset](lm/datasets/sequence_dataset.py)    |
+| [GRU](lm/models/rnn.py)                                     | [SequenceDataset](lm/datasets/sequence_dataset.py)    |
+| [Transformer Decoder (GPT-style)](lm/models/transformer.py) | [SequenceDataset](lm/datasets/sequence_dataset.py)    |
 
-| **Language Model**                      | **Dataset**                                           |
-| --------------------------------------- | ----------------------------------------------------- |
-| [Bigram](lm/models/bigram.py)           | [CharDataset](lm/datasets/char_dataset.py)            |
-| [MLP](lm/models/mlp.py)                 | [MultiCharDataset](lm/datasets/multi_char_dataset.py) |
-| [RNN](lm/models/rnn.py)                 | [SequenceDataset](lm/datasets/sequence_dataset.py)    |
-| [GRU](lm/models/rnn.py)                 | [SequenceDataset](lm/datasets/sequence_dataset.py)    |
-| [Transformer](lm/models/transformer.py) | [SequenceDataset](lm/datasets/sequence_dataset.py)    |
+### Language representation models and datasets
+
+| **Language Model**                                         | **Dataset**                          |
+| ---------------------------------------------------------- | ------------------------------------ |
+| [Transformer Encoder (BERT-style)](lm/bert/transformer.py) | [MLMDataset](lm/bert/mlm_dataset.py) |
 
 ### Tokenizers
 
 - [BasicTokenizer](lm/tokenization/basic_tokenizer.py)
 - [RegexTokenizer](lm/tokenization/regex_tokenizer.py)
+
+### Positional Encodings
+
+- [Rotary Position Embedding (RoPE)](lm/pos_embd/rope.py)
 
 ### Normalization layers
 
@@ -56,3 +64,5 @@ python -m unittest discover --verbose --failfast --start-directory lm/ --pattern
 - [A Programmer's Intro To Unicode](https://www.reedbeta.com/blog/programmers-intro-to-unicode/)
 - [Integer Tokenization is Insane](https://www.beren.io/2023-02-04-Integer-tokenization-is-insane/)
 - [SolidGoldMagikarp (plus, prompt generation)](https://www.lesswrong.com/posts/aPeJE8bSo6rAFoLqg/solidgoldmagikarp-plus-prompt-generation)
+- [Pytorchic BERT](https://github.com/dhlee347/pytorchic-bert)
+- [simple-bert](https://github.com/lukemelas/simple-bert)
