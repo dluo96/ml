@@ -3,7 +3,7 @@ import unittest
 import torch
 from torch.utils.data import DataLoader
 
-from lm.datasets.sequence_dataset import SequenceDataset
+from lm.generative.datasets.sequence_dataset import SequenceDataset
 
 
 class TestSequenceDataset(unittest.TestCase):

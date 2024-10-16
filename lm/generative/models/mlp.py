@@ -1,7 +1,7 @@
 import torch.nn as nn
 from torch.nn import functional as F
 
-from lm.model_config import ModelConfig, Tensor
+from lm.generative.model_config import ModelConfig, Tensor
 
 
 class MLP(nn.Module):

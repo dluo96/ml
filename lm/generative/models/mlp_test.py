@@ -2,10 +2,9 @@ import unittest
 
 import torch
 import torch.nn as nn
-from torch.nn import functional as F
 
-from lm.model_config import ModelConfig
-from lm.models.mlp import MLP
+from lm.generative.model_config import ModelConfig
+from lm.generative.models.mlp import MLP
 
 
 class TestMLP(unittest.TestCase):

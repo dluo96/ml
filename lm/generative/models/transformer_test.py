@@ -5,8 +5,13 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from lm.model_config import ModelConfig
-from lm.models.transformer import Block, CausalSelfAttention, NewGELU, Transformer
+from lm.generative.model_config import ModelConfig
+from lm.generative.models.transformer import (
+    Block,
+    CausalSelfAttention,
+    NewGELU,
+    Transformer,
+)
 
 
 class TestNewGELU(unittest.TestCase):

@@ -3,7 +3,7 @@ import unittest
 import torch
 from torch.utils.data import DataLoader
 
-from lm.datasets.char_dataset import CharDataset
+from lm.generative.datasets.char_dataset import CharDataset
 
 
 class TestCharDataset(unittest.TestCase):

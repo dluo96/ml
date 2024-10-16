@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from lm.model_config import ModelConfig, Tensor
+from lm.generative.model_config import ModelConfig, Tensor
 
 
 class NewGELU(nn.Module):

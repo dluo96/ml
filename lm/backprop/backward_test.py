@@ -2,8 +2,8 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from lm.datasets import MultiCharDataset
-from lm.model_config import Tensor
+from lm.generative.datasets import MultiCharDataset
+from lm.generative.model_config import Tensor
 
 
 def compare(name: str, dt: Tensor, t: Tensor) -> bool:

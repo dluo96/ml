@@ -5,8 +5,8 @@ from torch import nn
 
 from lm.bert.config import BertConfig
 from lm.bert.embeddings import BertEmbeddings
-from lm.model_config import Tensor
-from lm.models.transformer import NewGELU
+from lm.generative.model_config import Tensor
+from lm.generative.models import NewGELU
 
 
 class MultiHeadedSelfAttention(nn.Module):

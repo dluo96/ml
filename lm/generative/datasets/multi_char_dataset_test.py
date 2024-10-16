@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from lm.datasets.multi_char_dataset import MultiCharDataset
+from lm.generative.datasets.multi_char_dataset import MultiCharDataset
 
 
 class TestMultiCharDataset(unittest.TestCase):

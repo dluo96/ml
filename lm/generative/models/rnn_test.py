@@ -3,8 +3,8 @@ import unittest
 import torch
 import torch.nn as nn
 
-from lm.model_config import ModelConfig
-from lm.models.rnn import RNN, GRUCell, RNNCell
+from lm.generative.model_config import ModelConfig
+from lm.generative.models.rnn import RNN, GRUCell, RNNCell
 
 
 class TestRNN(unittest.TestCase):

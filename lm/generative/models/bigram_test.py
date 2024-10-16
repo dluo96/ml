@@ -3,8 +3,8 @@ import unittest
 import torch
 import torch.nn.functional as F
 
-from lm.model_config import ModelConfig
-from lm.models.bigram import Bigram
+from lm.generative.model_config import ModelConfig
+from lm.generative.models.bigram import Bigram
 
 
 class TestBigramModel(unittest.TestCase):

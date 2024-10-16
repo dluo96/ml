@@ -4,13 +4,13 @@ This repo contains code related to language modelling.
 
 ### Character-level generative language models and datasets
 
-| **Language Model**                                          | **Dataset**                                           |
-| ----------------------------------------------------------- | ----------------------------------------------------- |
-| [Bigram](lm/models/bigram.py)                               | [CharDataset](lm/datasets/char_dataset.py)            |
-| [MLP](lm/models/mlp.py)                                     | [MultiCharDataset](lm/datasets/multi_char_dataset.py) |
-| [RNN](lm/models/rnn.py)                                     | [SequenceDataset](lm/datasets/sequence_dataset.py)    |
-| [GRU](lm/models/rnn.py)                                     | [SequenceDataset](lm/datasets/sequence_dataset.py)    |
-| [Transformer Decoder (GPT-style)](lm/models/transformer.py) | [SequenceDataset](lm/datasets/sequence_dataset.py)    |
+| **Language Model**                                                     | **Dataset**                                                      |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [Bigram](lm/generative/models/bigram.py)                               | [CharDataset](lm/generative/datasets/char_dataset.py)            |
+| [MLP](lm/generative/models/mlp.py)                                     | [MultiCharDataset](lm/generative/datasets/multi_char_dataset.py) |
+| [RNN](lm/generative/models/rnn.py)                                     | [SequenceDataset](lm/generative/datasets/sequence_dataset.py)    |
+| [GRU](lm/generative/models/rnn.py)                                     | [SequenceDataset](lm/generative/datasets/sequence_dataset.py)    |
+| [Transformer Decoder (GPT-style)](lm/generative/models/transformer.py) | [SequenceDataset](lm/generative/datasets/sequence_dataset.py)    |
 
 ### Language representation models and datasets
 

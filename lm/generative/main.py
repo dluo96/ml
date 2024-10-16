@@ -4,10 +4,10 @@ import logging
 import torch
 from torch.utils.data import DataLoader
 
-from lm.datasets import CharDataset, MultiCharDataset, SequenceDataset
-from lm.model_config import ModelConfig
-from lm.models import MLP, RNN, Bigram, Transformer
-from lm.trainer import Trainer
+from lm.generative.datasets import CharDataset, MultiCharDataset, SequenceDataset
+from lm.generative.model_config import ModelConfig
+from lm.generative.models import MLP, RNN, Bigram, Transformer
+from lm.generative.trainer import Trainer
 
 
 def main() -> None:
