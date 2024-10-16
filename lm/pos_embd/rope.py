@@ -16,14 +16,12 @@ class RoPE(nn.Module):
             embedding). In the example, this is 0 for [q0, q1] and 1 for [q2, q3].
 
     Benefits of RoPE include:
-        - Preservation of relative distance: given two tokens, their embeddings will
-            have the same relative distance post-rotation (i.e. post-RoPE).
-            Furthermore, when the post-RoPE key and query are multiplied to compute
-            self-attention, the cosine similarity between the pre-RoPE and post-RoPE
-            embeddings is preserved.
-            Finally, RoPE preserves relative distance in different contexts: the
-            distance between 'cat' and 'mat' is the same in 'The cat sat on the mat'
-            and 'In the evening, the cat sat on the mat'.
+        - Preservation of cosine similarity: when the post-RoPE key and query are
+            multiplied to compute self-attention, the cosine similarity between the
+            query and key is the same pre-RoPE and post-RoPE.
+        - Preservation of relative angle in different contexts: the angle between the
+            rotated embeddings for the tokens 'cat' and 'mat' is the same in 'The cat
+            sat on the mat' and 'In the evening, the cat sat on the mat'.
         - The closer two tokens are, the smaller the angle between them and thus the
             higher their cosine similarity.
         - Stability of vectors: adding tokens at the end of a sentence doesn't affect
