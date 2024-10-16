@@ -50,9 +50,16 @@ class RoPE(nn.Module):
         self.register_buffer("inv_freq", inv_freq, persistent=False)
 
     def get_cos_sin(self, pos_ids: Tensor) -> tuple[Tensor, Tensor]:
-        """Create the vectors of cosines and sines for the different positions:
-        [cos(θ), cos(θ), cos(2θ), cos(2θ), ..., cos((D/2)θ), cos((D/2)θ)]
-        [sin(θ), sin(θ), sin(2θ), sin(2θ), ..., sin((D/2)θ), sin((D/2)θ)]
+        """Create the vectors of cosines and sines for the different token positions:
+
+            [cos(mθ_1), cos(mθ_1), cos(mθ_2), cos(mθ_2), ..., cos(mθ_{D/2})]
+            [sin(mθ_1), sin(mθ_1), sin(mθ_2), sin(mθ_2), ..., sin(mθ_{D/2})]
+
+        where `m` is the token position and
+
+            θ_i = 1/b^{2(i-D)/D} where i = 1, 2, ..., D/2.
+
+        See equation (15) in the paper for reference.
         """
         B = pos_ids.shape[0]
         D = self.inv_freq.shape[0] * 2
