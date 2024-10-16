@@ -3,15 +3,17 @@ import torch.nn as nn
 
 
 class RoPE(nn.Module):
-    """Minimal implementation of rotary position embedding (RoPE).
+    """Minimal implementation of rotary position embedding (RoPE) from Jianlin Su
+    et al., 2021 (https://arxiv.org/abs/2104.09864).
 
-    Paper: https://arxiv.org/abs/2104.09864 (Jianlin Su et al., 2021).
-    Implementation is inspired by:
-    https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py
-
-    Rather than adding a position embedding to each token embedding, RoPE applies a
-    rotation to the token embedding. The angle of rotation is proportional to the
-    position of the token in the sequence.
+    Rather than adding a position embedding to each token embedding, RoPE applies
+    rotations to each token embedding. Specifically, in each token embedding, every
+    pair of features is represented as a complex number. So if the query tensor has
+    features [q0, q1, q2, q3], it is represented by `q0 + iq1` and `q2 + iq3`. Each
+    complex number is rotated by an angle that depends on
+        - The position of the token in the input sequence,
+        - The feature pair index (identifying the feature pair within the token
+            embedding). In the example, this is 0 for [q0, q1] and 1 for [q2, q3].
 
     Benefits of RoPE include:
         - Preservation of relative positions: two given tokens will maintain their
@@ -48,6 +50,7 @@ class RoPE(nn.Module):
         # (B, T) -> (B, 1, T)
         pos_ids = pos_ids[:, None, :].float()
 
+        # Frequency depends on the position
         # (B, D/2, 1) @ (B, 1, T) -> (B, D/2, T) -> (B, T, D/2)
         freqs = (inv_freq @ pos_ids).transpose(1, 2)
 
