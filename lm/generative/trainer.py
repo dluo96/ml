@@ -56,7 +56,9 @@ class Trainer:
             logits, loss = self.model(idx=X, targets=Y)
 
             # Backward pass
-            self.model.zero_grad(set_to_none=True)  # Zero the gradients
+            # Zero the gradients: setting `set_to_none=True` will
+            # deallocate the gradients, which saves memory
+            self.model.zero_grad(set_to_none=True)
             loss.backward()
 
             # Parameter updates
