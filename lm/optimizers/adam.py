@@ -9,7 +9,9 @@ class AdamOptimizer:
         beta_2: float = 0.999,
         epsilon: float = 1e-8,
     ):
-        """Initialize the Adam optimizer.
+        """Initialize the Adam optimizer. Adam stands for Adaptive Moment Estimation.
+
+        Adam combines momentum and RMSProp.
 
         Args:
             eta: learning rate.
@@ -22,18 +24,25 @@ class AdamOptimizer:
         self.epsilon = epsilon
         self.eta = eta
 
-        # Initialize first and second moment estimates for weights and biases
+        # Initialize first moment estimates for weights and biases
         self.m_dw = 0
-        self.v_dw = 0
         self.m_db = 0
+
+        # Initialize second moment estimates for weights and biases
+        self.v_dw = 0
         self.v_db = 0
 
     def update(
         self, t: int, w: Tensor, dw: Tensor, b: Tensor, db: Tensor
     ) -> tuple[Tensor, Tensor]:
-        """Update the weights and biases using the Adam optimizer:
+        """Update the weights and biases using the Adam optimizer.
+
+        First, do the momentum-like update (exponentially weighted average):
 
             m_t = beta_1 * m_{t-1} + (1 - beta_1) * g_t
+
+        Then, do the RMSProp-like update:
+
             v_t = beta_2 * v_{t-1} + (1 - beta_2) * g_t^2
 
         Since most algorithms that depend on moving averages (such as SGD and RMSProp)
