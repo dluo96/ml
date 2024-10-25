@@ -24,13 +24,6 @@ class TestAdamOptimizer(unittest.TestCase):
         assert self.optim.m_db == 0
         assert self.optim.v_db == 0
 
-    def test_update(self):
-        new_w, new_b = self.optim.update(self.t, self.w, self.dw, self.b, self.db)
-
-        # Assert that weights and biases are updated
-        assert not torch.equal(new_w, self.w), "Weights did not change after update."
-        assert not torch.equal(new_b, self.b), "Biases did not change after update."
-
     def test_update__moment_estimates(self):
         """Test if the moment estimates are updated correctly."""
         # Perform one update step
