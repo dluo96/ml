@@ -36,6 +36,10 @@ This repo contains code related to language modelling.
 
 - [Manual backward pass](lm/backprop/backward_test.py)
 
+### Optimizers
+
+- [Adam](lm/optimizers/adam.py)
+
 ## Getting started
 
 ### Installation
