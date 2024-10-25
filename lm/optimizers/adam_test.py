@@ -25,8 +25,6 @@ class TestAdamOptimizer(unittest.TestCase):
         assert self.optim.v_db == 0
 
     def test_update__moment_estimates(self):
-        """Test if the moment estimates are updated correctly."""
-        # Perform one update step
         self.optim.update(self.t, self.w, self.dw, self.b, self.db)
 
         # First moment estimates (m_dw, m_db)
@@ -42,8 +40,6 @@ class TestAdamOptimizer(unittest.TestCase):
         assert torch.equal(self.optim.v_db, expected_v_db)
 
     def test_update__bias_correction(self):
-        """Test the bias correction for moments."""
-        # Perform one update step
         self.optim.update(self.t, self.w, self.dw, self.b, self.db)
 
         # Manually compute bias-corrected moments
@@ -62,7 +58,7 @@ class TestAdamOptimizer(unittest.TestCase):
         assert torch.equal(
             expected_v_dw_hat, self.optim.v_dw / (1 - self.optim.beta_2**self.t)
         )
-        torch.equal(
+        assert torch.equal(
             expected_v_db_hat, self.optim.v_db / (1 - self.optim.beta_2**self.t)
         )
 
