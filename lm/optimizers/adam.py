@@ -4,7 +4,7 @@ from lm.tensor import Tensor
 class AdamOptimizer:
     def __init__(
         self,
-        eta: float = 0.01,
+        lr: float = 0.01,
         beta_1: float = 0.9,
         beta_2: float = 0.999,
         epsilon: float = 1e-8,
@@ -16,7 +16,7 @@ class AdamOptimizer:
             - Second-order moment estimate of the variance.
 
         Args:
-            eta: learning rate.
+            lr: learning rate.
             beta_1: exponential decay rate for the first moment estimates.
             beta_2: exponential decay rate for the second moment estimates.
             epsilon: small value to prevent division by zero.
@@ -24,7 +24,7 @@ class AdamOptimizer:
         self.beta_1 = beta_1
         self.beta_2 = beta_2
         self.epsilon = epsilon
-        self.eta = eta
+        self.lr = lr
 
         # Initialize first moment estimates for weights and biases
         self.m_dw = 0
@@ -79,7 +79,7 @@ class AdamOptimizer:
         v_db_hat = self.v_db / (1 - self.beta_2**t)
 
         # Update weights and biases
-        w = w - self.eta * m_dw_hat / (v_dw_hat.sqrt() + self.epsilon)
-        b = b - self.eta * m_db_hat / (v_db_hat.sqrt() + self.epsilon)
+        w = w - self.lr * m_dw_hat / (v_dw_hat.sqrt() + self.epsilon)
+        b = b - self.lr * m_db_hat / (v_db_hat.sqrt() + self.epsilon)
 
         return w, b

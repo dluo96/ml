@@ -8,7 +8,7 @@ from lm.optimizers.adam import AdamOptimizer
 class TestAdamOptimizer(unittest.TestCase):
     def setUp(self):
         """Set up the optimizer and example tensors for testing."""
-        self.optim = AdamOptimizer(eta=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
+        self.optim = AdamOptimizer(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
         self.t = 1  # Current iteration
 
         # Example weights, biases, and their gradients
