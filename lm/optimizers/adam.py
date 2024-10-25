@@ -11,7 +11,9 @@ class AdamOptimizer:
     ):
         """Initialize the Adam optimizer. Adam stands for Adaptive Moment Estimation.
 
-        Adam combines momentum and RMSProp.
+        Adam combines momentum and RMSProp. As such, it relies on two moments:
+            - First-order moment estimate of the mean,
+            - Second-order moment estimate of the variance.
 
         Args:
             eta: learning rate.
