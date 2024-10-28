@@ -2,6 +2,17 @@ from lm.tensor import Tensor
 
 
 class AdamOptimizer:
+    """Minimal implementation of Adam (Adaptive Moment Estimation).
+
+    Adam combines momentum and RMSProp. As such, it relies on two moments:
+        - First-order moment estimate of the mean,
+        - Second-order moment estimate of the variance.
+
+    NOTE: this implementation has neither weight decay nor learning rate decay.
+    It simply updates weights and biases based on Adam's momentum and RMSProp steps
+    without applying a direct regularization term to penalize large weights.
+    """
+
     def __init__(
         self,
         lr: float = 0.01,
@@ -9,11 +20,7 @@ class AdamOptimizer:
         beta_2: float = 0.999,
         epsilon: float = 1e-8,
     ):
-        """Initialize the Adam optimizer. Adam stands for Adaptive Moment Estimation.
-
-        Adam combines momentum and RMSProp. As such, it relies on two moments:
-            - First-order moment estimate of the mean,
-            - Second-order moment estimate of the variance.
+        """Initialize the Adam optimizer.
 
         Args:
             lr: learning rate.
