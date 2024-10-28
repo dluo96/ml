@@ -57,7 +57,7 @@ class AdamOptimizer:
 
         Finally, we update the weights and biases:
 
-            w_t = w_{t-1} - eta / (sqrt(v_t_hat) + epsilon) * m_t_hat
+            w_t = w_{t-1} - lr / (sqrt(v_t_hat) + epsilon) * m_t_hat
 
         Args:
             t: current iteration.
