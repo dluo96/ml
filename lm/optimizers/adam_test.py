@@ -3,6 +3,7 @@ import unittest
 import torch
 
 from lm.optimizers.adam import AdamOptimizer
+from lm.tensor import Tensor
 
 
 class TestAdamOptimizer(unittest.TestCase):
@@ -13,54 +14,51 @@ class TestAdamOptimizer(unittest.TestCase):
 
         # Example weights, biases, and their gradients
         self.w = torch.tensor([0.5, -0.3])
-        self.b = torch.tensor([0.1])
         self.dw = torch.tensor([0.01, -0.01])
-        self.db = torch.tensor([0.005])
 
     def test_init(self):
-        # Check that moment estimates are initialized to zero
         assert self.optim.m_dw == 0
         assert self.optim.v_dw == 0
-        assert self.optim.m_db == 0
-        assert self.optim.v_db == 0
 
     def test_update__moment_estimates(self):
-        self.optim.update(self.t, self.w, self.dw, self.b, self.db)
+        self.optim.update(self.t, self.w, self.dw)
 
-        # First moment estimates (m_dw, m_db)
+        # First moment estimate
         expected_m_dw = self.optim.beta_1 * 0 + (1 - self.optim.beta_1) * self.dw
-        expected_m_db = self.optim.beta_1 * 0 + (1 - self.optim.beta_1) * self.db
         assert torch.equal(self.optim.m_dw, expected_m_dw)
-        assert torch.equal(self.optim.m_db, expected_m_db)
 
-        # Second moment estimates (v_dw, v_db)
+        # Second moment estimate:
         expected_v_dw = self.optim.beta_2 * 0 + (1 - self.optim.beta_2) * (self.dw**2)
-        expected_v_db = self.optim.beta_2 * 0 + (1 - self.optim.beta_2) * (self.db**2)
         assert torch.equal(self.optim.v_dw, expected_v_dw)
-        assert torch.equal(self.optim.v_db, expected_v_db)
 
     def test_update__bias_correction(self):
-        self.optim.update(self.t, self.w, self.dw, self.b, self.db)
+        self.optim.update(self.t, self.w, self.dw)
 
         # Manually compute bias-corrected moments
         expected_m_dw_hat = self.optim.m_dw / (1 - self.optim.beta_1**self.t)
-        expected_m_db_hat = self.optim.m_db / (1 - self.optim.beta_1**self.t)
         expected_v_dw_hat = self.optim.v_dw / (1 - self.optim.beta_2**self.t)
-        expected_v_db_hat = self.optim.v_db / (1 - self.optim.beta_2**self.t)
 
         # Test if the bias correction is working as expected
         assert torch.equal(
             expected_m_dw_hat, self.optim.m_dw / (1 - self.optim.beta_1**self.t)
         )
         assert torch.equal(
-            expected_m_db_hat, self.optim.m_db / (1 - self.optim.beta_1**self.t)
-        )
-        assert torch.equal(
             expected_v_dw_hat, self.optim.v_dw / (1 - self.optim.beta_2**self.t)
         )
-        assert torch.equal(
-            expected_v_db_hat, self.optim.v_db / (1 - self.optim.beta_2**self.t)
-        )
+
+    def test_update__convergence(self):
+        """Test if the optimizer converges to the minimum for a simple quadratic function."""
+
+        def grad_fn(w_: Tensor) -> Tensor:
+            return 2 * (w_ - 1)  # Derivative of f(w) = (w - 1)^2
+
+        w = torch.tensor(0.0)  # Start far from the minimum at w=1
+        for t in range(1, 10_000):
+            dw = grad_fn(w)
+            w = self.optim.update(t, w, dw)
+
+        # Check that the optimizer converged to the minimum at w=1
+        assert torch.allclose(w, torch.tensor(1.0), atol=0.01)
 
 
 if __name__ == "__main__":

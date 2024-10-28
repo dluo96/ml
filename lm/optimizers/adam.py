@@ -33,19 +33,15 @@ class AdamOptimizer:
         self.epsilon = epsilon
         self.lr = lr
 
-        # Initialize the (exponentially weighted) moving averages of the gradients
-        # `dw` and `db`. These serve as first moment estimates.
+        # Initialize the (exponentially weighted) moving average of the gradient `dw`.
+        # This serve as a first moment estimate.
         self.m_dw = 0
-        self.m_db = 0
 
-        # Initialize the (exponentially weighted) moving averages of the squared
-        # gradients, `dw**2` and `db**2`. These serve as second moment estimates.
+        # Initialize the (exponentially weighted) moving average of the squared
+        # gradient `dw**2`. This serves as second moment estimate.
         self.v_dw = 0
-        self.v_db = 0
 
-    def update(
-        self, t: int, w: Tensor, dw: Tensor, b: Tensor, db: Tensor
-    ) -> tuple[Tensor, Tensor]:
+    def update(self, t: int, w: Tensor, dw: Tensor) -> Tensor:
         """Update the weights and biases using the Adam optimizer.
 
         First, do the momentum-like update (exponentially weighted average):
@@ -70,25 +66,18 @@ class AdamOptimizer:
             t: current iteration.
             w: weights.
             dw: gradients of `w` in the current batch.
-            b: biases.
-            db: gradients of `b` in the current batch.
         """
-        # Update moving averages of gradients
+        # Update moving average of gradient
         self.m_dw = self.beta_1 * self.m_dw + (1 - self.beta_1) * dw
-        self.m_db = self.beta_1 * self.m_db + (1 - self.beta_1) * db
 
-        # Update moving averages of squared gradients
+        # Update moving average of squared gradient
         self.v_dw = self.beta_2 * self.v_dw + (1 - self.beta_2) * dw**2
-        self.v_db = self.beta_2 * self.v_db + (1 - self.beta_2) * db**2
 
         # Bias correction
         m_dw_hat = self.m_dw / (1 - self.beta_1**t)
-        m_db_hat = self.m_db / (1 - self.beta_1**t)
         v_dw_hat = self.v_dw / (1 - self.beta_2**t)
-        v_db_hat = self.v_db / (1 - self.beta_2**t)
 
         # Update weights and biases
         w = w - self.lr * m_dw_hat / (v_dw_hat.sqrt() + self.epsilon)
-        b = b - self.lr * m_db_hat / (v_db_hat.sqrt() + self.epsilon)
 
-        return w, b
+        return w
