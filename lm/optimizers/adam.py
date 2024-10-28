@@ -26,11 +26,13 @@ class AdamOptimizer:
         self.epsilon = epsilon
         self.lr = lr
 
-        # Initialize first moment estimates for weights and biases
+        # Initialize the (exponentially weighted) moving averages of the gradients
+        # `dw` and `db`. These serve as first moment estimates.
         self.m_dw = 0
         self.m_db = 0
 
-        # Initialize second moment estimates for weights and biases
+        # Initialize the (exponentially weighted) moving averages of the squared
+        # gradients, `dw**2` and `db**2`. These serve as second moment estimates.
         self.v_dw = 0
         self.v_db = 0
 
@@ -60,15 +62,15 @@ class AdamOptimizer:
         Args:
             t: current iteration.
             w: weights.
-            dw: gradients of weights in the current batch.
+            dw: gradients of `w` in the current batch.
             b: biases.
-            db: gradients of biases in the current batch.
+            db: gradients of `b` in the current batch.
         """
-        # First moment estimates
+        # Update moving averages of gradients
         self.m_dw = self.beta_1 * self.m_dw + (1 - self.beta_1) * dw
         self.m_db = self.beta_1 * self.m_db + (1 - self.beta_1) * db
 
-        # Second moment estimates
+        # Update moving averages of squared gradients
         self.v_dw = self.beta_2 * self.v_dw + (1 - self.beta_2) * dw**2
         self.v_db = self.beta_2 * self.v_db + (1 - self.beta_2) * db**2
 
