@@ -8,9 +8,9 @@ class AdamOptimizer:
         - Momentum: uses an exponentially weighted moving average of gradients.
         - RMSProp: uses an exponentially weighted moving average of squared gradients.
 
-    NOTE: this implementation has neither weight decay nor learning rate decay.
-    It simply updates weights and biases based on Adam's momentum and RMSProp steps
-    without applying a direct regularization term to penalize large weights.
+    NOTE: this implementation does NOT have
+        - Weight decay.
+        - Learning rate decay.
     """
 
     def __init__(
