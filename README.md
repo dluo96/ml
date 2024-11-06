@@ -40,6 +40,11 @@ This repo contains code related to language modelling.
 
 - [Adam](lm/optimizers/adam.py)
 
+### Autoencoders
+
+- [Autoencoder](lm/autoencoders/ae.py)
+- [Variational Autoencoder (VAE)](lm/autoencoders/vae.py)
+
 ## Getting started
 
 ### Installation
