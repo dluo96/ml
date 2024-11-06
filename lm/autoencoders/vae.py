@@ -3,6 +3,7 @@
 References:
     - https://www.jeremyjordan.me/variational-autoencoders/
     - https://mbernste.github.io/posts/vae/
+    - https://stats.stackexchange.com/questions/7440/kl-divergence-between-two-univariate-gaussians
 """
 import torch
 import torch.nn as nn
@@ -23,6 +24,10 @@ class VAE(nn.Module):
     probability distribution. When decoding from the latent state, we'll randomly
     sample from each latent state distribution to generate a vector as input for our
     decoder model.
+
+    The main benefit of a VAE is that we can learn smooth latent state representations
+    of the input data. In contrast, standard autoencoders simply need to learn an
+    encoding which allows us to reconstruct the input.
 
     Note on nomenclature: for VAEs,
         - The encoder model is sometimes referred to as the recognition model.
@@ -93,6 +98,18 @@ class VAE(nn.Module):
 
 
 def loss_function(output: Tensor, x: Tensor, mu: Tensor, log_var: Tensor) -> Tensor:
+    """The loss function for our VAE consists of two terms:
+    - The first term penalises reconstruction error (can be thought of maximizing
+        the reconstruction likelihood).
+    - The second term encourages our learned distribution q(z|x) to be similar to
+        the true prior distribution p(z|x). We assume that q(z|x) follows a
+        standard normal distribution N(0, 1) for each dimension of the latent space.
+    """
+    batch_size = x.shape[0]
     recon_loss = F.mse_loss(output, x, reduction="sum") / batch_size
+
+    # To see how the KL divergence loss is derived, see:
+    # https://stats.stackexchange.com/questions/7440/kl-divergence-between-two-univariate-gaussians
     kl_div_loss = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+
     return recon_loss + 0.002 * kl_div_loss
