@@ -34,7 +34,7 @@ This repo contains code related to language modelling.
 
 ### Manual backpropagation
 
-- [Manual backward pass](lm/backprop/backward_test.py)
+- [Manual backward pass](lm/backpropagation/backward_test.py)
 
 ### Optimizers
 
