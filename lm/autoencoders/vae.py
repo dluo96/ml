@@ -55,6 +55,11 @@ class VAE(nn.Module):
             correlated. However, we'll make a simplifying assumption that our
             covariance matrix only has nonzero values on the diagonal, allowing us to
             describe this information in a simple vector.
+
+        NOTE: to deal with the fact that the network may learn negative values for σ,
+        we instead make the network learn log(σ^2) = 2*log(σ). In the decoder, we
+        simply divide by 2 and exponentiate this quantity to get σ (the standard
+        deviation σ of the latent distribution).
         """
         x = F.relu(self.enc_layer1(x))
         mu = F.relu(self.enc_layer2_mu(x))
