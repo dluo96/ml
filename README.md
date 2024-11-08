@@ -4,46 +4,46 @@ This repo contains code related to language modelling.
 
 ### Character-level generative language models and datasets
 
-| **Language Model**                                                     | **Dataset**                                                      |
-| ---------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| [Bigram](lm/generative/models/bigram.py)                               | [CharDataset](lm/generative/datasets/char_dataset.py)            |
-| [MLP](lm/generative/models/mlp.py)                                     | [MultiCharDataset](lm/generative/datasets/multi_char_dataset.py) |
-| [RNN](lm/generative/models/rnn.py)                                     | [SequenceDataset](lm/generative/datasets/sequence_dataset.py)    |
-| [GRU](lm/generative/models/rnn.py)                                     | [SequenceDataset](lm/generative/datasets/sequence_dataset.py)    |
-| [Transformer Decoder (GPT-style)](lm/generative/models/transformer.py) | [SequenceDataset](lm/generative/datasets/sequence_dataset.py)    |
+| **Language Model**                                                        | **Dataset**                                                         |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [Bigram](ml/lm/generative/models/bigram.py)                               | [CharDataset](ml/lm/generative/datasets/char_dataset.py)            |
+| [MLP](ml/lm/generative/models/mlp.py)                                     | [MultiCharDataset](ml/lm/generative/datasets/multi_char_dataset.py) |
+| [RNN](ml/lm/generative/models/rnn.py)                                     | [SequenceDataset](ml/lm/generative/datasets/sequence_dataset.py)    |
+| [GRU](ml/lm/generative/models/rnn.py)                                     | [SequenceDataset](ml/lm/generative/datasets/sequence_dataset.py)    |
+| [Transformer Decoder (GPT-style)](ml/lm/generative/models/transformer.py) | [SequenceDataset](ml/lm/generative/datasets/sequence_dataset.py)    |
 
 ### Language representation models and datasets
 
-| **Language Model**                                         | **Dataset**                          |
-| ---------------------------------------------------------- | ------------------------------------ |
-| [Transformer Encoder (BERT-style)](lm/bert/transformer.py) | [MLMDataset](lm/bert/mlm_dataset.py) |
+| **Language Model**                                            | **Dataset**                             |
+| ------------------------------------------------------------- | --------------------------------------- |
+| [Transformer Encoder (BERT-style)](ml/lm/bert/transformer.py) | [MLMDataset](ml/lm/bert/mlm_dataset.py) |
 
 ### Tokenizers
 
-- [BasicTokenizer](lm/tokenization/basic_tokenizer.py)
-- [RegexTokenizer](lm/tokenization/regex_tokenizer.py)
+- [BasicTokenizer](ml/lm/tokenization/basic_tokenizer.py)
+- [RegexTokenizer](ml/lm/tokenization/regex_tokenizer.py)
 
 ### Positional Encodings
 
-- [Rotary Position Embedding (RoPE)](lm/pos_embd/rope.py)
+- [Rotary Position Embedding (RoPE)](ml/lm/pos_embd/rope.py)
 
 ### Normalization layers
 
-- [BatchNorm](lm/normalization/batch_norm.py)
-- [LayerNorm](lm/normalization/layer_norm.py)
+- [BatchNorm](ml/normalization/batch_norm.py)
+- [LayerNorm](ml/normalization/layer_norm.py)
 
 ### Manual backpropagation
 
-- [Manual backward pass](lm/backpropagation/backward_test.py)
+- [Manual backward pass](ml/backpropagation/backward_test.py)
 
 ### Optimizers
 
-- [Adam](lm/optimizers/adam.py)
+- [Adam](ml/optimizers/adam.py)
 
 ### Autoencoders
 
-- [Autoencoder](lm/autoencoders/ae.py)
-- [Variational Autoencoder (VAE)](lm/autoencoders/vae.py)
+- [Autoencoder](ml/autoencoders/ae.py)
+- [Variational Autoencoder (VAE)](ml/autoencoders/vae.py)
 
 ## Getting started
 
@@ -61,7 +61,7 @@ This repo contains code related to language modelling.
 Run all tests:
 
 ```bash
-python -m unittest discover --verbose --failfast --start-directory lm/ --pattern '*_test.py'
+python -m unittest discover --verbose --failfast --start-directory ml/ --pattern '*_test.py'
 ```
 
 ## References
