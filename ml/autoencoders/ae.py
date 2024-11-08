@@ -8,6 +8,15 @@ from ml.tensor import Tensor
 
 class Autoencoder(nn.Module):
     def __init__(self, d_x: int, d_hidden: int, d_z: int):
+        """Simple autoencoder with a single hidden layer.
+
+        Args:
+            d_x: feature/embedding dimensionality of input.
+            d_hidden: dimensionality of the intermediate compressed
+                (resp. reconstructed) representation for the encoder (resp. decoder).
+            d_z: dimensionality of the latent space. This is the dimensionality of the
+                output (resp. input) of the encoder (resp. decoder).
+        """
         super(Autoencoder, self).__init__()
         self.enc_layer1 = nn.Linear(d_x, d_hidden)
         self.enc_layer2 = nn.Linear(d_hidden, d_z)
