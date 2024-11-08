@@ -2,7 +2,6 @@ import unittest
 
 import torch
 
-from ml.autoencoders.ae import Autoencoder
 from ml.autoencoders.vae import VAE
 
 
@@ -12,11 +11,18 @@ class TestAutoencoder(unittest.TestCase):
         self.d_hidden = 10
         self.d_z = 5
         self.B = 1  # Batch size of 1
-        self.model = Autoencoder(self.d_x, self.d_hidden, self.d_z)
+        self.model = VAE(self.d_x, self.d_hidden, self.d_z)
 
     def test_encoder(self):
         x = torch.randn(self.B, self.d_x)
-        z = self.model.encoder(x)
+        mu, log_var = self.model.encoder(x)
+        assert mu.shape == (self.B, self.d_z)
+        assert log_var.shape == (self.B, self.d_z)
+
+    def test_sample_z(self):
+        mu = torch.randn(self.B, self.d_z)
+        log_var = torch.randn(self.B, self.d_z)
+        z = self.model.sample_z(mu, log_var)
         assert z.shape == (self.B, self.d_z)
 
     def test_decoder(self):
@@ -26,7 +32,7 @@ class TestAutoencoder(unittest.TestCase):
 
     def test_forward(self):
         x = torch.randn(self.B, self.d_x)
-        output = self.model(x)
+        output, _, _, _ = self.model(x)
         assert x.shape == output.shape
 
 
