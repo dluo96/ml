@@ -34,17 +34,17 @@ class VAE(nn.Module):
         - The decoder model is sometimes referred to as the generative model.
     """
 
-    def __init__(self, x_dim: int, hidden_dim: int, z_dim: int = 10):
+    def __init__(self, d_x: int, d_hidden: int, d_z: int = 10):
         super(VAE, self).__init__()
 
         # Encoder layers
-        self.enc_layer1 = nn.Linear(x_dim, hidden_dim)
-        self.enc_layer2_mu = nn.Linear(hidden_dim, z_dim)
-        self.enc_layer2_log_var = nn.Linear(hidden_dim, z_dim)
+        self.enc_layer1 = nn.Linear(d_x, d_hidden)
+        self.enc_layer2_mu = nn.Linear(d_hidden, d_z)
+        self.enc_layer2_log_var = nn.Linear(d_hidden, d_z)
 
         # Decoder layers
-        self.dec_layer1 = nn.Linear(z_dim, hidden_dim)
-        self.dec_layer2 = nn.Linear(hidden_dim, x_dim)
+        self.dec_layer1 = nn.Linear(d_z, d_hidden)
+        self.dec_layer2 = nn.Linear(d_hidden, d_x)
 
     def encoder(self, x: Tensor) -> tuple[Tensor, Tensor]:
         """Rather than directly outputting values for the latent state (as would be

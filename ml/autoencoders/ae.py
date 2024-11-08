@@ -7,12 +7,12 @@ from ml.tensor import Tensor
 
 
 class Autoencoder(nn.Module):
-    def __init__(self, x_dim: int, hidden_dim: int, z_dim: int = 10):
+    def __init__(self, d_x: int, d_hidden: int, d_z: int):
         super(Autoencoder, self).__init__()
-        self.enc_layer1 = nn.Linear(x_dim, hidden_dim)
-        self.enc_layer2 = nn.Linear(hidden_dim, z_dim)
-        self.dec_layer1 = nn.Linear(z_dim, hidden_dim)
-        self.dec_layer2 = nn.Linear(hidden_dim, x_dim)
+        self.enc_layer1 = nn.Linear(d_x, d_hidden)
+        self.enc_layer2 = nn.Linear(d_hidden, d_z)
+        self.dec_layer1 = nn.Linear(d_z, d_hidden)
+        self.dec_layer2 = nn.Linear(d_hidden, d_x)
 
     def encoder(self, x):
         x = F.relu(self.enc_layer1(x))
@@ -39,7 +39,7 @@ def train(
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     # Model and optimizer
-    model = Autoencoder(x_dim=X.shape[1], hidden_dim=256, z_dim=50)
+    model = Autoencoder(d_x=X.shape[1], d_hidden=256, d_z=50)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     for epoch in range(num_epochs):
