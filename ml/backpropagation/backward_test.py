@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from ml.lm.generative import MultiCharDataset
+from ml.lm.generative.datasets.multi_char_dataset import MultiCharDataset
 from ml.tensor import Tensor
 
 
