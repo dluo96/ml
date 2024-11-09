@@ -1,37 +1,85 @@
+import argparse
+import logging
+import pathlib
+
 import torch
-from torch.utils.data import DataLoader, TensorDataset
+import torch.nn.functional as F
+import torchvision
+from torch.utils.data import DataLoader
 
 from ml.autoencoders.ae import Autoencoder
-from ml.autoencoders.vae import VAE
-from ml.tensor import Tensor
-
-
-def train(
-    X: Tensor, learning_rate: float = 1e-3, batch_size: int = 128, num_epochs: int = 15
-):
-    # Data
-    X = torch.tensor(X).float()
-    dataset = TensorDataset(X)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-
-    # Model and optimizer
-    model = Autoencoder(d_x=X.shape[1], d_hidden=256, d_z=50)
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
-    for epoch in range(num_epochs):
-        epoch_loss = 0
-        for batch in dataloader:
-            optimizer.zero_grad()  # Zero the gradients
-            x = batch[0]  # Get batch
-            output = model(x)
-            loss = F.mse_loss(output, x, reduction="sum")  # Reconstruction loss
-            loss.backward()
-            optimizer.step()
-            epoch_loss += loss.item()
-
-        print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {epoch_loss / len(X)}")
-
 
 if __name__ == "__main__":
-    X = torch.randn(1000, 100)
-    train(X)
+    # fmt: off
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Train an autoencoder")
+
+    # System and I/O
+    parser.add_argument("--device", type=str, default="cpu", help="Device to use: cpu|gpu)")
+    parser.add_argument("--num-workers", type=int, default=0, help="Number of dataloader workers")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
+
+    # Model
+    parser.add_argument("--type", type=str, default="standard", help="Model to use: standard|variational")
+    parser.add_argument("--d-x", type=int, default=64, help="Embedding dimension")
+    parser.add_argument("--d-hidden", type=int, default=64, help="Second embedding dimension")
+    parser.add_argument("--d-z", type=int, default=16, help="Number of consecutive transformer blocks")
+
+    # Optimization
+    parser.add_argument("--batch-size", type=int, default=128, help="Batch size")
+    parser.add_argument("--learning-rate", type=float, default=0.001, help="Learning rate")
+    parser.add_argument("--num-epochs", type=int, default=10_000, help="Number of complete passes through the dataset")
+    # fmt: on
+
+    args = parser.parse_args()
+    for arg_name, arg_value in vars(args).items():
+        logging.info(f"{arg_name}: {arg_value}")
+
+    # Create MNIST dataset and dataloader
+    data_dir = pathlib.Path(__file__).parent
+    mnist_dataset = torchvision.datasets.MNIST(
+        data_dir, download=True, transform=torchvision.transforms.ToTensor()
+    )
+    dataloader = torch.utils.data.DataLoader(
+        mnist_dataset,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=args.num_workers,
+    )
+    # Extract channel, height, and width
+    C, H, W = mnist_dataset[0][0].shape
+
+    # Model and optimizer
+    # We flatten each image into a vector and use fully connected layers in both the
+    # encoder and decoder
+    d_x = H * W  # MNIST image size
+    model = Autoencoder(d_x=d_x, d_hidden=args.d_hidden, d_z=args.d_z)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+
+    # Training
+    for epoch in range(args.num_epochs):
+        epoch_loss = 0
+        for batch in dataloader:
+            # Autoencoder doesn't need labels as it is unsupervised
+            X, _ = batch
+
+            # Flatten the images: (B, C, H, W) -> (B, C*H*W)
+            X = X.view(X.size(0), -1)
+
+            # Zero the gradients
+            optimizer.zero_grad()
+
+            # Forward pass: compute reconstruction loss
+            output = model(X)
+            loss = F.mse_loss(output, X, reduction="sum")
+
+            # Backward pass and parameter updates
+            loss.backward()
+            optimizer.step()
+
+            epoch_loss += loss.item()
+
+        print(f"Epoch {epoch} | Loss: {epoch_loss / len(dataloader)}")
+
+    # Breakpoint here
+    print("BREAK")
