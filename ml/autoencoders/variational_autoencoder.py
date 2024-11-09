@@ -99,7 +99,7 @@ class VAE(nn.Module):
         return output, z, mu, log_var
 
 
-def loss_function(output: Tensor, x: Tensor, mu: Tensor, log_var: Tensor) -> Tensor:
+def loss_fn_vae(output: Tensor, x: Tensor, mu: Tensor, log_var: Tensor) -> Tensor:
     """Loss function for a VAE.
 
     - Reconstruction error: this term penalises reconstruction error.

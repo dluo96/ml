@@ -8,6 +8,7 @@ import torchvision
 from torch.utils.data import DataLoader
 
 from ml.autoencoders.autoencoder import Autoencoder
+from ml.autoencoders.variational_autoencoder import VAE, loss_fn_vae
 
 if __name__ == "__main__":
     # fmt: off
@@ -52,8 +53,15 @@ if __name__ == "__main__":
     # Model and optimizer
     # We flatten each image into a vector and use fully connected layers in both the
     # encoder and decoder
-    d_x = H * W  # MNIST image size
-    model = Autoencoder(d_x=d_x, d_hidden=args.d_hidden, d_z=args.d_z)
+    d_x = H * W
+
+    if args.type == "standard":
+        model = Autoencoder(d_x=d_x, d_hidden=args.d_hidden, d_z=args.d_z)
+    elif args.type == "variational":
+        model = VAE(d_x=d_x, d_hidden=args.d_hidden, d_z=args.d_z)
+    else:
+        raise ValueError(f"Invalid model type: {args.type}")
+
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
 
     # Training
@@ -70,8 +78,14 @@ if __name__ == "__main__":
             optimizer.zero_grad()
 
             # Forward pass: compute reconstruction loss
-            output = model(X)
-            loss = F.mse_loss(output, X, reduction="sum")
+            if args.type == "standard":
+                output = model(X)
+                loss = F.mse_loss(output, X, reduction="sum")
+            elif args.type == "variational":
+                output, z, mu, log_var = model(X)
+                loss = loss_fn_vae(output, X, mu, log_var)
+            else:
+                raise ValueError(f"Invalid model type: {args.type}")
 
             # Backward pass and parameter updates
             loss.backward()
