@@ -42,7 +42,8 @@ class AdamOptimizer:
         self.v_dw = 0
 
     def update(self, t: int, w: Tensor, dw: Tensor) -> Tensor:
-        """Update the weights and biases using the Adam optimizer.
+        """Update the parameter `w` using the Adam optimizer. Note: in general, an
+        optimizer is responsible for updating all the parameters of the model.
 
         - Momentum update:
             m_t = beta_1 * m_{t-1} + (1 - beta_1) * g_t
