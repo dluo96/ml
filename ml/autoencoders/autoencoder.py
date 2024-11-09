@@ -5,6 +5,12 @@ from ml.tensor import Tensor
 
 
 class Autoencoder(nn.Module):
+    """Minimal implementation of an autoencoder which uses fully connected layers.
+
+    An autoencoder finds latent, low-dimensional representations of data. Thus, they
+    are a method for performing dimensionality reduction.
+    """
+
     def __init__(self, d_x: int, d_hidden: int, d_z: int):
         """Simple autoencoder with a single hidden layer.
 

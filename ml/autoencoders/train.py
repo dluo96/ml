@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import torchvision
 from torch.utils.data import DataLoader
 
-from ml.autoencoders.ae import Autoencoder
+from ml.autoencoders.autoencoder import Autoencoder
 
 if __name__ == "__main__":
     # fmt: off
