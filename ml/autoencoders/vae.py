@@ -13,17 +13,19 @@ from ml.tensor import Tensor
 
 
 class VAE(nn.Module):
-    """Minimal implementation of a Variational Autoencoder (VAE).
+    """Minimal implementation of a Variational Autoencoder (VAE) which uses fully
+    connected layers.
 
+    VAEs can be viewed as probabilistic autoencoders: instead of mapping each x
+    directly to z, the VAE maps x to a distribution over z from which z is sampled.
     The crucial thing to remember about a standard autoencoder is that its encoder
     outputs a single value for each latent dimension. The decoder network then
     subsequently takes these values and attempts to reconstruct the original input.
-
     Using a VAE however, we can describe latent attributes probabilistically.
-    Concretely, we will now represent each latent attribute for a given input as a
-    probability distribution. When decoding from the latent state, we'll randomly
-    sample from each latent state distribution to generate a vector as input for our
-    decoder model.
+    Specifically, each latent attribute for a given input is represented by a
+    probability distribution. When decoding from the latent state, we will randomly
+    sample from each latent state distribution to generate a vector as input for the
+    decoder.
 
     The main benefit of a VAE is that we can learn smooth latent state representations
     of the input data. In contrast, standard autoencoders simply need to learn an
@@ -98,12 +100,15 @@ class VAE(nn.Module):
 
 
 def loss_function(output: Tensor, x: Tensor, mu: Tensor, log_var: Tensor) -> Tensor:
-    """The loss function for our VAE consists of two terms:
-    - The first term penalises reconstruction error (can be thought of maximizing
-        the reconstruction likelihood).
-    - The second term encourages our learned distribution q(z|x) to be similar to
-        the true prior distribution p(z|x). We assume that q(z|x) follows a
-        standard normal distribution N(0, 1) for each dimension of the latent space.
+    """Loss function for a VAE.
+
+    - Reconstruction error: this term penalises reconstruction error.
+    - KL divergence: this term encourages our learned distribution q(z|x) to be similar
+        to the true prior distribution p(z|x). We assume that q(z|x) follows a standard
+        normal distribution N(0, 1) for each latent space dimension. We can think of
+        the KL-term as a regularization term on the reconstruction loss. That is, the
+        model seeks to reconstruct each sample x, however it also seeks to ensure that
+        the latent z follows a normal distribution!
     """
     batch_size = x.shape[0]
     recon_loss = F.mse_loss(output, x, reduction="sum") / batch_size
