@@ -2,6 +2,7 @@ import argparse
 import logging
 import pathlib
 
+import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
 import torchvision
@@ -9,6 +10,26 @@ from torch.utils.data import DataLoader
 
 from ml.autoencoders.autoencoder import Autoencoder
 from ml.autoencoders.variational_autoencoder import VAE, loss_fn_vae
+from ml.tensor import Tensor
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+
+def visualize_single_mnist_image(image_tensor: Tensor):
+    """Visualise a single MNIST image.
+
+    Args:
+        image_tensor (torch.Tensor): Single MNIST image of shape (1, 28, 28) or (28, 28).
+    """
+    image = image_tensor.squeeze()  # Remove the channel dimension if present
+    plt.imshow(image, cmap="gray")
+    plt.axis("off")  # Hide axis for a cleaner look
+    plt.show()
+
 
 if __name__ == "__main__":
     # fmt: off
@@ -36,6 +57,9 @@ if __name__ == "__main__":
     for arg_name, arg_value in vars(args).items():
         logging.info(f"{arg_name}: {arg_value}")
 
+    # Set seed for reproducibility
+    torch.manual_seed(args.seed)
+
     # Create MNIST dataset and dataloader
     data_dir = pathlib.Path(__file__).parent
     mnist_dataset = torchvision.datasets.MNIST(
@@ -53,7 +77,7 @@ if __name__ == "__main__":
     # Model and optimizer
     # We flatten each image into a vector and use fully connected layers in both the
     # encoder and decoder
-    d_x = H * W
+    d_x = C * H * W
 
     if args.type == "standard":
         model = Autoencoder(d_x=d_x, d_hidden=args.d_hidden, d_z=args.d_z)
@@ -72,7 +96,7 @@ if __name__ == "__main__":
             X, _ = batch
 
             # Flatten the images: (B, C, H, W) -> (B, C*H*W)
-            X = X.view(X.size(0), -1)
+            X = X.view(X.size(0), d_x)
 
             # Zero the gradients
             optimizer.zero_grad()
@@ -93,7 +117,4 @@ if __name__ == "__main__":
 
             epoch_loss += loss.item()
 
-        print(f"Epoch {epoch} | Loss: {epoch_loss / len(dataloader)}")
-
-    # Breakpoint here
-    print("BREAK")
+        logging.info(f"Epoch {epoch} | Loss: {epoch_loss / len(dataloader)}")
