@@ -81,10 +81,25 @@ class VAE(nn.Module):
         return mu, log_var
 
     def sample_z(self, mu: Tensor, log_var: Tensor) -> Tensor:
-        """This sampling process requires some extra attention. When training
-        the model, we can't backpropagate through a random sampling process. To solve
-        this, we use the reparametrization trick: now, the randomness comes from
-        another tensor `epsilon` which isn't part of the computational graph.
+        """Sample an encoding from the latent space distribution.
+
+        By sampling encodings from the latent space distribution, the decoder will
+        learn to recognise that nearby points in latent space correspond to similar
+        data. This continuity enables the decoder to generalize and decode slight
+        variations in the latent space, ultimately making the VAE a better generative
+        model.
+
+        NOTE: the sampling process requires special attention. When training the model,
+        we cannot backpropagate through a random sampling process. To get around this,
+        we use the reparametrization trick: now, the randomness instead comes from
+        sampling another tensor `epsilon` which isn't part of the computational graph.
+
+        Args:
+            mu: vector of means, one for each latent dimension.
+            log_var: vector of log-variances, one for each latent dimension.
+
+        Returns:
+            z: sampled encoding from the latent space distribution.
         """
         std = torch.exp(log_var / 2)
 
@@ -109,13 +124,17 @@ class VAE(nn.Module):
 def loss_fn_vae(output: Tensor, x: Tensor, mu: Tensor, log_var: Tensor) -> Tensor:
     """Loss function for a VAE.
 
+    Consists of two terms:
     - Reconstruction error: this term penalises reconstruction error.
     - KL divergence: this term encourages our learned distribution q(z|x) to be similar
         to the true prior distribution p(z|x). We assume that q(z|x) follows a standard
         normal distribution N(0, 1) for each latent space dimension. We can think of
         the KL-term as a regularization term on the reconstruction loss. That is, the
         model seeks to reconstruct each sample x, however it also seeks to ensure that
-        the latent z follows a normal distribution!
+        the latent z follows a normal distribution! Intuitively, the KL divergence
+        encourages the encoder to distribute encodings (for all types of inputs, e.g.
+        all MNIST numbers) around the center of the latent space distribution, which
+        in this case is N(0, 1) for each dimension.
     """
     batch_size = x.shape[0]
     recon_loss = F.mse_loss(output, x, reduction="sum") / batch_size
