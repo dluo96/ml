@@ -3,6 +3,7 @@
 References:
     - https://www.jeremyjordan.me/variational-autoencoders/
     - https://mbernste.github.io/posts/vae/
+    - https://towardsdatascience.com/intuitively-understanding-variational-autoencoders-1bfe67eb5daf
     - https://stats.stackexchange.com/questions/7440/kl-divergence-between-two-univariate-gaussians
 """
 import torch
@@ -13,8 +14,8 @@ from ml.tensor import Tensor
 
 
 class VAE(nn.Module):
-    """Minimal implementation of a Variational Autoencoder (VAE) which uses fully
-    connected layers.
+    """Minimal implementation of a Variational Autoencoder (VAE) whose encoder and
+     decoder are fully connected layers.
 
     VAEs can be viewed as probabilistic autoencoders: instead of mapping each x
     directly to z, the VAE maps x to a distribution over z from which z is sampled.
@@ -27,9 +28,15 @@ class VAE(nn.Module):
     sample from each latent state distribution to generate a vector as input for the
     decoder.
 
-    The main benefit of a VAE is that we can learn smooth latent state representations
-    of the input data. In contrast, standard autoencoders simply need to learn an
-    encoding which allows us to reconstruct the input.
+    The probabilistic nature of VAEs makes them ideal for generative modelling: their
+    latent spaces are continuous by design, which allows easy random sampling and
+    interpolation. Thus, VAEs can learn smooth latent state representations of the
+    input data. For example, training a standard autoencoder on MNIST typically results
+    in distinct clusters in the (say) 2D latent space, with each cluster representing
+    a digit. While this clustering helps the decoder accurately reconstruct images, it
+    creates gaps in the latent space. In generative models, these gaps are problematic
+    because sampling from them can result in unrealistic outputs, as the decoder has
+    no training data from those regions to guide generation.
 
     Note on nomenclature: for VAEs,
         - The encoder model is sometimes referred to as the recognition model.
