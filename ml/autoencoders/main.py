@@ -9,6 +9,7 @@ import torchvision
 from torch.utils.data import DataLoader
 
 from ml.autoencoders.autoencoder import Autoencoder
+from ml.autoencoders.conv_autoencoder import ConvolutionalAutoencoder
 from ml.autoencoders.variational_autoencoder import VAE, loss_fn_vae
 from ml.tensor import Tensor
 
@@ -84,6 +85,8 @@ if __name__ == "__main__":
         model = Autoencoder(d_x=d_x, d_hidden=args.d_hidden, d_z=args.d_z)
     elif args.type == "variational":
         model = VAE(d_x=d_x, d_hidden=args.d_hidden, d_z=args.d_z)
+    elif args.type == "convolutional":
+        model = ConvolutionalAutoencoder()
     else:
         raise ValueError(f"Invalid model type: {args.type}")
 
@@ -102,14 +105,15 @@ if __name__ == "__main__":
             # Autoencoder doesn't need labels as it is unsupervised
             X, _ = batch
 
-            # Flatten the images: (B, C, H, W) -> (B, C*H*W)
-            X = X.view(X.size(0), d_x)
+            if args.type in ["standard", "variational"]:
+                # Flatten the images: (B, C, H, W) -> (B, C*H*W)
+                X = X.view(X.size(0), d_x)
 
             # Zero the gradients
             optimizer.zero_grad()
 
             # Forward pass: compute reconstruction loss
-            if args.type == "standard":
+            if args.type in ["standard", "convolutional"]:
                 output = model(X)
                 loss = F.mse_loss(output, X, reduction="sum")
             elif args.type == "variational":
