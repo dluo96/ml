@@ -44,6 +44,8 @@ This repo contains code related to language modelling.
 
 - [Autoencoder](ml/autoencoders/autoencoder.py)
 - [Variational Autoencoder (VAE)](ml/autoencoders/vae.py)
+- [Convolutional Autoencoder](ml/autoencoders/conv_autoencoder.py)
+- [Convolutional VAE](ml/autoencoders/conv_vae.py)
 
 ## Getting started
 
