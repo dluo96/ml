@@ -133,8 +133,11 @@ def loss_fn_vae(output: Tensor, x: Tensor, mu: Tensor, log_var: Tensor) -> Tenso
         model seeks to reconstruct each sample x, however it also seeks to ensure that
         the latent z follows a normal distribution! Intuitively, the KL divergence
         encourages the encoder to distribute encodings (for all types of inputs, e.g.
-        all MNIST numbers) around the center of the latent space distribution, which
-        in this case is N(0, 1) for each dimension.
+        all MNIST numbers) around the center of the latent space distribution, N(0, I).
+        This is great: when randomly generating, we can sample a vector from N(0, I)
+        and the decoder will be able to decode it. And for interpolation, there are no
+        sudden gaps between clusters, but a smooth mix of features that a decoder can
+        understand.
     """
     batch_size = x.shape[0]
     recon_loss = F.mse_loss(output, x, reduction="sum") / batch_size
