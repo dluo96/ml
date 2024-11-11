@@ -78,10 +78,7 @@ if __name__ == "__main__":
     C, H, W = mnist_dataset[0][0].shape
 
     # Model and optimizer
-    # We flatten each image into a vector and use fully connected layers in both the
-    # encoder and decoder
-    d_x = C * H * W
-
+    d_x = C * H * W  # Needed for autoencoder and VAE that use fully connected layers
     if args.type == "autoencoder":
         model = Autoencoder(d_x=d_x, d_hidden=args.d_hidden, d_z=args.d_z)
     elif args.type == "vae":
@@ -109,7 +106,9 @@ if __name__ == "__main__":
             X, _ = batch
 
             if args.type in ["standard", "variational"]:
-                # Flatten the images: (B, C, H, W) -> (B, C*H*W)
+                # For the autoencoder and VAE that use fully connected layers for
+                # their encoder and decoder, we need to flatten each image into a
+                # vector: (B, C, H, W) -> (B, C*H*W)
                 X = X.view(X.size(0), d_x)
 
             # Zero the gradients
