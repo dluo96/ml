@@ -2,15 +2,18 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
 import torchvision as tv
 from PIL import Image
-from torch.utils.data import ConcatDataset
+from torch.utils.data import Dataset
+
+from ml.tensor import Tensor
 
 IMG_SIZE = 64
 
 
-def create_datasets() -> ConcatDataset[tuple[torch.Tensor, int]]:
+def create_datasets() -> (
+    tuple[Dataset[tuple[Tensor, int]], Dataset[tuple[Tensor, int]]]
+):
     """Loads a torchvision dataset, performs transformations on it, and creates
     training and test sets.
 
@@ -32,14 +35,14 @@ def create_datasets() -> ConcatDataset[tuple[torch.Tensor, int]]:
 
     # Load datasets, applying transformations
     data_dir = Path(__file__).parent
-    train = tv.datasets.OxfordIIITPet(
+    train_dataset = tv.datasets.OxfordIIITPet(
         root=data_dir, download=True, transform=data_transform
     )
-    test = tv.datasets.OxfordIIITPet(
+    test_dataset = tv.datasets.OxfordIIITPet(
         root=data_dir, download=True, transform=data_transform, split="test"
     )
 
-    return torch.utils.data.ConcatDataset([train, test])
+    return train_dataset, test_dataset
 
 
 def show_tensor_image(image: Image) -> None:
@@ -57,4 +60,6 @@ def show_tensor_image(image: Image) -> None:
     # Pick the first image in the batch
     if len(image.shape) == 4:
         image = image[0, :, :, :]
+
     plt.imshow(reverse_transforms(image))
+    plt.show()
