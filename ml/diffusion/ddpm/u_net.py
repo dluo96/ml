@@ -20,7 +20,11 @@ from ml.tensor import Tensor
 
 class Block(nn.Module):
     def __init__(
-        self, in_ch: int, out_ch: int, time_emb_dim: int, upsampling: bool = False
+        self,
+        in_channels: int,
+        out_channels: int,
+        time_emb_dim: int,
+        upsampling: bool = False,
     ) -> None:
         """Block used in U-net.
 
@@ -32,27 +36,27 @@ class Block(nn.Module):
             downsampling.
 
         Args:
-            in_ch: number of input channels.
-            out_ch: number of output channels.
+            in_channels: number of input channels.
+            out_channels: number of output channels.
             time_emb_dim: the dimensionality of the embedding space for the positional
                 encoding of time steps.
             upsampling: whether the block is used for upsampling. If False, the block
                 is for downsampling.
         """
         super().__init__()
-        self.time_mlp = nn.Linear(time_emb_dim, out_ch)
+        self.time_mlp = nn.Linear(time_emb_dim, out_channels)
 
         if upsampling:
             # `2 * in_ch` is needed because of skip connection
-            self.conv1 = nn.Conv2d(2 * in_ch, out_ch, 3, padding=1)
-            self.transform = nn.ConvTranspose2d(out_ch, out_ch, 4, 2, 1)
+            self.conv1 = nn.Conv2d(2 * in_channels, out_channels, 3, padding=1)
+            self.transform = nn.ConvTranspose2d(out_channels, out_channels, 4, 2, 1)
         else:
-            self.conv1 = nn.Conv2d(in_ch, out_ch, 3, padding=1)
-            self.transform = nn.Conv2d(out_ch, out_ch, 4, 2, 1)
+            self.conv1 = nn.Conv2d(in_channels, out_channels, 3, padding=1)
+            self.transform = nn.Conv2d(out_channels, out_channels, 4, 2, 1)
 
-        self.conv2 = nn.Conv2d(out_ch, out_ch, 3, padding=1)
-        self.bn1 = nn.BatchNorm2d(out_ch)
-        self.bn2 = nn.BatchNorm2d(out_ch)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, 3, padding=1)
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.bn2 = nn.BatchNorm2d(out_channels)
 
     def forward(self, x: Tensor, t: Tensor) -> Tensor:
         """Forward pass of the downsampling/upsampling block.
