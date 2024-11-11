@@ -4,9 +4,11 @@ import torch.nn.functional as F
 from ml.tensor import Tensor
 
 
-class ConvolutionalAutoencoder(nn.Module):
+class ConvAutoencoder(nn.Module):
+    """Minimal implementation of an autoencoder whose encoder and decoder are CNNs."""
+
     def __init__(self):
-        super(ConvolutionalAutoencoder, self).__init__()
+        super(ConvAutoencoder, self).__init__()
         # Encoder: increase number of channels, decrease the spatial dimensions
         # Each MNIST input image has shape (B, 1, 28, 28).
         self.encoder = nn.Sequential(
