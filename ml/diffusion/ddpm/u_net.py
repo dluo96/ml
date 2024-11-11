@@ -10,6 +10,7 @@
 import math
 
 import torch
+import torch.nn.functional as F
 from torch import nn
 from torch.utils.data import DataLoader
 
@@ -24,6 +25,11 @@ class Block(nn.Module):
         """Block used in U-net.
 
         It is either a downsampling block or an upsampling block.
+        - Downsampling reduces the spatial dimensions of the input while capturing
+            important features, enabling the network to learn high-level patterns.
+        - Upsampling gradually restores the spatial dimensions, allowing the network
+            to reconstruct a detailed output while preserving learned features from
+            downsampling.
 
         Args:
             in_ch: number of input channels.
@@ -47,7 +53,6 @@ class Block(nn.Module):
         self.conv2 = nn.Conv2d(out_ch, out_ch, 3, padding=1)
         self.bn1 = nn.BatchNorm2d(out_ch)
         self.bn2 = nn.BatchNorm2d(out_ch)
-        self.relu = nn.ReLU()
 
     def forward(self, x: Tensor, t: Tensor) -> Tensor:
         """Forward pass of the downsampling/upsampling block.
@@ -60,15 +65,17 @@ class Block(nn.Module):
             Embedding tensor.
         """
         # First convolution, ReLU, and batch normalisation
-        h = self.bn1(self.relu(self.conv1(x)))
-        # Time embedding. Shape (1, time_emb_dim)
-        time_emb = self.relu(self.time_mlp(t))
+        h = self.bn1(F.relu(self.conv1(x)))
+
+        # Time embedding
+        time_emb = F.relu(self.time_mlp(t))  # (1, time_emb_dim)
+
         # Extend last 2 dimensions to get shape (1, time_emb_dim, 1, 1)
         time_emb = time_emb[(...,) + (None,) * 2]
-        # Add time channel (broadcasting occurs)
-        h = h + time_emb
-        # Second Conv
-        h = self.bn2(self.relu(self.conv2(h)))
+
+        h = h + time_emb  # Add time channel (broadcasting occurs)
+        h = self.bn2(F.relu(self.conv2(h)))
+
         # Upsample/downsample
         return self.transform(h)
 

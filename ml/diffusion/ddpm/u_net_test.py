@@ -15,7 +15,7 @@ class TestBlock(unittest.TestCase):
         block = Block(3, 6, 4, upsampling=False)
         assert isinstance(block.transform, nn.Conv2d)
 
-    def test_forward(self):
+    def test_forward__upsampling(self):
         block = Block(3, 6, 4, upsampling=True)
         B = 4  # Batch size
         x = torch.randn(B, 3, IMG_SIZE, IMG_SIZE)
@@ -24,3 +24,7 @@ class TestBlock(unittest.TestCase):
         t = torch.randn(B, 4)
         output = block(x, t)
         assert output.shape == (B, 6, 128, 128)
+
+    def test_forward__downsampling(self):
+        block = Block(3, 6, 4, upsampling=False)
+        B = 4
