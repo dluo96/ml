@@ -9,8 +9,9 @@ import torchvision
 from torch.utils.data import DataLoader
 
 from ml.autoencoders.autoencoder import Autoencoder
-from ml.autoencoders.conv_autoencoder import ConvolutionalAutoencoder
-from ml.autoencoders.variational_autoencoder import VAE, loss_fn_vae
+from ml.autoencoders.conv_autoencoder import ConvAutoencoder
+from ml.autoencoders.conv_vae import ConvVAE
+from ml.autoencoders.vae import VAE, loss_fn_vae
 from ml.tensor import Tensor
 
 logging.basicConfig(
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
 
     # Model
-    parser.add_argument("--type", type=str, default="standard", help="Model to use: standard|variational")
+    parser.add_argument("--type", type=str, default="standard", help="Model to use: autoencoder|vae|conv-autoencoder|conv-vae")
     parser.add_argument("--d-x", type=int, default=64, help="Embedding dimension")
     parser.add_argument("--d-hidden", type=int, default=64, help="Second embedding dimension")
     parser.add_argument("--d-z", type=int, default=16, help="Number of consecutive transformer blocks")
@@ -81,12 +82,14 @@ if __name__ == "__main__":
     # encoder and decoder
     d_x = C * H * W
 
-    if args.type == "standard":
+    if args.type == "autoencoder":
         model = Autoencoder(d_x=d_x, d_hidden=args.d_hidden, d_z=args.d_z)
-    elif args.type == "variational":
+    elif args.type == "vae":
         model = VAE(d_x=d_x, d_hidden=args.d_hidden, d_z=args.d_z)
-    elif args.type == "convolutional":
-        model = ConvolutionalAutoencoder()
+    elif args.type == "conv-autoencoder":
+        model = ConvAutoencoder()
+    elif args.type == "conv-vae":
+        model = ConvVAE()
     else:
         raise ValueError(f"Invalid model type: {args.type}")
 
@@ -112,11 +115,11 @@ if __name__ == "__main__":
             # Zero the gradients
             optimizer.zero_grad()
 
-            # Forward pass: compute reconstruction loss
-            if args.type in ["standard", "convolutional"]:
+            # Forward pass
+            if args.type in ["autoencoder", "conv-autoencoder"]:
                 output = model(X)
-                loss = F.mse_loss(output, X, reduction="sum")
-            elif args.type == "variational":
+                loss = F.mse_loss(output, X, reduction="sum")  # Reconstruction error
+            elif args.type in ["vae", "conv-vae"]:
                 output, z, mu, log_var = model(X)
                 loss = loss_fn_vae(output, X, mu, log_var)
             else:

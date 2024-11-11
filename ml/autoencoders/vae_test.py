@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from ml.autoencoders.variational_autoencoder import VAE
+from ml.autoencoders.vae import VAE
 
 
 class TestAutoencoder(unittest.TestCase):
