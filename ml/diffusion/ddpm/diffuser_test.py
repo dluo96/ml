@@ -53,10 +53,13 @@ class TestDDPM(unittest.TestCase):
         )
         assert torch.allclose(self.ddpm.alphabars_prev, expected_alphabars_prev)
 
-        expected_posterior_variance = (
-            expected_betas
-            * (1.0 - expected_alphabars_prev)
-            / (1.0 - expected_alphabars)
+        expected_posterior_variance = torch.tensor(
+            [
+                0.001 * (1.0 - 1.0) / (1.0 - 0.999),
+                0.004 * (1.0 - 0.999) / (1.0 - 0.999 * 0.996),
+                0.007 * (1.0 - 0.999 * 0.996) / (1.0 - 0.999 * 0.996 * 0.993),
+                0.01 * (1.0 - 0.999 * 0.996 * 0.993) / (1.0 - 0.999 * 0.996 * 0.993 * 0.99),  # fmt: skip
+            ]
         )
         assert torch.allclose(
             self.ddpm.posterior_variance, expected_posterior_variance, atol=1e-7
