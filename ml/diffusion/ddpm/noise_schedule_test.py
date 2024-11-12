@@ -10,7 +10,7 @@ class TestLinearBetaSchedule(unittest.TestCase):
         T = 10
         beta_start = 0.1
         beta_final = 0.2
-        beta_values = linear_beta_schedule(T, beta_start, beta_final)
+        beta_values = linear_beta_schedule(T, beta_start, beta_final, device="cpu")
 
         # Check shape
         assert beta_values.shape == (T,)
