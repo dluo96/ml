@@ -80,20 +80,18 @@ class TestUnet(unittest.TestCase):
     def setUp(self):
         self.B = 5
         self.d_embd_time = 10
+        self.u_net = Unet()
 
     def test_init(self):
-        u_net = Unet()
-        assert len(u_net.downsampling_blocks) == 4
-        assert len(u_net.upsampling_blocks) == 4
+        assert len(self.u_net.downsampling_blocks) == 4
+        assert len(self.u_net.upsampling_blocks) == 4
 
     def test_forward(self):
         # Input
         C, H, W = 3, 64, 64
         x = torch.randn(self.B, C, H, W)
-        t = torch.randint(0, 10, size=(self.B, self.d_embd_time)).float()
-
-        # Model
-        u_net = Unet()
+        t = torch.randint(0, 10, size=(self.B,)).float()
 
         # Check output
-        assert u_net(x, t).shape == x.shape, "Output shape must match input shape"
+        out = self.u_net(x, t)
+        assert out.shape == x.shape, "Output shape must match input shape"
