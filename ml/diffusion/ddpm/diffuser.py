@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import torch
-import torch.nn.functional
 from torch import nn
 from torch.utils.data import DataLoader
 
@@ -52,10 +51,7 @@ class DDPM:
         )
 
     def create_noised_image(
-        self,
-        x_0: Tensor,
-        t: Tensor,
-        device: str = "cpu",
+        self, x_0: Tensor, t: Tensor, device: str = "cpu"
     ) -> tuple[Tensor, Tensor]:
         """Create a noised version of an uncorrupted image. Used in the forward process.
 
