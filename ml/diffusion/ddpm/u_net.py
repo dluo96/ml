@@ -97,7 +97,7 @@ class Block(nn.Module):
         return h
 
 
-class SinusoidalPositionEmbeddings(nn.Module):
+class SinPosEmbed(nn.Module):
     """Positional encoding is needed because the U-Net uses the same network parameters
     regardless of the timestep `t` in question.
     """
@@ -137,7 +137,7 @@ class Unet(nn.Module):
 
         # Position embedding for time step followed by linear layer and ReLU
         self.time_mlp = nn.Sequential(
-            SinusoidalPositionEmbeddings(d_embd_time),
+            SinPosEmbed(d_embd_time),
             nn.Linear(d_embd_time, d_embd_time),
             nn.ReLU(),
         )

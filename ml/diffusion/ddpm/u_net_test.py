@@ -3,7 +3,7 @@ import unittest
 import torch
 import torch.nn as nn
 
-from ml.diffusion.ddpm.u_net import Block, SinusoidalPositionEmbeddings, Unet
+from ml.diffusion.ddpm.u_net import Block, SinPosEmbed, Unet
 
 
 class TestBlock(unittest.TestCase):
@@ -59,10 +59,10 @@ class TestBlock(unittest.TestCase):
         assert downsampling_block(x, t).shape == (self.B, out_channels, W / 2, H / 2)
 
 
-class TestSinusoidalPositionalEncoding(unittest.TestCase):
+class TestSinPosEmbed(unittest.TestCase):
     def setUp(self):
         self.d_embd_time = 10
-        self.pos_embd = SinusoidalPositionEmbeddings(d_embd=self.d_embd_time)
+        self.pos_embd = SinPosEmbed(d_embd=self.d_embd_time)
 
     def test_forward__single(self):
         t = torch.tensor([2]).float()
