@@ -27,17 +27,18 @@ class DDPM:
     - No ML model/network is needed in the forward/noising process.
     """
 
-    def __init__(self, T: int) -> None:
+    def __init__(self, T: int, device: str = "cpu") -> None:
         """Initialize the DDPM model.
 
         Args:
             T: number of time steps.
+            device: device on which to create tensors.
         """
         self.T = T
 
         # Create a linear beta schedule which defines the noise schedule
         # and precompute useful quantities.
-        self.betas = linear_beta_schedule(T, 0.001, 0.01)
+        self.betas = linear_beta_schedule(T, 0.001, 0.01, device)
         self.alphas = 1.0 - self.betas
         self.alphabars = torch.cumprod(self.alphas, dim=0)
         self.sqrt_recip_alphas = torch.sqrt(1.0 / self.alphas)
