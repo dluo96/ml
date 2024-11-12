@@ -11,7 +11,7 @@ from ml.tensor import Tensor
 
 class DDPM:
     """Class for representing the forward (noising) process and backward (denoising)
-    process in a denoising diffusion probabilistic model (DDPM). This implementation
+    process in a Denoising Diffusion Probabilistic Model (DDPM). This implementation
     is based on the original DDPM paper: https://arxiv.org/pdf/2006.11239.pdf.
 
     Forward process, noise/variance schedule, and sampling: we must first create the
@@ -27,7 +27,7 @@ class DDPM:
     - No ML model/network is needed in the forward/noising process.
     """
 
-    def __init__(self, T: int, device: str = "cpu") -> None:
+    def __init__(self, T: int, device: torch.device = "cpu") -> None:
         """Initialize the DDPM model.
 
         Args:

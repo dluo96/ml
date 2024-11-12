@@ -5,6 +5,9 @@
     - Because the parameters are shared across time, we must tell the network in
       which timestep we are: the timestep `t` is positionally encoded.
     - We output one single value (mean), because the variance is fixed.
+
+References:
+    - https://colab.research.google.com/drive/1sjy9odlSSy0RBVgMTgP7s99NXsqglsUL?usp=sharing#scrollTo=buW6BaNga-XH
 """
 
 import math

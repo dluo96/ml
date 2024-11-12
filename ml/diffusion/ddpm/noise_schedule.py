@@ -4,7 +4,7 @@ from ml.tensor import Tensor
 
 
 def linear_beta_schedule(
-    T: int, beta_start: float, beta_final: float, device: str
+    T: int, beta_start: float, beta_final: float, device: torch.device
 ) -> Tensor:
     """Return a tensor of linearly spaced beta values, defining the noise schedule
     (aka variance schedule).
