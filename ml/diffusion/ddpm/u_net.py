@@ -107,21 +107,31 @@ class SinPosEmbed(nn.Module):
         self.d_embd = d_embd
 
     def forward(self, t: Tensor) -> Tensor:
-        """Compute a positional encoding for the provided timestep `t`.
+        """Compute a positional embedding for the time step `t`. For full details, see
+        Section 3.5 in https://arxiv.org/abs/1706.03762.
 
         Args:
-            t: the timestep indicating the amount of noise. In {1, 2, ..., T}.
+            t: the time step indicating the amount of noise. In {1, 2, ..., T}.
 
         Returns:
             1D tensor representing the positional encoding of the timestep `t`.
         """
         device = t.device
-        half_dim = self.d_embd // 2
-        embeddings = math.log(10000) / (half_dim - 1)
-        embeddings = torch.exp(torch.arange(half_dim, device=device) * -embeddings)
-        embeddings = t[:, None] * embeddings[None, :]
-        embeddings = torch.cat((embeddings.sin(), embeddings.cos()), dim=-1)
-        return embeddings
+        half_d_embd = self.d_embd // 2
+
+        # Compute inverse frequencies 1/10000^(2i/d_embd)
+        i = torch.arange(half_d_embd, device=device)  # (d_embd // 2,)
+        inv_freqs = torch.exp(-2 * i / self.d_embd * math.log(10000))
+
+        # Compute angles `pos * 1/10000^(2i/d_embd)` where `pos` is the time step `t`
+        # (B, 1) * (1, d_embd // 2) -> (B, d_embd // 2)
+        angles = t[:, None] * inv_freqs[None, :]
+
+        # Concatenating (B, d_embd // 2) and (B, d_embd // 2) along the last dimension
+        # results in shape (B, d_embd)
+        pos_embeddings = torch.cat((angles.sin(), angles.cos()), dim=-1)
+
+        return pos_embeddings
 
 
 class Unet(nn.Module):
