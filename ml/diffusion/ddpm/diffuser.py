@@ -50,9 +50,7 @@ class DDPM:
             self.betas * (1.0 - self.alphabars_prev) / (1.0 - self.alphabars)
         )
 
-    def create_noised_image(
-        self, x_0: Tensor, t: Tensor, device: str = "cpu"
-    ) -> tuple[Tensor, Tensor]:
+    def noising_step(self, x_0: Tensor, t: Tensor) -> tuple[Tensor, Tensor]:
         """Create a noised version of an uncorrupted image. Used in the forward process.
 
         Specifically, given an uncorrupted image at t=0 and timestep `t`, this method
@@ -67,7 +65,6 @@ class DDPM:
         Args:
             x_0: the original image, i.e. the image at t=0. Shape (B, C, H, W).
             t: timestep to sample. Can take values in {1, ..., T}. Shape (B,).
-            device: device on which to place the resulting noised image.
 
         Returns:
             A tuple containing:
@@ -84,20 +81,18 @@ class DDPM:
         )
 
         # Sample epsilon from the standard normal distribution (Algorithm 1 line 4)
-        noise = torch.randn_like(x_0)
+        noise = torch.randn_like(x_0, device=x_0.device)
 
         # Sample from the normal distribution (Equation 4 in the DDPM paper)
         # using the reparametrization trick: x = μ + sigma * ε
-        mean = sqrt_alphabar_t.to(device) * x_0.to(device)
-        std = sqrt_one_minus_alphabar_t.to(device)
-        noised_image = mean + std * noise.to(device)
+        mean = sqrt_alphabar_t * x_0
+        std = sqrt_one_minus_alphabar_t
+        noised_image = mean + std * noise
 
-        return noised_image, noise.to(device)
+        return noised_image, noise
 
     @torch.no_grad()
-    def perform_denoising_step(
-        self, x_t: Tensor, t: Tensor, model: nn.Module
-    ) -> Tensor:
+    def denoising_step(self, x_t: Tensor, t: Tensor, model: nn.Module) -> Tensor:
         """Denoise a noisy image to get a slightly less noisy image.
 
         The following steps are done:
@@ -175,7 +170,7 @@ if __name__ == "__main__":
     for idx in range(0, T_, step_size):
         t_ = torch.Tensor([idx]).type(torch.int64)
         plt.subplot(1, num_images + 1, int(idx / step_size) + 1)
-        noised_img, _ = ddpm.create_noised_image(x_0=example_image, t=t_)
+        noised_img, _ = ddpm.noising_step(x_0=example_image, t=t_)
         show_tensor_image(noised_img)
 
     plt.show()
