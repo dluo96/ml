@@ -44,7 +44,9 @@ class Block(nn.Module):
             upsampling: whether the block is used for upsampling. If False, the block
                 is for downsampling.
         """
-        super().__init__()
+        super(Block).__init__()
+
+        # Position embedding for time step
         self.time_mlp = nn.Linear(d_embd_time, out_channels)
 
         if upsampling:
@@ -65,12 +67,12 @@ class Block(nn.Module):
         self.bn1 = nn.BatchNorm2d(out_channels)
         self.bn2 = nn.BatchNorm2d(out_channels)
 
-    def forward(self, x: Tensor, t: Tensor) -> Tensor:
-        """Forward pass of the downsampling/upsampling block.
+    def forward(self, x: Tensor, t_emb: Tensor) -> Tensor:
+        """Forward pass of downsampling (or upsampling) block.
 
         Args:
             x: embedding tensor of shape (B, C, H, W)
-            t: the timestep of the sample in question.
+            t_emb: time embedding tensor of shape (B, d_embd_time)
 
         Returns:
             Embedding tensor.
@@ -78,7 +80,7 @@ class Block(nn.Module):
         h = self.bn1(F.relu(self.conv1(x)))  # (B, out_channels, H, W)
 
         # Position embedding for time step
-        t_emb = F.relu(self.time_mlp(t))  # (B, d_embd_time) -> (B, out_channels)
+        t_emb = F.relu(self.time_mlp(t_emb))  # (B, d_embd_time) -> (B, out_channels)
         t_emb = t_emb[:, :, None, None]  # (B, out_channels) -> (B, out_channels, 1, 1)
 
         # Add position embedding to hidden representation. Broadcasting occurs:
@@ -119,7 +121,6 @@ class SinusoidalPositionEmbeddings(nn.Module):
         embeddings = torch.exp(torch.arange(half_dim, device=device) * -embeddings)
         embeddings = t[:, None] * embeddings[None, :]
         embeddings = torch.cat((embeddings.sin(), embeddings.cos()), dim=-1)
-        # TODO: Double check the ordering here
         return embeddings
 
 
@@ -134,7 +135,7 @@ class Unet(nn.Module):
         out_dim = 3
         d_embd_time = 32
 
-        # Time embedding
+        # Position embedding for time step followed by linear layer and ReLU
         self.time_mlp = nn.Sequential(
             SinusoidalPositionEmbeddings(d_embd_time),
             nn.Linear(d_embd_time, d_embd_time),
@@ -176,23 +177,30 @@ class Unet(nn.Module):
             A prediction of the noise in the input `x`.
         """
         # Compute the positional encoding of the timestep
-        t_encoded = self.time_mlp(t)
+        t_emb = self.time_mlp(t)
 
         # Initial convolution
         x = self.conv0(x)
 
-        # U-net: downsampling followed by upsampling.
-        residual_inputs = []  # Use a stack to store residuals
-        for down_blocks in self.downsampling_blocks:
-            x = down_blocks(x, t_encoded)
-            residual_inputs.append(x)
+        # Use a stack to store residuals (needed for upsampling)
+        residuals = []
+
+        # U-net: downsampling followed by upsampling
+        for down_block in self.downsampling_blocks:
+            x = down_block(x, t_emb)
+            residuals.append(x)
         for up_block in self.upsampling_blocks:
-            residual_x = residual_inputs.pop()
+            # Pop stack to get residual x
+            residual_x = residuals.pop()
+
             # Add residual x as additional channels
             x = torch.cat((x, residual_x), dim=1)
-            x = up_block(x, t_encoded)
+            x = up_block(x, t_emb)
 
-        return self.output(x)
+        # Output layer
+        out = self.output(x)
+
+        return out
 
 
 if __name__ == "__main__":
