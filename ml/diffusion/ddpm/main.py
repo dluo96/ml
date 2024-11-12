@@ -82,7 +82,9 @@ if __name__ == "__main__":
         eps=1e-8,
     )
 
+    # Training loop
     for epoch in range(args.num_epochs):
+        losses = []
         for step, batch in enumerate(train_dataloader):
             # Set the gradients to zero before doing the backpropagation step
             # This is necessary because, by default, PyTorch accumulates the
@@ -90,15 +92,15 @@ if __name__ == "__main__":
             # of loss.backward()
             optimizer.zero_grad()
 
-            # Algorithm 1 line 3: sample `t` from a discrete uniform distribution
+            # Noising process
+            #   1. Sample a timestep `t` from a discrete uniform distribution
+            #       (Algorithm 1 line 3)
+            #   2. Extract the image (index 0 is the image and index 1 the label)
+            #   3. From the original image x_0, sample a noised image at timestep `t`
             t = torch.randint(
                 low=0, high=args.T, size=(args.batch_size,), device=device
             ).long()
-
-            # Extract the image (index 0 is the image and index 1 the label)
             x_0 = batch[0]
-
-            # From the original image x_0, sample a noised image at timestep t
             x_noisy, noise = diffuser.noising_step(x_0, t)
 
             # Denoising process
@@ -111,6 +113,9 @@ if __name__ == "__main__":
             loss.backward()
             optimizer.step()
 
-            if epoch % 5 == 0 and step == 0:
-                logging.info(f"Epoch {epoch} | step {step:03d} Loss: {loss.item()} ")
-                # sample_plot_image()
+            # Append loss
+            losses.append(loss.item())
+
+        mean_loss = torch.tensor(losses).mean().item()
+        logging.info(f"Epoch {epoch} | Train loss: {mean_loss} ")
+        # sample_plot_image()
