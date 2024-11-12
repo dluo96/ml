@@ -2,14 +2,14 @@ import unittest
 
 import torch
 
-from ml.diffusion.ddpm.diffuser import DDPM
+from ml.diffusion.ddpm.diffuser import DiffuserDDPM
 
 
-class TestDDPM(unittest.TestCase):
+class TestDiffuserDDPM(unittest.TestCase):
     def setUp(self):
         self.T = 4
-        self.device = "cpu"
-        self.ddpm = DDPM(T=self.T, device=self.device)
+        self.device = torch.device("cpu")
+        self.ddpm = DiffuserDDPM(T=self.T, device=self.device)
 
     def test_init(self):
         assert self.ddpm.T == self.T

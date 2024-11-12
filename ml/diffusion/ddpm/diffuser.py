@@ -9,7 +9,7 @@ from ml.diffusion.ddpm.utils import get_tensor_value_at_index
 from ml.tensor import Tensor
 
 
-class DDPM:
+class DiffuserDDPM:
     """Class for representing the forward (noising) process and backward (denoising)
     process in a Denoising Diffusion Probabilistic Model (DDPM). This implementation
     is based on the original DDPM paper: https://arxiv.org/pdf/2006.11239.pdf.
@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
     # Initialize DDPM model
     T_ = 100
-    ddpm = DDPM(T=T_)
+    ddpm = DiffuserDDPM(T=T_)
 
     # Simulate forward diffusion for an example image
     example_image = next(iter(dataloader))[0]

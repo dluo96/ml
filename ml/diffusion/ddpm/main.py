@@ -6,7 +6,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from ml.diffusion.ddpm.dataset import create_datasets
-from ml.diffusion.ddpm.diffuser import DDPM
+from ml.diffusion.ddpm.diffuser import DiffuserDDPM
 from ml.diffusion.ddpm.u_net import Unet
 
 logging.basicConfig(
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     )
 
     # Diffuser and denoising model
-    diffuser = DDPM(args.T, device)
+    diffuser = DiffuserDDPM(args.T, device)
     denoising_model = Unet()
 
     # Move model to device
