@@ -62,18 +62,17 @@ class TestBlock(unittest.TestCase):
 class TestSinusoidalPositionalEncoding(unittest.TestCase):
     def setUp(self):
         self.d_embd_time = 10
+        self.pos_embd = SinusoidalPositionEmbeddings(d_embd=self.d_embd_time)
 
     def test_forward__single(self):
         t = torch.tensor([2]).float()
-        pos_embd = SinusoidalPositionEmbeddings(d_embd=self.d_embd_time)
-        t_emb = pos_embd(t)
+        t_emb = self.pos_embd(t)
         assert t_emb.shape == (1, self.d_embd_time)
 
     def test_forward__batch(self):
         B = 5
         t = torch.randint(0, 10, size=(B,)).float()
-        pos_embd = SinusoidalPositionEmbeddings(d_embd=self.d_embd_time)
-        t_emb = pos_embd(t)
+        t_emb = self.pos_embd(t)
         assert t_emb.shape == (B, self.d_embd_time)
 
 
