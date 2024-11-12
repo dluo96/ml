@@ -23,32 +23,37 @@ class Block(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        time_emb_dim: int,
+        d_embd_time: int,
         upsampling: bool = False,
     ) -> None:
         """Block used in U-net.
 
         It is either a downsampling block or an upsampling block.
-        - Downsampling reduces the spatial dimensions of the input while capturing
-            important features, enabling the network to learn high-level patterns.
-        - Upsampling gradually restores the spatial dimensions, allowing the network
-            to reconstruct a detailed output while preserving learned features from
-            downsampling.
+        - Downsampling reduces the height and width but increases the number of
+            channels. This allows the network to capture important features, enabling
+            the network to learn high-level patterns.
+        - Upsampling gradually grows the image back to its original size, while
+            shrinking the number of channels. This allows the network to reconstruct
+            a detailed output while preserving learned features from downsampling.
 
         Args:
             in_channels: number of input channels.
             out_channels: number of output channels.
-            time_emb_dim: the dimensionality of the embedding space for the positional
+            d_embd_time: the dimensionality of the embedding space for the positional
                 encoding of time steps.
             upsampling: whether the block is used for upsampling. If False, the block
                 is for downsampling.
         """
         super().__init__()
-        self.time_mlp = nn.Linear(time_emb_dim, out_channels)
+        self.time_mlp = nn.Linear(d_embd_time, out_channels)
 
         if upsampling:
-            # `2 * in_ch` is needed because of skip connection
+            # `2 * in_ch` is due to residual connections during upsampling (recall
+            # that U-net consists of downsampling followed by upsampling)
             self.conv1 = nn.Conv2d(2 * in_channels, out_channels, 3, padding=1)
+
+            # Transpose convolution is used for upsampling because it increases the
+            # spatial dimensions and reduces the number of channels
             self.transform = nn.ConvTranspose2d(out_channels, out_channels, 4, 2, 1)
         else:
             self.conv1 = nn.Conv2d(in_channels, out_channels, 3, padding=1)
@@ -68,20 +73,23 @@ class Block(nn.Module):
         Returns:
             Embedding tensor.
         """
-        # First convolution, ReLU, and batch normalisation
-        h = self.bn1(F.relu(self.conv1(x)))
+        h = self.bn1(F.relu(self.conv1(x)))  # (B, out_channels, H, W)
 
-        # Time embedding
-        time_emb = F.relu(self.time_mlp(t))  # (1, time_emb_dim)
+        # Position embedding for time step
+        t_emb = F.relu(self.time_mlp(t))  # (B, d_embd_time) -> (B, out_channels)
+        t_emb = t_emb[:, :, None, None]  # (B, out_channels) -> (B, out_channels, 1, 1)
 
-        # Extend last 2 dimensions to get shape (1, time_emb_dim, 1, 1)
-        time_emb = time_emb[(...,) + (None,) * 2]
+        # Add position embedding to hidden representation. Broadcasting occurs:
+        # # (B, out_channels, H, W) + (B, out_channels, 1, 1) -> (B, out_channels, H, W)
+        h = h + t_emb
 
-        h = h + time_emb  # Add time channel (broadcasting occurs)
-        h = self.bn2(F.relu(self.conv2(h)))
+        h = self.bn2(F.relu(self.conv2(h)))  # (B, out_channels, H, W)
 
-        # Upsample/downsample
-        return self.transform(h)
+        # Downsampling: (B, out_channels, H, W) -> (B, out_channels, H/2, W/2)
+        # Upsampling: (B, out_channels, H, W) -> (B, out_channels, 2H, 2W)
+        h = self.transform(h)  # (B, out_channels, H, W) -> (B, out_channels, 2H, 2W)
+
+        return h
 
 
 class SinusoidalPositionEmbeddings(nn.Module):
@@ -126,12 +134,12 @@ class Unet(nn.Module):
         down_channels = (64, 128, 256, 512, 1024)
         up_channels = (1024, 512, 256, 128, 64)
         out_dim = 3
-        time_emb_dim = 32
+        d_embd_time = 32
 
         # Time embedding
         self.time_mlp = nn.Sequential(
-            SinusoidalPositionEmbeddings(time_emb_dim),
-            nn.Linear(time_emb_dim, time_emb_dim),
+            SinusoidalPositionEmbeddings(d_embd_time),
+            nn.Linear(d_embd_time, d_embd_time),
             nn.ReLU(),
         )
 
@@ -141,7 +149,7 @@ class Unet(nn.Module):
         # Downsampling
         self.downsampling_blocks = nn.ModuleList(
             [
-                Block(down_channels[i], down_channels[i + 1], time_emb_dim)
+                Block(down_channels[i], down_channels[i + 1], d_embd_time)
                 for i in range(len(down_channels) - 1)
             ]
         )
@@ -149,7 +157,7 @@ class Unet(nn.Module):
         # Upsampling
         self.upsampling_blocks = nn.ModuleList(
             [
-                Block(up_channels[i], up_channels[i + 1], time_emb_dim, upsampling=True)
+                Block(up_channels[i], up_channels[i + 1], d_embd_time, upsampling=True)
                 for i in range(len(up_channels) - 1)
             ]
         )
