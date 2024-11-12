@@ -3,7 +3,7 @@ import unittest
 import torch
 import torch.nn as nn
 
-from ml.diffusion.ddpm.u_net import Block
+from ml.diffusion.ddpm.u_net import Block, SinusoidalPositionEmbeddings, Unet
 
 
 class TestBlock(unittest.TestCase):
@@ -57,3 +57,44 @@ class TestBlock(unittest.TestCase):
 
         # Check output
         assert downsampling_block(x, t).shape == (self.B, out_channels, W / 2, H / 2)
+
+
+class TestSinusoidalPositionalEncoding(unittest.TestCase):
+    def setUp(self):
+        self.d_embd_time = 10
+
+    def test_forward__single(self):
+        t = torch.tensor([2]).float()
+        pos_embd = SinusoidalPositionEmbeddings(d_embd=self.d_embd_time)
+        t_emb = pos_embd(t)
+        assert t_emb.shape == (1, self.d_embd_time)
+
+    def test_forward__batch(self):
+        B = 5
+        t = torch.randint(0, 10, size=(B,)).float()
+        pos_embd = SinusoidalPositionEmbeddings(d_embd=self.d_embd_time)
+        t_emb = pos_embd(t)
+        assert t_emb.shape == (B, self.d_embd_time)
+
+
+class TestUnet(unittest.TestCase):
+    def setUp(self):
+        self.B = 5
+        self.d_embd_time = 10
+
+    def test_init(self):
+        u_net = Unet()
+        assert len(u_net.downsampling_blocks) == 4
+        assert len(u_net.upsampling_blocks) == 4
+
+    def test_forward(self):
+        # Input
+        C, H, W = 3, 64, 64
+        x = torch.randn(self.B, C, H, W)
+        t = torch.randint(0, 10, size=(self.B, self.d_embd_time)).float()
+
+        # Model
+        u_net = Unet()
+
+        # Check output
+        assert u_net(x, t).shape == x.shape, "Output shape must match input shape"

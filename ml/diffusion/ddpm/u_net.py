@@ -44,7 +44,7 @@ class Block(nn.Module):
             upsampling: whether the block is used for upsampling. If False, the block
                 is for downsampling.
         """
-        super(Block).__init__()
+        super().__init__()
 
         # Position embedding for time step
         self.time_mlp = nn.Linear(d_embd_time, out_channels)
