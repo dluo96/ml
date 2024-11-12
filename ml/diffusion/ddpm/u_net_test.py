@@ -3,7 +3,6 @@ import unittest
 import torch
 import torch.nn as nn
 
-from ml.diffusion.ddpm.dataset import IMG_SIZE
 from ml.diffusion.ddpm.u_net import Block
 
 

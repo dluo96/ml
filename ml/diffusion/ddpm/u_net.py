@@ -80,7 +80,7 @@ class Block(nn.Module):
         t_emb = t_emb[:, :, None, None]  # (B, out_channels) -> (B, out_channels, 1, 1)
 
         # Add position embedding to hidden representation. Broadcasting occurs:
-        # # (B, out_channels, H, W) + (B, out_channels, 1, 1) -> (B, out_channels, H, W)
+        # (B, out_channels, H, W) + (B, out_channels, 1, 1) -> (B, out_channels, H, W)
         h = h + t_emb
 
         h = self.bn2(F.relu(self.conv2(h)))  # (B, out_channels, H, W)
