@@ -52,11 +52,13 @@ class Block(nn.Module):
             # that U-net consists of downsampling followed by upsampling)
             self.conv1 = nn.Conv2d(2 * in_channels, out_channels, 3, padding=1)
 
-            # Transpose convolution is used for upsampling because it increases the
-            # spatial dimensions and reduces the number of channels
+            # Transpose convolution is used for upsampling because it increases height
+            # and width
             self.transform = nn.ConvTranspose2d(out_channels, out_channels, 4, 2, 1)
         else:
             self.conv1 = nn.Conv2d(in_channels, out_channels, 3, padding=1)
+
+            # Convolution is used for downsampling because it reduces height and width
             self.transform = nn.Conv2d(out_channels, out_channels, 4, 2, 1)
 
         self.conv2 = nn.Conv2d(out_channels, out_channels, 3, padding=1)
@@ -83,6 +85,7 @@ class Block(nn.Module):
         # (B, out_channels, H, W) + (B, out_channels, 1, 1) -> (B, out_channels, H, W)
         h = h + t_emb
 
+        # By design, the second convolution does not change the shape
         h = self.bn2(F.relu(self.conv2(h)))  # (B, out_channels, H, W)
 
         # Downsampling: (B, out_channels, H, W) -> (B, out_channels, H/2, W/2)
@@ -97,14 +100,9 @@ class SinusoidalPositionEmbeddings(nn.Module):
     regardless of the timestep `t` in question.
     """
 
-    def __init__(self, dim: int) -> None:
-        """Positional encoding.
-
-        Args:
-            dim: dimensionality of the embedding space.
-        """
+    def __init__(self, d_embd: int) -> None:
         super().__init__()
-        self.dim = dim
+        self.d_embd = d_embd
 
     def forward(self, t: Tensor) -> Tensor:
         """Compute a positional encoding for the provided timestep `t`.
@@ -116,7 +114,7 @@ class SinusoidalPositionEmbeddings(nn.Module):
             1D tensor representing the positional encoding of the timestep `t`.
         """
         device = t.device
-        half_dim = self.dim // 2
+        half_dim = self.d_embd // 2
         embeddings = math.log(10000) / (half_dim - 1)
         embeddings = torch.exp(torch.arange(half_dim, device=device) * -embeddings)
         embeddings = t[:, None] * embeddings[None, :]
@@ -131,8 +129,8 @@ class Unet(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         image_channels = 3
-        down_channels = (64, 128, 256, 512, 1024)
-        up_channels = (1024, 512, 256, 128, 64)
+        down_channels = (64, 128, 256, 512, 1024)  # Downsampling increases channels
+        up_channels = (1024, 512, 256, 128, 64)  # Upsampling decreases channels
         out_dim = 3
         d_embd_time = 32
 
