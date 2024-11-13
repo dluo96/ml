@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import torch
 import torch.nn.functional as F
@@ -39,14 +40,18 @@ class Trainer:
         for epoch in range(self.num_epochs):
             train_loss = self.train_epoch()
 
-            # Evaluate
-            if epoch % 20 == 0:
+            if epoch % 3 == 0:
+                # Evaluate on validation set
                 valid_loss = self.evaluate(self.val_loader)
                 logging.info(
                     f"Epoch: {epoch} | "
                     f"Train loss: {train_loss:.4f} | "
                     f"Validation loss: {valid_loss:.4f}"
                 )
+
+                # Checkpoint
+                checkpoint_path = str(Path(__file__) / f"checkpoint_{epoch}.pt")
+                self.save_checkpoint(epoch=epoch, filepath=checkpoint_path)
 
     def train_epoch(self) -> float:
         self.denoising_model.train()  # Set PyTorch module to training mode
@@ -110,3 +115,16 @@ class Trainer:
         self.denoising_model.train()  # Reset module back to training mode
 
         return mean_loss
+
+    def save_checkpoint(self, epoch: int, filepath: str) -> None:
+        checkpoint = {
+            "epoch": epoch,
+            "model_state_dict": self.denoising_model.state_dict(),
+            "optimizer_state_dict": self.optimizer.state_dict(),
+        }
+        torch.save(checkpoint, filepath)  # Save to disk
+
+    def load_checkpoint(self, filepath: str) -> None:
+        checkpoint = torch.load(filepath)
+        self.denoising_model.load_state_dict(checkpoint["model_state_dict"])
+        self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
