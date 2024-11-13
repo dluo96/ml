@@ -70,9 +70,7 @@ class Trainer:
             # Noising process
             #   1. Sample `t` from a discrete uniform distribution (Algorithm 1 line 3)
             #   2. From the original image x_0, sample a noised image at timestep `t`
-            t = torch.randint(
-                low=0, high=self.T, size=(batch_size,), device=self.device
-            ).long()
+            t = torch.randint(0, self.T, size=(batch_size,), device=self.device).long()
             x_noisy, noise = self.diffuser.noising_step(x_0, t)
 
             # Denoising process
@@ -104,10 +102,19 @@ class Trainer:
 
         losses = []
         for batch in dataloader:
-            X, Y = batch
-            X = X.to(self.device, non_blocking=True)
-            Y = Y.to(self.device, non_blocking=True)
-            logits, loss = self.denoising_model(idx=X, targets=Y)
+            x_0, _ = batch
+            x_0 = x_0.to(self.device)
+            batch_size = x_0.size(0)
+
+            # Noising process
+            t = torch.randint(0, self.T, size=(batch_size,), device=self.device).long()
+            x_noisy, noise = self.diffuser.noising_step(x_0, t)
+
+            # Denoising process
+            pred_noise = self.denoising_model(x_noisy, t)
+            loss = F.mse_loss(noise, pred_noise)
+
+            # Append loss
             losses.append(loss.item())
 
         mean_loss = torch.tensor(losses).mean().item()
