@@ -3,6 +3,7 @@ import argparse
 import logging
 
 import torch
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from ml.diffusion.ddpm.dataset import create_datasets
@@ -19,7 +20,7 @@ logging.basicConfig(
 if __name__ == "__main__":
     # fmt: off
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description="Train DDPM")
+    parser = argparse.ArgumentParser(description="Train DDPM diffusion model")
 
     # System and I/O
     parser.add_argument("--device", type=str, default="cpu", help="Device to use: cpu|gpu)")
@@ -109,7 +110,7 @@ if __name__ == "__main__":
             #   3. Backward pass (through the denoising model)
             #   4. Update parameters of the denoising model
             pred_noise = denoising_model(x_noisy, t)
-            loss = torch.nn.functional.l1_loss(noise, pred_noise)
+            loss = F.l1_loss(noise, pred_noise)
             loss.backward()
             optimizer.step()
 
