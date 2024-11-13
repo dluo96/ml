@@ -89,7 +89,7 @@ if __name__ == "__main__":
     for epoch in range(args.num_epochs):
         losses = []
         for batch in train_dataloader:
-            # Extract image: first element is image, second element is label
+            # Extract image: first element is image, second element is label (not used)
             x_0, _ = batch
 
             # Move to device

@@ -27,23 +27,30 @@ if __name__ == "__main__":
     for arg_name, arg_value in vars(args).items():
         logging.info(f"{arg_name}: {arg_value}")
 
+    # Determine device
+    if args.device == "gpu" and torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif args.device == "cpu":
+        device = torch.device("cpu")
+    else:
+        raise ValueError(f"Device {args.device} is not recognized!")
+    logging.info(f"Using device: {device}")
+
     """Inference (Algorithm 2 in the paper)"""
     T = 100
-    diffuser = DiffuserDDPM(T=args.T)
+    diffuser = DiffuserDDPM(T=args.T, device=device)
 
     # Define the neural network which predicts noise
     denoising_model = Unet()
 
     # Algorithm 2 line 1: sample pure noise at t=T from N(0, I)
     B, C, H, W = 1, 3, 128, 128
-    x_t = torch.randn(size=(B, C, H, W), device=args.device)
+    x_t = torch.randn(size=(B, C, H, W), device=device)
 
     # Algorithm 2 for-loop
     for timestep in range(T, 0):
-        t = torch.Tensor([timestep]).type(torch.int64)
-
-        # Algorithm 2 line 4
-        x_t = diffuser.denoising_step(x_t, t, denoising_model)
+        t = torch.tensor([timestep])
+        x_t = diffuser.denoising_step(x_t, t, denoising_model)  # Algorithm 2 line 4
 
     # Plot the generated/denoised image
     show_tensor_image(x_t)
