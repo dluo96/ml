@@ -2,11 +2,11 @@ import argparse
 import logging
 
 import torch
-import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from ml.diffusion.ddpm.dataset import create_datasets
 from ml.diffusion.ddpm.diffuser import DiffuserDDPM
+from ml.diffusion.ddpm.trainer import Trainer
 from ml.diffusion.ddpm.u_net import Unet
 
 logging.basicConfig(
@@ -55,15 +55,15 @@ if __name__ == "__main__":
 
     """Implement Algorithm 1 in the DDPM paper."""
     # Data
-    train_dataset, test_dataset = create_datasets()
-    train_dataloader = DataLoader(
+    train_dataset, val_dataset = create_datasets()
+    train_loader = DataLoader(
         train_dataset,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
         shuffle=args.shuffle,
     )
-    test_dataloader = DataLoader(
-        test_dataset,
+    val_loader = DataLoader(
+        val_dataset,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
         shuffle=args.shuffle,
@@ -85,43 +85,17 @@ if __name__ == "__main__":
         eps=1e-8,
     )
 
-    # Training loop
-    for epoch in range(args.num_epochs):
-        losses = []
-        for batch in train_dataloader:
-            # Extract image: first element is image, second element is label (not used)
-            x_0, _ = batch
+    # Consolidate everything in the trainer
+    trainer = Trainer(
+        num_epochs=args.num_epochs,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        T=args.T,
+        diffuser=diffuser,
+        denoising_model=denoising_model,
+        optimizer=optimizer,
+        device=device,
+    )
 
-            # Move to device
-            x_0 = x_0.to(device)
-
-            # Noising process
-            #   1. Sample `t` from a discrete uniform distribution (Algorithm 1 line 3)
-            #   2. From the original image x_0, sample a noised image at timestep `t`
-            t = torch.randint(
-                low=0, high=args.T, size=(args.batch_size,), device=device
-            ).long()
-            x_noisy, noise = diffuser.noising_step(x_0, t)
-
-            # Denoising process
-            #   1. Predict the noise (forward pass through denoising model)
-            #   2. Compute the L2 loss between the actual noise and the predicted noise
-            #   3. Set the gradients to zero before doing the backpropagation step.
-            #       This is necessary because, by default, PyTorch accumulates the
-            #       gradients on subsequent backward passes i.e. subsequent calls of
-            #       loss.backward(). Note: setting `set_to_none=True` will deallocate
-            #       the gradients, which saves memory.
-            #   4. Backward pass (through the denoising model)
-            #   5. Update parameters of the denoising model
-            pred_noise = denoising_model(x_noisy, t)
-            loss = F.mse_loss(noise, pred_noise)
-            denoising_model.zero_grad(set_to_none=True)
-            loss.backward()
-            optimizer.step()
-
-            # Append loss
-            losses.append(loss.item())
-
-        mean_loss = torch.tensor(losses).mean().item()
-        logging.info(f"Epoch {epoch} | Train loss: {mean_loss} ")
-        # sample_plot_image()
+    # Launch training
+    trainer.train()
