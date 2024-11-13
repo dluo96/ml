@@ -1,4 +1,3 @@
-"""Module for training. This implements Algorithm 1 in the DDPM paper."""
 import argparse
 import logging
 
@@ -89,7 +88,7 @@ if __name__ == "__main__":
     # Training loop
     for epoch in range(args.num_epochs):
         losses = []
-        for step, batch in enumerate(train_dataloader):
+        for batch in train_dataloader:
             # Extract image: first element is image, second element is label
             x_0, _ = batch
 
@@ -106,7 +105,7 @@ if __name__ == "__main__":
 
             # Denoising process
             #   1. Predict the noise (forward pass through denoising model)
-            #   2. Compute the L1 loss between the actual noise and the predicted noise
+            #   2. Compute the L2 loss between the actual noise and the predicted noise
             #   3. Set the gradients to zero before doing the backpropagation step.
             #       This is necessary because, by default, PyTorch accumulates the
             #       gradients on subsequent backward passes i.e. subsequent calls of
@@ -115,7 +114,7 @@ if __name__ == "__main__":
             #   4. Backward pass (through the denoising model)
             #   5. Update parameters of the denoising model
             pred_noise = denoising_model(x_noisy, t)
-            loss = F.l1_loss(noise, pred_noise)
+            loss = F.mse_loss(noise, pred_noise)
             denoising_model.zero_grad(set_to_none=True)
             loss.backward()
             optimizer.step()
