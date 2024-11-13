@@ -25,6 +25,7 @@ if __name__ == "__main__":
     # System and I/O
     parser.add_argument("--device", type=str, default="cpu", help="Device to use: cpu|gpu)")
     parser.add_argument("--num-workers", type=int, default=0, help="Number of dataloader workers")
+    parser.add_argument("--shuffle", type=bool, default=True, help="Enable shuffling in dataloader")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
 
     # Model
@@ -60,11 +61,13 @@ if __name__ == "__main__":
         train_dataset,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
+        shuffle=args.shuffle,
     )
     test_dataloader = DataLoader(
         test_dataset,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
+        shuffle=args.shuffle,
     )
 
     # Diffuser and denoising model
@@ -87,30 +90,34 @@ if __name__ == "__main__":
     for epoch in range(args.num_epochs):
         losses = []
         for step, batch in enumerate(train_dataloader):
-            # Set the gradients to zero before doing the backpropagation step
-            # This is necessary because, by default, PyTorch accumulates the
-            # gradients on subsequent backward passes i.e. subsequent calls
-            # of loss.backward()
-            optimizer.zero_grad()
+            # Extract image: first element is image, second element is label
+            x_0, _ = batch
+
+            # Move to device
+            x_0 = x_0.to(device)
 
             # Noising process
             #   1. Sample a timestep `t` from a discrete uniform distribution
             #       (Algorithm 1 line 3)
-            #   2. Extract the image (index 0 is the image and index 1 the label)
-            #   3. From the original image x_0, sample a noised image at timestep `t`
+            #   2. From the original image x_0, sample a noised image at timestep `t`
             t = torch.randint(
                 low=0, high=args.T, size=(args.batch_size,), device=device
             ).long()
-            x_0 = batch[0]
             x_noisy, noise = diffuser.noising_step(x_0, t)
 
             # Denoising process
             #   1. Predict the noise (forward pass through denoising model)
             #   2. Compute the L1 loss between the actual noise and the predicted noise
-            #   3. Backward pass (through the denoising model)
-            #   4. Update parameters of the denoising model
+            #   3. Set the gradients to zero before doing the backpropagation step.
+            #       This is necessary because, by default, PyTorch accumulates the
+            #       gradients on subsequent backward passes i.e. subsequent calls of
+            #       loss.backward(). Note: setting `set_to_none=True` will deallocate
+            #       the gradients, which saves memory.
+            #   4. Backward pass (through the denoising model)
+            #   5. Update parameters of the denoising model
             pred_noise = denoising_model(x_noisy, t)
             loss = F.l1_loss(noise, pred_noise)
+            denoising_model.zero_grad(set_to_none=True)
             loss.backward()
             optimizer.step()
 
