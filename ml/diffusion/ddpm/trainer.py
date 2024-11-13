@@ -58,14 +58,10 @@ class Trainer:
 
         losses = []
         for batch in self.train_loader:
-            # Extract image: first element is image, second element is label (not used)
+            # Extract image (we don't need the label) and get batch size
             x_0, _ = batch
-
-            # Extract batch size
-            batch_size = x_0.size(0)
-
-            # Move to device
             x_0 = x_0.to(self.device)
+            batch_size = x_0.size(0)
 
             # Noising process
             #   1. Sample `t` from a discrete uniform distribution (Algorithm 1 line 3)
