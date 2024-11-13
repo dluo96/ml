@@ -1,6 +1,8 @@
-# Language modelling
+# Machine Learning
 
-This repo contains code related to language modelling.
+This repo is a collection of ML concepts I have implemented in PyTorch to enhance my
+understanding. It contains a lot of fundamentals that I believe are key to first
+principles thinking in ML.
 
 ### Character-level generative language models and datasets
 
@@ -46,6 +48,10 @@ This repo contains code related to language modelling.
 - [Variational Autoencoder (VAE)](ml/autoencoders/vae.py)
 - [Convolutional Autoencoder](ml/autoencoders/conv_autoencoder.py)
 - [Convolutional VAE](ml/autoencoders/conv_vae.py)
+
+### Diffusion models
+
+- [Denoising Diffusion Probabilistic Models (DDPM)](ml/diffusion/ddpm)
 
 ## Getting started
 
