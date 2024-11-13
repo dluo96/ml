@@ -50,8 +50,8 @@ class Trainer:
                 )
 
                 # Checkpoint
-                checkpoint_path = str(Path(__file__) / f"checkpoint_{epoch}.pt")
-                self.save_checkpoint(epoch=epoch, filepath=checkpoint_path)
+                checkpoint_path = Path(__file__).parent / f"checkpoint_{epoch}.pt"
+                self.save_checkpoint(epoch=epoch, filepath=str(checkpoint_path))
 
     def train_epoch(self) -> float:
         self.denoising_model.train()  # Set PyTorch module to training mode
