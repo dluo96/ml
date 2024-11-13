@@ -9,7 +9,7 @@ authors = [{name = "Daniel Luo", email = "dan.luo1996@gmail.com"}]
 description = "Language Modelling"
 name = "lm"
 readme = "README.md"
-requires-python = ">=3.11.0"
+requires-python = ">=3.10.0"
 version = "0.0.1"
 dependencies = ["torch>=2.0.0"]
 

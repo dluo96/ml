@@ -34,7 +34,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=8, help="Batch size")
     parser.add_argument("--learning-rate", type=float, default=0.001, help="Learning rate")
     parser.add_argument("--weight-decay", type=float, default=0.01, help="Weight decay")
-    parser.add_argument("--num-epochs", type=int, default=10_000, help="Number of complete passes through the dataset")
+    parser.add_argument("--num-epochs", type=int, default=100, help="Number of complete passes through the dataset")
     # fmt: on
 
     args = parser.parse_args()

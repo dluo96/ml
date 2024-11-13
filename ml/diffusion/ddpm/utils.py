@@ -32,7 +32,7 @@ def get_tensor_value_at_index(
     batch_size = t.shape[0]
 
     # Get the value of `tensor` at index `t`
-    out = tensor.gather(dim=-1, index=t.cpu())
+    out = tensor.gather(dim=-1, index=t)
 
     # Reshape to (1, 1, 1, 1) i.e. same rank as the image.
     non_batch_shape = (1,) * (len(x_shape) - 1)
