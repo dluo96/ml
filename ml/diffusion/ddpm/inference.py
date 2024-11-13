@@ -37,18 +37,18 @@ if __name__ == "__main__":
     logging.info(f"Using device: {device}")
 
     """Inference (Algorithm 2 in the paper)"""
-    T = 100
+    # Diffuser and denoising model
     diffuser = DiffuserDDPM(T=args.T, device=device)
-
-    # Define the neural network which predicts noise
     denoising_model = Unet()
 
-    # Algorithm 2 line 1: sample pure noise at t=T from N(0, I)
+    # Dimensions of image we want to generate
     B, C, H, W = 1, 3, 128, 128
+
+    # Algorithm 2 line 1: sample pure noise at t=T from N(0, I)
     x_t = torch.randn(size=(B, C, H, W), device=device)
 
     # Algorithm 2 for-loop
-    for timestep in range(T, 0):
+    for timestep in range(args.T, 0):
         t = torch.tensor([timestep])
         x_t = diffuser.denoising_step(x_t, t, denoising_model)  # Algorithm 2 line 4
 
