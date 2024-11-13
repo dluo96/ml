@@ -97,8 +97,7 @@ if __name__ == "__main__":
             x_0 = x_0.to(device)
 
             # Noising process
-            #   1. Sample a timestep `t` from a discrete uniform distribution
-            #       (Algorithm 1 line 3)
+            #   1. Sample `t` from a discrete uniform distribution (Algorithm 1 line 3)
             #   2. From the original image x_0, sample a noised image at timestep `t`
             t = torch.randint(
                 low=0, high=args.T, size=(args.batch_size,), device=device
