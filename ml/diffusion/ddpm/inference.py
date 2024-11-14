@@ -46,6 +46,9 @@ if __name__ == "__main__":
     checkpoint = torch.load(args.path_checkpoint)
     denoising_model.load_state_dict(checkpoint["model_state_dict"])
 
+    # Move denoising model to device
+    denoising_model.to(device)
+
     # Batch size and dimensions of image we want to generate
     B = 1  # We only want 1 image
     C, H, W = 3, 128, 128
@@ -55,8 +58,8 @@ if __name__ == "__main__":
 
     # Algorithm 2 for-loop
     for timestep in range(args.T - 1, 1, -1):
-        t = torch.tensor([timestep])
+        t = torch.tensor([timestep], device=device)
         x_t = diffuser.denoising_step(x_t, t, denoising_model)  # Algorithm 2 line 4
 
-        # Plot the generated/denoised image
-        show_tensor_image(x_t)
+    # Plot the generated/denoised image
+    show_tensor_image(x_t.cpu())
