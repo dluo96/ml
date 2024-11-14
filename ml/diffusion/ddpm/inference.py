@@ -43,7 +43,7 @@ if __name__ == "__main__":
     denoising_model = Unet()
 
     # Load checkpoint (for inference, we only need the model parameters)
-    checkpoint = torch.load(args.path_checkpoint)
+    checkpoint = torch.load(args.path_checkpoint, weights_only=True)
     denoising_model.load_state_dict(checkpoint["model_state_dict"])
 
     # Move denoising model to device
