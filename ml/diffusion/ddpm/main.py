@@ -61,12 +61,14 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         num_workers=args.num_workers,
         shuffle=args.shuffle,
+        persistent_workers=True,
     )
     val_loader = DataLoader(
         val_dataset,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
         shuffle=args.shuffle,
+        persistent_workers=True,
     )
 
     # Diffuser and denoising model
