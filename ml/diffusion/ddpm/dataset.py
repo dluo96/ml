@@ -61,5 +61,7 @@ def show_tensor_image(image: Image) -> None:
     if len(image.shape) == 4:
         image = image[0, :, :, :]
 
+    # save_path = Path(__file__).parent / "image.png"
+    # reverse_transforms(image).save(save_path)
     plt.imshow(reverse_transforms(image))
     plt.show()
