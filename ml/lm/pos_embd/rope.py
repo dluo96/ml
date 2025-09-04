@@ -13,12 +13,12 @@ class RoPE(nn.Module):
     to each token embedding.
 
     Specifically, in each token embedding, every pair of features is represented as a
-    complex number. So if the query tensor has features [q0, q1, q2, q3], it is
-    represented by `q0 + iq1` and `q2 + iq3`. Each complex number is rotated by an
+    complex number. So if the query tensor has features [q1, q2, q3, q4], it is
+    represented by `q1 + iq2` and `q3 + iq4`. Each complex number is rotated by an
     angle that depends on:
         - The position of the token in the input sequence,
         - The feature pair index (identifying the feature pair within the token
-            embedding). In the example, this is 0 for [q0, q1] and 1 for [q2, q3].
+            embedding). In the example, this is 0 for [q1, q2] and 1 for [q3, q4].
 
     Benefits of RoPE include:
         - Preserves cosine similarity between query and key: it is the same pre-RoPE
@@ -41,12 +41,13 @@ class RoPE(nn.Module):
         super().__init__()
         base = rope_theta
         D = head_dim
+        assert D % 2 == 0, "RoPE operates on feature pairs, so D must be even."
 
         # Pre-compute and save inverse frequencies as a buffer (not a model parameter)
-        # This is the frequencies 1/b^(0/D), 1/b^(2/D), ..., 1/b^((D-2)/D)
-        # Note: this is similar to the absolute position embeddings in the original
-        # paper 'Attention is All You Need'.
-        inv_freq = 1.0 / (base ** (torch.arange(0, D, 2).float() / D))  # (D/2,)
+        # The frequencies are 1/b^(0/D), 1/b^(2/D), ..., 1/b^((D-2)/D). There is one
+        # frequency for each feature pair.
+        i = torch.arange(1, D // 2 + 1).float()  # (D/2,)
+        inv_freq = 1.0 / (base ** (2 * (i - 1) / D))  # (D/2,)
         self.register_buffer("inv_freq", inv_freq, persistent=False)
 
     def get_cos_sin(self, pos_ids: Tensor) -> tuple[Tensor, Tensor]:
@@ -57,9 +58,17 @@ class RoPE(nn.Module):
 
         where `m` is the token position and
 
-            θ_i = 1/b^{2(i-D)/D} where i = 1, 2, ..., D/2.
+            θ_i = 1/b^(2(i-1)/D) where i = 1, 2, ..., D/2.
 
         See equation (15) in the paper for reference.
+
+        Args:
+            pos_ids: the token positions. Shape: (B, T).
+
+        Returns:
+            cos: the cosine of the angles. Shape: (B, T, D).
+            sin: the sine of the angles. Shape: (B, T, D).
+
         """
         B = pos_ids.shape[0]
         D = self.inv_freq.shape[0] * 2
@@ -85,30 +94,38 @@ class RoPE(nn.Module):
         return cos, sin
 
     def swap_negate_pairwise(self, x: Tensor) -> Tensor:
-        D = x.shape[-1]
-        assert D % 2 == 0, "RoPE operates on pairs of features, so D must be even."
+        """Swap and negate the features of `x` pairwise:
 
-        # Denote the elements of `x` by [x1, x2, ..., x_D]
-        # Take elements at even positions [x1, x3, x5, ...]
+            [x1, x2, ..., x_{D-1}, x_{D}] -> [-x2, x1, ..., -x_{D}, x_{D-1}]
+
+        Args:
+            x: the tensor to swap and negate (either the query or the key).
+                Shape: (..., D).
+
+        Returns:
+            The swapped and negated tensor. Shape: (..., D).
+        """
+        # Features at even indices [x1, x3, ..., x_{D-1}]
         x_at_even = x[..., 0::2]  # (..., D/2)
 
-        # Take elements at odd positions [x2, x4, x6, ...]
+        # Features at odd indices [x2, x4, ..., x_{D}]
         x_at_odd = x[..., 1::2]  # (..., D/2)
 
-        # Negate elements at odd positions to get [-x2, -x4, ..., -x_D]
-        # NB: cannot do it in-place since this will modify the original `x`
+        # Negate elements at odd indices to get [-x2, -x4, ..., -x_D]
+        # NB: cannot do this in-place since this would modify the original `x`
+        # because x_at_odd is a view  of `x`.
         x_at_odd = -x_at_odd
 
-        # Interleave to get [-x2, x1, -x4, x3, ..., -x_D, x_{D-1}] by
+        # Rearrange to get [-x2, x1, -x4, x3, ..., -x_{D}, x_{D-1}] by
         # (a) stacking the two tensors along a new dimension and then
         # (b) flattening the last two dimensions.
         t = torch.stack((x_at_odd, x_at_even), dim=-1)  # (..., D/2, 2)
-        t = t.flatten(-2)  # (..., D)
+        t = t.flatten(start_dim=-2, end_dim=-1)  # (..., D)
 
         return t
 
     def forward(self, q: Tensor, k: Tensor) -> tuple[Tensor, Tensor]:
-        """Applies RoPE (Rotary Position Embedding) to the query and key tensors.
+        """Applies RoPE (Rotary Position Embedding) to the query and key.
 
         This is done just before the self-attention is computed.
 
@@ -117,15 +134,15 @@ class RoPE(nn.Module):
             k: key tensor with shape (B, H, T, D).
 
         Returns:
-            Rotated (via RoPE) query and key tensors.
+            Rotated (via RoPE) query and key tensors, each with shape (B, H, T, D).
         """
         B, H, T, D = q.shape
 
-        pos_ids = torch.arange(T, device=q.device).expand(B, T)
+        pos_ids = torch.arange(T, device=q.device).expand(B, T)  # (B, T)
         cos, sin = self.get_cos_sin(pos_ids=pos_ids)  # (B, T, D) for both
 
         # Implement equation (34) from the paper: this is a computationally efficient
-        # implementation of applying a rotation matrix to each pair of features in the
+        # implementation of applying a rotation matrix to each feature pair in the
         # query and key tensors.
         q_sw_neg = self.swap_negate_pairwise(q)
         k_sw_neg = self.swap_negate_pairwise(k)
